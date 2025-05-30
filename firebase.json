@@ -1,0 +1,34 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "workout-app-59927",
+          "appId": "1:683585224838:android:1c4b80cceac17e26f51107",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "workout-app-59927",
+          "configurations": {
+            "android": "1:683585224838:android:1c4b80cceac17e26f51107",
+            "ios": "1:683585224838:ios:49584abe1cd48b6ef51107",
+            "macos": "1:683585224838:ios:49584abe1cd48b6ef51107",
+            "web": "1:683585224838:web:5c6379c015bd10eef51107",
+            "windows": "1:683585224838:web:03784591258d4662f51107"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-southeast1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
