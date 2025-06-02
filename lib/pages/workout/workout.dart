@@ -1,4 +1,3 @@
-// lib/pages/workout.dart
 import 'package:flutter/material.dart';
 
 class WorkoutPage extends StatelessWidget {
