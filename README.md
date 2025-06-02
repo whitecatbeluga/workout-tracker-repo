@@ -2,6 +2,7 @@
 
 ## Folder Structure Guide
 - https://medium.com/flutter-community/flutter-scalable-folder-files-structure-8f860faafebd
+- https://medium.com/@vortj/leveling-up-your-flutter-project-structure-fcb7099a3930
 ## How to run the workout_tracker_repo 
 
 - flutter run 
