@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/services/auth-service/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,10 +22,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      final userCredential = await authService.value.signIn(email: _emailController.text.trim(), password: _passwordController.text.trim());
       print(userCredential);
       if (userCredential.user != null) {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
