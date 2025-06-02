@@ -27,9 +27,6 @@ class _RegisterPageState extends State<RegisterPage> {
         password: _passwordController.text.trim(),
       );
 
-      // Optionally update display name or send email verification
-      // await authService.value.updateUsername(username: "Your Name");
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
       );
