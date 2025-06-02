@@ -9,8 +9,26 @@ class WorkoutPage extends StatelessWidget {
     final user = authService.value.currentUser;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Workout Tracker')),
-      body: Center(child: Text(user != null ? 'Welcome, ${user.email}': 'No user signed in')),
+      appBar: AppBar(
+        title: const Text('Workout Tracker'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () async {
+              await authService.value.signOut();
+              // Navigate to login and remove all previous routes
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: Text(
+          user != null ? 'Welcome, ${user.email}' : 'No user signed in',
+          style: const TextStyle(fontSize: 16),
+        ),
+      ),
     );
   }
 }
