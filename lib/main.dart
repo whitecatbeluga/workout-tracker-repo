@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:workout_tracker_repo/routes/route_generator.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import './routes/route.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +22,7 @@ class WorkoutTracker extends StatelessWidget {
       debugShowCheckedModeBanner: false,
               title: "Workout Tracker",
       initialRoute: '/login',
-      routes:appRoutes,
+      onGenerateRoute: RouteGenerator.generateRoute,
     );
   }
 }
