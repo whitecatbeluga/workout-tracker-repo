@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:workout_tracker_repo/routes/route_generator.dart';
-import 'firebase_options.dart';
+import 'config/firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
