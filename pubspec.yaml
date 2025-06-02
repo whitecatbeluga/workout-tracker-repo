@@ -25,3 +25,4 @@ flutter:
   # Add assets here (correct location)
   assets:
     - .env
+    - assets/images/
