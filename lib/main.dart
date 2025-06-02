@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'pages/login.dart';
-import 'pages/workout.dart';
-import 'pages/register.dart';
+import 'pages/auth/login.dart';
+import 'pages/workout/workout.dart';
+import 'pages/auth/register.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
