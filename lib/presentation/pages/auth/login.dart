@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/services/auth-service/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -10,11 +12,13 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final authRepo = AuthRepositoryImpl(AuthService());
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _passwordVisible = false;
+  
 
   Future<void> _signInWithEmailAndPassword() async {
     if (!_formKey.currentState!.validate()) return;
@@ -22,9 +26,9 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await authService.value.signIn(email: _emailController.text.trim(), password: _passwordController.text.trim());
+      final userCredential = await authRepo.signIn(_emailController.text.trim(), _passwordController.text.trim());
       print(userCredential);
-      if (userCredential.user != null) {
+      if (userCredential != null && userCredential.email.isNotEmpty) {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     } on FirebaseAuthException catch (e) {
