@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 
 import '../presentation/pages/auth/login.dart';
@@ -15,17 +16,17 @@ class RouteGenerator {
     final user = FirebaseAuth.instance.currentUser;
 
     switch (settings.name) {
-      case '/':
+      case AuthRoutes.home:
         return MaterialPageRoute(
           builder: (_) =>
               user != null ? const WorkoutPage() : const LandingPage(),
         );
-      case '/login':
+      case AuthRoutes.login:
         return MaterialPageRoute(
           builder: (_) =>
               user == null ? const LoginPage() : const WorkoutPage(),
         );
-      case "/register":
+      case AuthRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case SocialRoutes.socialPage:
         return MaterialPageRoute(builder: (_) => const SocialPage());
