@@ -26,9 +26,8 @@ class RouteGenerator {
         );
       case "/register":
         return MaterialPageRoute(builder: (_) => const RegisterPage());
-        return MaterialPageRoute(builder: (_) => const RegisterPage());
       case '/social/social-page':
-        return MaterialPageRoute(builder: (_) => const ButtonPick());
+        return MaterialPageRoute(builder: (_) => const SocialPage());
       case "/social/view-post":
         return MaterialPageRoute(builder: (_) => const ViewPost());
       default:
