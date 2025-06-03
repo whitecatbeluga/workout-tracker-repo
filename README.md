@@ -31,7 +31,7 @@ if using wsl use this
 
 ## CODE STRUCTURE
 
-**Workout** = pure domain entity (no Firebase code).
+**Domain -> Entity** = pure workout object (no Firebase code).
 
 **WorkoutModel** = DTO that converts between Firestore and entity.
 
