@@ -20,13 +20,13 @@ class RouteGenerator {
       case AuthRoutes.home:
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ContainerTree(), ifDenied:(_) => const LandingPage());
       case AuthRoutes.login:
-        return guardedRoute(guard:() async => Authentication.isAuthenticated(), ifAllowed: (_) => const LoginPage(), ifDenied: (_)=> const WorkoutPage());
+        return MaterialPageRoute(builder: (_) => const LoginPage());
       case AuthRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case SocialRoutes.socialPage:
-        return MaterialPageRoute(builder: (_) => const SocialPage());
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const SocialPage(), ifDenied:(_) => const LoginPage());
       case SocialRoutes.viewPost:
-        return MaterialPageRoute(builder: (_) => const ViewPost());
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ViewPost(), ifDenied:(_) => const LoginPage());
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
