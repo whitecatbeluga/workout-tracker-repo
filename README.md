@@ -11,7 +11,7 @@ if using wsl use this
 - flutter run -d web-server
 
 
-## 📁 FOLDER STRUCTURE
+## 📁 FOLDER STRUCTURE `CLEAN ARCHITECTURE`
 
 **domain** – Contains core business models, plain Dart classes, and interfaces.
 
@@ -28,3 +28,5 @@ if using wsl use this
 **config** – Environment configurations, API keys.
 
 **theme** – Centralized theme definitions, color palette, typography.
+
+
