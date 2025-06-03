@@ -19,7 +19,7 @@ class RouteGenerator {
       case AuthRoutes.home:
         return MaterialPageRoute(
           builder: (_) =>
-              user != null ? const WorkoutPage() : const LandingPage(),
+              user != null ? const WorkoutPage() : const LoginPage(),
         );
       case AuthRoutes.login:
         return MaterialPageRoute(
