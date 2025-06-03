@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/models/user_model.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -13,49 +15,74 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   final authRepo = AuthRepositoryImpl(AuthService());
   final _formKey = GlobalKey<FormState>();
+
+  // Controllers
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _userNameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
+  final _genderController = TextEditingController();
+  final _addressController = TextEditingController();
+  final _activityLevelController = TextEditingController();
+  final _bmiController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+
+  List<String> selectedWorkoutTypes = [];
+  DateTime? birthDate;
   bool _isLoading = false;
   bool _passwordVisible = false;
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate() || birthDate == null) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await authRepo.signUp(
-        _emailController.text.trim(),
-        _passwordController.text.trim(),
+      final user = UserModel(
+        uid: '',
+        email: _emailController.text.trim(),
+        userName: _userNameController.text.trim(),
+        firstName: _firstNameController.text.trim(),
+        lastName: _lastNameController.text.trim(),
+        gender: _genderController.text.trim(),
+        address: _addressController.text.trim(),
+        activityLevel: _activityLevelController.text.trim(),
+        birthDate: birthDate!,
+        bmi: double.parse(_bmiController.text.trim()),
+        height: double.parse(_heightController.text.trim()),
+        weight: _weightController.text.trim(),
+        workoutType: selectedWorkoutTypes,
       );
+
+      await authRepo.signUp(user, _passwordController.text.trim());
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
       );
-
-      // Navigate to home or login
       Navigator.pushReplacementNamed(context, '/');
     } on FirebaseAuthException catch (e) {
-      String errorMessage;
-      switch (e.code) {
-        case 'email-already-in-use':
-          errorMessage = 'Email already in use';
-          break;
-        case 'invalid-email':
-          errorMessage = 'Invalid email address';
-          break;
-        case 'weak-password':
-          errorMessage = 'Password is too weak';
-          break;
-        default:
-          errorMessage = 'Registration failed: ${e.message}';
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+        SnackBar(content: Text(e.message ?? 'Registration failed')),
       );
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickBirthDate() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1900),
+      lastDate: now,
+    );
+    if (picked != null) {
+      setState(() {
+        birthDate = picked;
+      });
     }
   }
 
@@ -63,6 +90,15 @@ class _RegisterPageState extends State<RegisterPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _userNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _genderController.dispose();
+    _addressController.dispose();
+    _activityLevelController.dispose();
+    _bmiController.dispose();
+    _heightController.dispose();
+    _weightController.dispose();
     super.dispose();
   }
 
@@ -70,71 +106,96 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Register')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              const SizedBox(height: 40),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter your email';
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                    return 'Enter a valid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: !_passwordVisible,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _passwordVisible ? Icons.visibility : Icons.visibility_off,
+              _buildTextField(_emailController, 'Email'),
+              _buildTextField(_passwordController, 'Password', isPassword: true),
+              _buildTextField(_userNameController, 'Username'),
+              _buildTextField(_firstNameController, 'First Name'),
+              _buildTextField(_lastNameController, 'Last Name'),
+              _buildTextField(_genderController, 'Gender'),
+              _buildTextField(_addressController, 'Address'),
+              _buildTextField(_activityLevelController, 'Activity Level'),
+              _buildTextField(_bmiController, 'BMI', isNumber: true),
+              _buildTextField(_heightController, 'Height (cm)', isNumber: true),
+              _buildTextField(_weightController, 'Weight (kg)', isNumber: false),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      birthDate == null
+                          ? 'Select Birthdate'
+                          : 'Birthdate: ${birthDate!.toLocal()}'.split(' ')[0],
                     ),
-                    onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
                   ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter a password';
-                  if (value.length < 6) return 'Password must be at least 6 characters';
-                  return null;
-                },
+                  TextButton(
+                    onPressed: _pickBirthDate,
+                    child: const Text('Pick Date'),
+                  )
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: ['cardio', 'strength', 'flexibility', 'balance'].map((type) {
+                  final selected = selectedWorkoutTypes.contains(type);
+                  return FilterChip(
+                    label: Text(type),
+                    selected: selected,
+                    onSelected: (bool selectedValue) {
+                      setState(() {
+                        selected
+                            ? selectedWorkoutTypes.remove(type)
+                            : selectedWorkoutTypes.add(type);
+                      });
+                    },
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _register,
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('REGISTER'),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: const Text('Already have an account? Login here'),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _register,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('REGISTER'),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label,
+      {bool isPassword = false, bool isNumber = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextFormField(
+        controller: controller,
+        obscureText: isPassword && !_passwordVisible,
+        keyboardType: isNumber ? TextInputType.number : TextInputType.text,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          prefixIcon: isPassword ? const Icon(Icons.lock) : const Icon(Icons.person),
+          suffixIcon: isPassword
+              ? IconButton(
+            icon: Icon(
+              _passwordVisible ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+          )
+              : null,
+        ),
+        validator: (value) {
+          if (value == null || value.isEmpty) return 'Enter $label';
+          return null;
+        },
       ),
     );
   }

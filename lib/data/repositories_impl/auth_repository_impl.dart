@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user.dart';
 import 'package:workout_tracker_repo/domain/repositories/auth_repository.dart';
@@ -15,10 +16,35 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<AppUser?> signUp(String email, String password) async {
-    final user = await _authService.signUp(email, password);
-    return user != null ? UserModel.fromFirebaseUser(user) : null;
+  Future<AppUser?> signUp(UserModel data, String password) async {
+    final user = await _authService.signUp(data.email,password);
+
+    if (user != null) {
+      final newUser = UserModel(
+        uid: user.uid,
+        email: data.email,
+        userName: data.userName,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        gender: data.gender,
+        address: data.address,
+        activityLevel: data.activityLevel,
+        birthDate: data.birthDate,
+        bmi: data.bmi,
+        height: data.height,
+        weight: data.weight,
+        workoutType: data.workoutType,
+      );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(newUser.toMap());
+      return newUser;
+    }
+
+    return null;
   }
+
 
   @override
   Future<void> signOut() async {
