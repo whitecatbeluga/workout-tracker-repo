@@ -21,13 +21,12 @@ class Button extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (variant) {
       case ButtonVariant.secondary:
-        return const Color(0xFF64748B); // slate gray
+        return const Color(0xFF48A6A7); // slate gray
       case ButtonVariant.danger:
         return const Color(0xFFDC2626); // red
       case ButtonVariant.white:
         return const Color(0xFFFFFFFF); // white
       case ButtonVariant.primary:
-      default:
         return const Color(0xFF006A71); // teal
     }
   }

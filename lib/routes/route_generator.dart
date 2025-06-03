@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import 'package:workout_tracker_repo/utils/authentication.dart';
@@ -27,6 +28,8 @@ class RouteGenerator {
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const SocialPage(), ifDenied:(_) => const LoginPage());
       case SocialRoutes.viewPost:
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ViewPost(), ifDenied:(_) => const LoginPage());
+      case SocialRoutes.visitProfile:
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const VisitProfilePage(), ifDenied: (_) => const LoginPage());
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
