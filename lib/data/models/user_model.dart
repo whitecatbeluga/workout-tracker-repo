@@ -15,8 +15,8 @@ class UserModel extends AppUser {
   final List<String> workoutType;
 
   UserModel({
-    required String uid,
-    required String email,
+    required super.uid,
+    required super.email,
     required this.userName,
     required this.firstName,
     required this.lastName,
@@ -28,7 +28,7 @@ class UserModel extends AppUser {
     required this.height,
     required this.weight,
     required this.workoutType,
-  }) : super(uid: uid, email: email);
+  });
 
   Map<String, dynamic> toMap() {
     return {
