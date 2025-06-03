@@ -16,8 +16,6 @@ import '../presentation/pages/social/social_view_post.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
-    final user = FirebaseAuth.instance.currentUser;
-
     switch (settings.name) {
       case AuthRoutes.home:
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ContainerTree(), ifDenied:(_) => const LandingPage());
