@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/auth_service.dart';
 
 import '../../../services/auth-service/auth_service.dart';
 
@@ -11,6 +13,7 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final authRepo = AuthRepositoryImpl(AuthService());
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -23,9 +26,9 @@ class _RegisterPageState extends State<RegisterPage> {
     setState(() => _isLoading = true);
 
     try {
-      UserCredential userCredential = await authService.value.createAccount(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+      await authRepo.signUp(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
