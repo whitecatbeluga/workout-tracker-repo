@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
-import 'package:workout_tracker_repo/services/auth-service/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

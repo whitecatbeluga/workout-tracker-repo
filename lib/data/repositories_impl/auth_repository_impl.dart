@@ -1,7 +1,6 @@
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user.dart';
 import 'package:workout_tracker_repo/domain/repositories/auth_repository.dart';
-import '../../services/auth-service/auth_service.dart';
 import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
-import 'package:workout_tracker_repo/services/auth-service/auth_service.dart';
 
 class WorkoutPage extends StatelessWidget {
   const WorkoutPage({super.key});
