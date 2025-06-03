@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/widgets/post_card.dart';
+
+import '../../../widgets/post_card.dart';
 
 class ButtonPick extends StatefulWidget {
   const ButtonPick({super.key});

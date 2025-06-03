@@ -1,9 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/pages/auth/login.dart';
-import 'package:workout_tracker_repo/pages/auth/register.dart';
-import 'package:workout_tracker_repo/pages/page_not_found/page_not_found.dart';
-import 'package:workout_tracker_repo/pages/workout/workout.dart';
+
+import '../presentation/pages/auth/login.dart';
+import '../presentation/pages/auth/register.dart';
+import '../presentation/pages/page_not_found/page_not_found.dart';
+import '../presentation/pages/workout/workout.dart';
 
 class RouteGenerator{
   static Route<dynamic> generateRoute(RouteSettings settings){
