@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
+import 'package:workout_tracker_repo/presentation/pages/auth/register.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/images/logo_hero.dart';
+import 'package:workout_tracker_repo/presentation/widgets/inputs/password_field.dart';
+import 'package:workout_tracker_repo/presentation/widgets/inputs/text_field.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -17,7 +22,6 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _passwordVisible = false;
-  
 
   Future<void> _signInWithEmailAndPassword() async {
     if (!_formKey.currentState!.validate()) return;
@@ -25,7 +29,10 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      final userCredential = await authRepo.signIn(_emailController.text.trim(), _passwordController.text.trim());
+      final userCredential = await authRepo.signIn(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+      );
       print(userCredential);
       if (userCredential != null && userCredential.email.isNotEmpty) {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
@@ -49,15 +56,17 @@ class _LoginPageState extends State<LoginPage> {
           errorMessage = 'Login failed. Please try again';
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(errorMessage)));
     } catch (e, stackTrace) {
       print('Unexpected error: $e');
       print('Stack trace: $stackTrace');
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('A system error occurred. Please try again later.')),
+        SnackBar(
+          content: Text('A system error occurred. Please try again later.'),
+        ),
       );
     } finally {
       if (mounted) {
@@ -76,88 +85,105 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 40),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('Login'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+      ),
+      body: Center(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  HeroLogo(),
+                  const SizedBox(height: 40),
+                  InputField(
+                    controller: _emailController,
+                    label: 'Email',
+                    prefixIcon: Icons.email,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email';
+                      }
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
+                        return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
                   ),
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                  const SizedBox(height: 16),
+                  PasswordField(
+                    label: 'Password',
+                    controller: _passwordController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      if (value.length < 6) {
+                        return 'Password must be at least 6 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  Button(
+                    label: 'LOGIN',
+                    isLoading: _isLoading,
+                    onPressed: _signInWithEmailAndPassword,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    spacing: 10,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(color: Color(0xFF868686)),
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() => _passwordVisible = !_passwordVisible);
-                      },
-                    ),
+                      Text("Or", style: TextStyle(color: Color(0xFF868686))),
+                      Expanded(
+                        child: Container(
+                          height: 1,
+                          decoration: BoxDecoration(color: Color(0xFF868686)),
+                        ),
+                      ),
+                    ],
                   ),
-                  obscureText: !_passwordVisible,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _signInWithEmailAndPassword,
-                    child: _isLoading
-                        ? const CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 3,
-                    )
-                        : const Text('LOGIN', style: TextStyle(fontSize: 16)),
+
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    spacing: 8,
+                    children: [
+                      const Text("Don't have an account?"),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return RegisterPage();
+                              },
+                            ),
+                          );
+                        },
+                        child: Text(
+                          "Register Here",
+                          style: TextStyle(color: Color(0xFF48A6A7)),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/register');
-                  },
-                  child: const Text("Don't have an account? Click here"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/forgot-password');
-                  },
-                  child: const Text('Forgot password?'),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
