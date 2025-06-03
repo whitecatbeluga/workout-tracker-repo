@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
 import '../presentation/pages/page_not_found/page_not_found.dart';
@@ -15,7 +17,7 @@ class RouteGenerator {
       case '/':
         return MaterialPageRoute(
           builder: (_) =>
-              user != null ? const WorkoutPage() : const LoginPage(),
+              user != null ? const WorkoutPage() : const LandingPage(),
         );
       case '/login':
         return MaterialPageRoute(
@@ -23,6 +25,7 @@ class RouteGenerator {
               user == null ? const LoginPage() : const WorkoutPage(),
         );
       case "/register":
+        return MaterialPageRoute(builder: (_) => const RegisterPage());
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case '/social/social-page':
         return MaterialPageRoute(builder: (_) => const ButtonPick());

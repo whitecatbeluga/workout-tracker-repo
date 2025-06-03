@@ -7,9 +7,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const WorkoutTracker());
 }
 
@@ -20,8 +18,8 @@ class WorkoutTracker extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-              title: "Workout Tracker",
-      initialRoute: '/login',
+      title: "Workout Tracker",
+      initialRoute: '/',
       onGenerateRoute: RouteGenerator.generateRoute,
     );
   }
