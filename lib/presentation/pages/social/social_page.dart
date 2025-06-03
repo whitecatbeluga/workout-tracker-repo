@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import '../../../widgets/post_card.dart';
+import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 
 class ButtonPick extends StatefulWidget {
   const ButtonPick({super.key});
@@ -128,6 +127,9 @@ class SocialPage extends State<ButtonPick> {
               child: PostCard(
                 name: 'Philippe',
                 email: 'philippetan99@gmail.com',
+                onTap: () {
+                  Navigator.pushNamed(context, '/view_post');
+                },
               ),
             ),
           ],
