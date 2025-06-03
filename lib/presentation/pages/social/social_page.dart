@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 
-class ButtonPick extends StatefulWidget {
-  const ButtonPick({super.key});
+class SocialPage extends StatefulWidget {
+  const SocialPage({super.key});
 
   @override
-  State<ButtonPick> createState() => SocialPage();
+  State<SocialPage> createState() => SocialPageState();
 }
 
-class SocialPage extends State<ButtonPick> {
+class SocialPageState extends State<SocialPage> {
   bool isFollowingSelected = true;
 
   @override
