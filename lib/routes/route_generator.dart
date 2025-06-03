@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
@@ -18,8 +19,7 @@ class RouteGenerator {
     switch (settings.name) {
       case AuthRoutes.home:
         return MaterialPageRoute(
-          builder: (_) =>
-              user != null ? const WorkoutPage() : const LoginPage(),
+          builder: (_) => user != null ? ContainerTree() : const LandingPage(),
         );
       case AuthRoutes.login:
         return MaterialPageRoute(
