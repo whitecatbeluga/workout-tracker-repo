@@ -29,4 +29,16 @@ if using wsl use this
 
 **theme** – Centralized theme definitions, color palette, typography.
 
+## CODE STRUCTURE
+
+**Workout** = pure domain entity (no Firebase code).
+
+**WorkoutModel** = DTO that converts between Firestore and entity.
+
+**WorkoutService** = low-level Firebase access.
+
+**WorkoutRepositoryImpl** = bridges service + entity.
+
+**UI uses WorkoutRepositoryImpl through the domain interface.**
+
 
