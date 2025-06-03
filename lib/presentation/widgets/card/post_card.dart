@@ -4,12 +4,14 @@ class PostCard extends StatelessWidget {
   final String name;
   final String email;
   final VoidCallback? onTap;
+  final VoidCallback? viewProfileOnTap;
 
   const PostCard({
     super.key,
     required this.name,
     required this.email,
     this.onTap,
+    this.viewProfileOnTap,
   });
 
   @override
@@ -32,41 +34,49 @@ class PostCard extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: EdgeInsets.all(0),
-                          child: Row(
-                            spacing: 10,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(0),
-                                child: CircleAvatar(
-                                  backgroundImage: AssetImage(
-                                    'assets/images/guy1.png',
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: EdgeInsets.all(0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      name,
-                                      style: TextStyle(color: Colors.black),
-                                    ),
-                                    Text(
-                                      '2 hours ago',
-                                      style: TextStyle(
-                                        color: Color(0xFFA7A7A7),
-                                        fontSize: 12,
+                        Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: viewProfileOnTap,
+                            child: Container(
+                              padding: EdgeInsets.all(0),
+                              child: Row(
+                                spacing: 10,
+                                children: [
+                                  Container(
+                                    padding: EdgeInsets.all(0),
+                                    child: CircleAvatar(
+                                      backgroundImage: AssetImage(
+                                        'assets/images/guy1.png',
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.all(0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name,
+                                          style: TextStyle(color: Colors.black),
+                                        ),
+                                        Text(
+                                          '2 hours ago',
+                                          style: TextStyle(
+                                            color: Color(0xFFA7A7A7),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
+
                         Container(
                           padding: EdgeInsets.all(0),
                           child: Row(

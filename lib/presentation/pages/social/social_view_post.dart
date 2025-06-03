@@ -9,7 +9,11 @@ class ViewPost extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(centerTitle: true, title: Text('Workout Detail')),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        centerTitle: true,
+        title: Text('Workout Detail'),
+      ),
       body: SafeArea(
         child: Column(
           children: [
@@ -18,6 +22,13 @@ class ViewPost extends StatelessWidget {
               child: PostCard(
                 name: 'Philippe',
                 email: 'philippetan99@gmail.com',
+                viewProfileOnTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/social/visit-profile',
+                    arguments: {'name': 'philippetan99'},
+                  );
+                },
               ),
             ),
             Container(

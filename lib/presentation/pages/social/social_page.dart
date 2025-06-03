@@ -16,6 +16,7 @@ class SocialPageState extends State<SocialPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
         titleSpacing: 0,
         title: Padding(
@@ -128,7 +129,14 @@ class SocialPageState extends State<SocialPage> {
                 name: 'Philippe',
                 email: 'philippetan99@gmail.com',
                 onTap: () {
-                  Navigator.pushNamed(context, '/view_post');
+                  Navigator.pushNamed(context, '/social/view-post');
+                },
+                viewProfileOnTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/social/visit-profile',
+                    arguments: {'name': 'philippetan99'},
+                  );
                 },
               ),
             ),
