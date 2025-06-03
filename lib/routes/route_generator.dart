@@ -4,6 +4,8 @@ import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
+import 'package:workout_tracker_repo/utils/authentication.dart';
+import 'package:workout_tracker_repo/utils/guardedRoute.dart';
 
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
@@ -18,14 +20,9 @@ class RouteGenerator {
 
     switch (settings.name) {
       case AuthRoutes.home:
-        return MaterialPageRoute(
-          builder: (_) => user != null ? ContainerTree() : const LandingPage(),
-        );
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ContainerTree(), ifDenied:(_) => const LandingPage());
       case AuthRoutes.login:
-        return MaterialPageRoute(
-          builder: (_) =>
-              user == null ? const LoginPage() : const WorkoutPage(),
-        );
+        return guardedRoute(guard:() async => Authentication.isAuthenticated(), ifAllowed: (_) => const LoginPage(), ifDenied: (_)=> const WorkoutPage());
       case AuthRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case SocialRoutes.socialPage:
