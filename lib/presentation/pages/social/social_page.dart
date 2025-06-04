@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
+import '../../../data/repositories_impl/social_repository_impl.dart';
+import '../../../domain/entities/social_with_username.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -11,6 +15,10 @@ class SocialPage extends StatefulWidget {
 
 class SocialPageState extends State<SocialPage> {
   bool isFollowingSelected = true;
+
+  final user = authService.value.getCurrentUser();
+
+  final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
   @override
   Widget build(BuildContext context) {
@@ -124,19 +132,46 @@ class SocialPageState extends State<SocialPage> {
                 ],
               ),
             ),
-            Container(
-              padding: EdgeInsets.all(0),
-              child: PostCard(
-                name: 'Philippe',
-                email: 'philippetan99@gmail.com',
-                onTap: () {
-                  Navigator.pushNamed(context, '/social/view-post');
-                },
-                viewProfileOnTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    '/social/visit-profile',
-                    arguments: {'name': 'philippetan99'},
+            Expanded(
+              child: StreamBuilder<List<SocialWithUserName>>(
+                stream: repository.fetchPublicWorkouts(user!.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  final posts = snapshot.data ?? [];
+
+                  if (posts.isEmpty) {
+                    return const Center(child: Text('No public posts found.'));
+                  }
+
+                  return ListView.builder(
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
+                      return PostCard(
+                        data: post,
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            SocialRoutes.viewPost,
+                            arguments: post,
+                          );
+                        },
+                        viewProfileOnTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            SocialRoutes.visitProfile,
+                            arguments: {'name': post.userName},
+                          );
+                        },
+                      );
+                    },
                   );
                 },
               ),
