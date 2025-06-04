@@ -109,6 +109,7 @@ class _CollapsibleState extends State<Collapsible> {
                     label: "Start Routine",
                     onPressed: () {},
                     prefixIcon: Icons.play_arrow_rounded,
+                    fullWidth: true,
                   ),
                 ],
               ),
