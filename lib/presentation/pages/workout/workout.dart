@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+
+import '../../domain/entities/program.dart';
+import '../../widgets/collapsible/collapsible.dart';
 
 class WorkoutPage extends StatelessWidget {
   const WorkoutPage({super.key});
@@ -9,6 +13,45 @@ class WorkoutPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = authService.value.getCurrentUser();
 
+    ProgramState programState = ProgramState(
+      programs: [
+        Program(
+          id: '1',
+          programName: 'Program 1',
+          routines: [
+            Routine(
+              id: '1',
+              routineName: 'Routine 1',
+              exercises: [
+                Exercise(
+                  id: '1',
+                  name: 'Exercise 1',
+                  description: 'Description 1',
+                  category: 'Category 1',
+                  withOutEquipment: true,
+                  imageUrl: 'https://example.com/exercise1.jpg',
+                  sets: [
+                    WorkoutSet(
+                      exerciseId: '1',
+                      name: 'Set 1',
+                      sets: [
+                        SetDetail(
+                          set: 1,
+                          previous: '0',
+                          kg: '0',
+                          reps: '0',
+                          checked: false,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
     return Scaffold(
       appBar: AppBar(
         title: const Text('Workout Tracker'),
@@ -23,12 +66,60 @@ class WorkoutPage extends StatelessWidget {
           ),
         ],
       ),
-      body: Center(
-        child: Text(
-          user != null ? 'Welcome, ${user.email}' : 'No user signed in',
-          style: const TextStyle(fontSize: 16),
-        ),
-      ),
+      body:SafeArea(child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+           padding: EdgeInsets.all(10),
+           child: Column(
+             children: [
+               Row(
+                 children: [
+                   Padding(padding: EdgeInsets.only(bottom: 6),
+                   child: Text("Quick Start",
+                     style: TextStyle(fontWeight: FontWeight.bold),
+                   ),
+                   ),
+                 ],
+               ),
+                Button(label: "Start Workout",
+                   onPressed: () {},
+                   variant: ButtonVariant.primary,)
+             ],
+           ),
+         ),
+          Container(
+            padding: EdgeInsets.all(10),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(padding: EdgeInsets.only(bottom: 6),
+                      child: Text("Routines",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(child:
+                    Button(label: "Start Workout",
+                      onPressed: () {},
+                      variant: ButtonVariant.primary,)
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(child:
+                      Button(label: "Explore", onPressed: () {}, variant: ButtonVariant.primary,)
+                    )
+                  ],
+                )
+              ],
+            ),
+          ),
+          Collapsible(title: "Workout Details", program: programState),
+        ],
+      ))
     );
   }
 }
