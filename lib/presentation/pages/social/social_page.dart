@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
+import 'package:workout_tracker_repo/routes/social/social.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -37,7 +38,7 @@ class SocialPageState extends State<SocialPage> {
         actions: [
           IconButton(
             onPressed: () {
-              print('Search pressed');
+              Navigator.pushNamed(context, SocialRoutes.search);
             },
             icon: Icon(Icons.search),
           ),
