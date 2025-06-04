@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/theme/color.dart';
 
 enum ButtonVariant { primary, secondary, danger, white }
 enum ButtonSize { small, medium, large }
@@ -26,14 +27,14 @@ class Button extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (variant) {
       case ButtonVariant.secondary:
-        return const Color(0xFF48A6A7);
+        return const Color(CustomColor.gray); // slate gray
       case ButtonVariant.danger:
-        return const Color(0xFFDB141F);
+        return const Color(CustomColor.red); // red
       case ButtonVariant.white:
-        return const Color(0xFFFFFFFF);
+        return const Color(CustomColor.white); // white
       case ButtonVariant.primary:
       default:
-        return const Color(0xFF006A71);
+        return const Color(CustomColor.defaultColor);
     }
   }
 
