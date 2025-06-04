@@ -41,7 +41,7 @@ class _NavbarState extends State<Navbar> with TickerProviderStateMixin {
               children: List.generate(navList.length, (index) {
                 final isActive = currentScreenIndex.value == index;
 
-                return Container(
+                return SizedBox(
                   width:
                       MediaQuery.of(context).size.width / navList.length - 16,
                   // fixed width per tab minus some margin
