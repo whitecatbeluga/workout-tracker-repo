@@ -133,10 +133,17 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  Button(
-                    label: 'LOGIN',
-                    isLoading: _isLoading,
-                    onPressed: _signInWithEmailAndPassword,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Button(
+                          label: 'LOGIN',
+                          isLoading: _isLoading,
+                          onPressed: _signInWithEmailAndPassword,
+                          size: ButtonSize.large,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   Row(

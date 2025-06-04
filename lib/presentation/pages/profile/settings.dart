@@ -1,0 +1,145 @@
+import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/domain/entities/profile-menu.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+
+class Settings extends StatelessWidget {
+  const Settings({super.key});
+
+  // final user = authService.value.getCurrentUser();
+
+  final List<MenuItem> menuItems = const [
+    MenuItem(
+      title: "Account Details",
+      icon: Icons.account_circle_rounded,
+      route: "/account-details",
+    ),
+    MenuItem(title: "Contact Us", icon: Icons.call, route: "/contact-us"),
+    MenuItem(
+      title: "Terms and Service",
+      icon: Icons.info,
+      route: "/terms-and-service",
+    ),
+    MenuItem(
+      title: "About Us",
+      icon: Icons.supervisor_account_rounded,
+      route: "/about-us",
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text('Settings'),
+        leading: BackButton(
+          onPressed: Navigator.canPop(context)
+              ? () => Navigator.pop(context)
+              : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
+                },
+        ),
+      ),
+      body: Center(
+        child: Column(
+          spacing: 20,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {},
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(width: 1, color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          spacing: 10,
+                          children: [
+                            ClipOval(
+                              child: SizedBox.fromSize(
+                                size: Size.fromRadius(22),
+                                child: Image.asset("assets/images/default.jpg"),
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "John Smith Doe",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                // Text(user?.email ?? "", style: TextStyle(fontSize: 14)),
+                                Text(
+                                  "Johndoe@email.com",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        Icon(Icons.chevron_right, size: 30),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Column(
+              spacing: 10,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Text("Other Settings", style: TextStyle(fontSize: 16)),
+                ),
+                MenuList(menuItems: menuItems),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Button(
+                      label: "Logout",
+                      onPressed: () async {
+                        await authService.value.signOut();
+                        // Navigate to login and remove all previous routes
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/login',
+                          (route) => false,
+                        );
+                      },
+                      variant: ButtonVariant.danger,
+                      size: ButtonSize.medium,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

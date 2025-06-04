@@ -42,26 +42,40 @@ class LandingPage extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.only(top: 20.0, left: 20.0, right: 20.0),
-            child: Button(
-              label: "Get Started",
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) {
-                      return LoginPage();
+            child: Row(
+              children: [
+                Expanded(
+                  child: Button(
+                    label: "Get Started",
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            return LoginPage();
+                          },
+                        ),
+                      );
                     },
+                    size: ButtonSize.large,
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(top: 10.0, left: 20.0, right: 20.0),
-            child: Button(
-              label: "Continue as Guest",
-              onPressed: () {},
-              variant: ButtonVariant.white,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Button(
+                    label: "Continue as Guest",
+                    onPressed: () {},
+                    variant: ButtonVariant.white,
+                    size: ButtonSize.large,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

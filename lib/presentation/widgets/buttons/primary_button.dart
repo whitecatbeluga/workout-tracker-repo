@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 enum ButtonVariant { primary, secondary, danger, white }
 
+enum ButtonSize { small, medium, large }
+
 class Button extends StatelessWidget {
   const Button({
     super.key,
@@ -10,6 +12,7 @@ class Button extends StatelessWidget {
     this.prefixIcon,
     this.isLoading = false,
     this.variant = ButtonVariant.primary,
+    this.size = ButtonSize.medium,
   });
 
   final String label;
@@ -17,13 +20,14 @@ class Button extends StatelessWidget {
   final IconData? prefixIcon;
   final bool isLoading;
   final ButtonVariant variant;
+  final ButtonSize size;
 
   Color _getBackgroundColor() {
     switch (variant) {
       case ButtonVariant.secondary:
         return const Color(0xFF48A6A7); // slate gray
       case ButtonVariant.danger:
-        return const Color(0xFFDC2626); // red
+        return const Color(0xFFDB141F); // red
       case ButtonVariant.white:
         return const Color(0xFFFFFFFF); // white
       case ButtonVariant.primary:
@@ -31,13 +35,25 @@ class Button extends StatelessWidget {
     }
   }
 
+  double _getButtonHeight() {
+    switch (size) {
+      case ButtonSize.large:
+        return 50;
+      case ButtonSize.medium:
+        return 40;
+      case ButtonSize.small:
+      default:
+        return 30;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final backgroundColor = _getBackgroundColor();
+    final buttonHeight = _getButtonHeight();
 
     return SizedBox(
-      width: double.infinity,
-      height: 50,
+      height: buttonHeight,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
@@ -46,17 +62,29 @@ class Button extends StatelessWidget {
           elevation: 0,
           textStyle: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: buttonHeight == 50
+                ? 18
+                : buttonHeight == 40
+                ? 16
+                : 14,
             color: backgroundColor == const Color(0xFFFFFFFF)
                 ? Colors.black
                 : Colors.white,
           ),
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
+            ? SizedBox(
+                width: buttonHeight == 50
+                    ? 18
+                    : buttonHeight == 40
+                    ? 16
+                    : 14,
+                height: buttonHeight == 50
+                    ? 18
+                    : buttonHeight == 40
+                    ? 16
+                    : 14,
+                child: const CircularProgressIndicator(
                   color: Colors.white,
                   strokeWidth: 3,
                 ),
