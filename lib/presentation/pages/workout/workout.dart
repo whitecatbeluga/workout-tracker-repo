@@ -84,7 +84,9 @@ class WorkoutPage extends StatelessWidget {
                ),
                 Button(label: "Start Workout",
                    onPressed: () {},
-                   variant: ButtonVariant.primary,)
+                   variant: ButtonVariant.primary,
+                   fullWidth: true,
+                )
              ],
            ),
          ),
@@ -104,7 +106,7 @@ class WorkoutPage extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(child:
-                    Button(label: "Start Workout",
+                    Button(label: "Start Routine",
                       onPressed: () {},
                       variant: ButtonVariant.primary,)
                     ),
