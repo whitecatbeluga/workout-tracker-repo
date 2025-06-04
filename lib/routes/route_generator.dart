@@ -1,17 +1,19 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/add_exercise_routine.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/log_workout.dart';
 import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
+import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/utils/authentication.dart';
 import 'package:workout_tracker_repo/utils/guardedRoute.dart';
 
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
 import '../presentation/pages/page_not_found/page_not_found.dart';
-import '../presentation/pages/workout/workout.dart';
 import '../presentation/pages/social/social_page.dart';
 import '../presentation/pages/social/social_view_post.dart';
 
@@ -30,6 +32,12 @@ class RouteGenerator {
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ViewPost(), ifDenied:(_) => const LoginPage());
       case SocialRoutes.visitProfile:
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const VisitProfilePage(), ifDenied: (_) => const LoginPage());
+      case RoutineRoutes.createRoutinePage:
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const CreateRoutine(), ifDenied: (_) => const LoginPage());
+      case RoutineRoutes.logWorkoutPage:
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const LogWorkout(), ifDenied: (_) => const LoginPage());
+      case RoutineRoutes.addExercisePage:
+        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const AddExerciseRoutine(), ifDenied: (_) => const LoginPage());
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
