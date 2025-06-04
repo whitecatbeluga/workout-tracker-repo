@@ -21,6 +21,7 @@ class RouteGenerator {
     switch (settings.name) {
       case AuthRoutes.home:
         return guardedRoute(
+          settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const ContainerTree(),
           ifDenied: (_) => const LandingPage(),
@@ -31,24 +32,28 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const RegisterPage());
       case SocialRoutes.socialPage:
         return guardedRoute(
+          settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const SocialPage(),
           ifDenied: (_) => const LoginPage(),
         );
       case SocialRoutes.viewPost:
         return guardedRoute(
+          settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const ViewPost(),
           ifDenied: (_) => const LoginPage(),
         );
       case SocialRoutes.visitProfile:
         return guardedRoute(
+          settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const VisitProfilePage(),
           ifDenied: (_) => const LoginPage(),
         );
       case SocialRoutes.search:
         return guardedRoute(
+          settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const SearchPage(),
           ifDenied: (_) => const LoginPage(),
