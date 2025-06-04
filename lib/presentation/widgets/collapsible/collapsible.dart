@@ -19,7 +19,6 @@ class _CollapsibleState extends State<Collapsible> {
     setState(() => _isExpanded = !_isExpanded);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Container(
