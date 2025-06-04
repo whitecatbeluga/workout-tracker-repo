@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/theme/color.dart';
 
 enum ButtonVariant { primary, secondary, danger, white }
+enum ButtonSize { small, medium, large }
 
 class Button extends StatelessWidget {
   const Button({
@@ -10,6 +12,8 @@ class Button extends StatelessWidget {
     this.prefixIcon,
     this.isLoading = false,
     this.variant = ButtonVariant.primary,
+    this.size = ButtonSize.medium,
+    this.fullWidth = false,
   });
 
   final String label;
@@ -17,68 +21,97 @@ class Button extends StatelessWidget {
   final IconData? prefixIcon;
   final bool isLoading;
   final ButtonVariant variant;
+  final ButtonSize size;
+  final bool fullWidth;
 
   Color _getBackgroundColor() {
     switch (variant) {
       case ButtonVariant.secondary:
-        return const Color(0xFF48A6A7); // slate gray
+        return const Color(CustomColor.gray); // slate gray
       case ButtonVariant.danger:
-        return const Color(0xFFDC2626); // red
+        return const Color(CustomColor.red); // red
       case ButtonVariant.white:
-        return const Color(0xFFFFFFFF); // white
+        return const Color(CustomColor.white); // white
       case ButtonVariant.primary:
-        return const Color(0xFF006A71); // teal
+      default:
+        return const Color(CustomColor.defaultColor);
+    }
+  }
+
+  double _getButtonHeight() {
+    switch (size) {
+      case ButtonSize.large:
+        return 50;
+      case ButtonSize.medium:
+        return 40;
+      case ButtonSize.small:
+      default:
+        return 30;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final backgroundColor = _getBackgroundColor();
-
+    final buttonHeight = _getButtonHeight();
     return SizedBox(
-      width: double.infinity,
-      height: 50,
+      height: buttonHeight,
+      width: fullWidth ? double.infinity : null,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
           backgroundColor: backgroundColor,
           elevation: 0,
           textStyle: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 16,
-            color: backgroundColor == const Color(0xFFFFFFFF)
-                ? Colors.black
-                : Colors.white,
+            fontSize: buttonHeight == 50
+                ? 18
+                : buttonHeight == 40
+                ? 16
+                : 14,
           ),
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 3,
-                ),
-              )
+            ? SizedBox(
+          width: buttonHeight == 50
+              ? 18
+              : buttonHeight == 40
+              ? 16
+              : 14,
+          height: buttonHeight == 50
+              ? 18
+              : buttonHeight == 40
+              ? 16
+              : 14,
+          child: const CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 3,
+          ),
+        )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (prefixIcon != null) ...[
-                    Icon(prefixIcon, color: Colors.white),
-                    const SizedBox(width: 8),
-                  ],
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: backgroundColor == const Color(0xFFFFFFFF)
-                          ? Color(0xFF323232)
-                          : Colors.white,
-                    ),
-                  ),
-                ],
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (prefixIcon != null) ...[
+              Icon(prefixIcon,
+                  color: backgroundColor == Colors.white
+                      ? const Color(0xFF323232)
+                      : Colors.white),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: backgroundColor == Colors.white
+                    ? const Color(0xFF323232)
+                    : Colors.white,
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
