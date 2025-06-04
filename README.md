@@ -11,7 +11,7 @@ if using wsl use this
 - flutter run -d web-server
 
 
-## 📁 FOLDER STRUCTURE `CLEAN ARCHITECTURE`
+## 📁 FOLDER STRUCTURE `LAYERED / CLEAN ARCHITECTURE`
 
 **domain** – Contains core business models, plain Dart classes, and interfaces.
 
