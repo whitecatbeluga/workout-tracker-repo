@@ -108,7 +108,8 @@ class WorkoutPage extends StatelessWidget {
                     Expanded(child:
                     Button(label: "Start Routine",
                       onPressed: () {},
-                      variant: ButtonVariant.primary,)
+                      variant: ButtonVariant.primary,
+                      )
                     ),
                     SizedBox(width: 10),
                     Expanded(child:
