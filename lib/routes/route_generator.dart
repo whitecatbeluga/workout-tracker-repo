@@ -14,6 +14,7 @@ import '../presentation/pages/page_not_found/page_not_found.dart';
 import '../presentation/pages/workout/workout.dart';
 import '../presentation/pages/social/social_page.dart';
 import '../presentation/pages/social/social_view_post.dart';
+import '../presentation/pages/social/search.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -30,6 +31,8 @@ class RouteGenerator {
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const ViewPost(), ifDenied:(_) => const LoginPage());
       case SocialRoutes.visitProfile:
         return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const VisitProfilePage(), ifDenied: (_) => const LoginPage());
+      case SocialRoutes.search:
+        return guardedRoute(guard: ()async => Authentication.isAuthenticated(), ifAllowed: (_) => const SearchPage(), ifDenied: (_) => const LoginPage());
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
