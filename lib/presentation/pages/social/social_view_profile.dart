@@ -249,7 +249,8 @@ class VisitProfilePage extends StatelessWidget {
                   variant: ButtonVariant.secondary,
                 ),
               ),
-              PostCard(name: 'John Smith Doe', email: 'john@email.com'),
+              // Fetch each posts made by the visited profile
+              // PostCard(name: 'John Smith Doe', email: 'john@email.com'),
             ],
           ),
         ),

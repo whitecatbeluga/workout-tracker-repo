@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import '../../../domain/entities/social_with_username.dart';
 
 class PostCard extends StatelessWidget {
-  final String name;
-  final String email;
+  final SocialWithUserName data;
   final VoidCallback? onTap;
   final VoidCallback? viewProfileOnTap;
 
   const PostCard({
     super.key,
-    required this.name,
-    required this.email,
+    required this.data,
     this.onTap,
     this.viewProfileOnTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final createdAt = data.social.createdAt.toDate();
+    final timeAgo = timeago.format(createdAt);
+
     return InkWell(
       onTap: onTap,
       child: Card(
@@ -30,7 +33,7 @@ class PostCard extends StatelessWidget {
                 spacing: 10,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(0),
+                    padding: EdgeInsets.zero,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -39,12 +42,12 @@ class PostCard extends StatelessWidget {
                           child: InkWell(
                             onTap: viewProfileOnTap,
                             child: Container(
-                              padding: EdgeInsets.all(0),
+                              padding: EdgeInsets.zero,
                               child: Row(
                                 spacing: 10,
                                 children: [
                                   Container(
-                                    padding: EdgeInsets.all(0),
+                                    padding: EdgeInsets.zero,
                                     child: CircleAvatar(
                                       backgroundImage: AssetImage(
                                         'assets/images/guy1.png',
@@ -52,17 +55,17 @@ class PostCard extends StatelessWidget {
                                     ),
                                   ),
                                   Container(
-                                    padding: EdgeInsets.all(0),
+                                    padding: EdgeInsets.zero,
                                     child: Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          name,
+                                          data.userName,
                                           style: TextStyle(color: Colors.black),
                                         ),
                                         Text(
-                                          '2 hours ago',
+                                          timeAgo,
                                           style: TextStyle(
                                             color: Color(0xFFA7A7A7),
                                             fontSize: 12,
@@ -78,7 +81,7 @@ class PostCard extends StatelessWidget {
                         ),
 
                         Container(
-                          padding: EdgeInsets.all(0),
+                          padding: EdgeInsets.zero,
                           child: Row(
                             children: [
                               Icon(
@@ -100,39 +103,45 @@ class PostCard extends StatelessWidget {
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.all(0),
+                    padding: EdgeInsets.zero,
                     width: double.infinity,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Leg Day!',
+                          data.social.workoutTitle,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Text('No skip leg day.'),
+                        Text(data.social.workoutDescription),
                       ],
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.all(0),
+                    padding: EdgeInsets.zero,
                     child: Row(
                       spacing: 50,
                       children: [
                         Container(
-                          padding: EdgeInsets.all(0),
+                          padding: EdgeInsets.zero,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [Text('Time'), Text('42 min')],
+                            children: [
+                              Text('Time'),
+                              Text(data.social.workoutDuration),
+                            ],
                           ),
                         ),
                         Container(
-                          padding: EdgeInsets.all(0),
+                          padding: EdgeInsets.zero,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [Text('Volume'), Text('3,780 kg')],
+                            children: [
+                              Text('Volume'),
+                              Text(data.social.totalVolume.toString()),
+                            ],
                           ),
                         ),
                       ],
@@ -142,16 +151,19 @@ class PostCard extends StatelessWidget {
               ),
             ),
             Container(
-              padding: EdgeInsets.all(0),
-              child: Image.asset('assets/images/legday.png'),
+              padding: EdgeInsets.zero,
+              child: data.social.imageUrls.isNotEmpty
+                  ? Image.network(data.social.imageUrls[0])
+                  : null,
             ),
+
             Container(
               padding: EdgeInsets.symmetric(horizontal: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(0),
+                    padding: EdgeInsets.zero,
                     child: Row(children: [Text('20 likes')]),
                   ),
                   Text('0 comments'),
