@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/domain/entities/profile-menu.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 
 class MenuList extends StatelessWidget {
   const MenuList({super.key, this.menuItems = const []});

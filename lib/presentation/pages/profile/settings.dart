@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
-import 'package:workout_tracker_repo/domain/entities/profile-menu.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
 
