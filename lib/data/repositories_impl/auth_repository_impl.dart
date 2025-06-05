@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:workout_tracker_repo/data/errors/custom_exception.dart';
+import 'package:workout_tracker_repo/data/errors/auth_custom_exception.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user.dart';
 import 'package:workout_tracker_repo/domain/repositories/auth_repository.dart';
@@ -15,10 +15,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = await _authService.signIn(email, password);
       return user != null ? UserModel.fromFirebaseUser(user) : null;
-    } on CustomErrorException catch (e) {
-      throw CustomErrorException.fromCode(e.code);
+    } on AuthErrorException catch (e) {
+      throw AuthErrorException.fromCode(e.code);
     } catch (e) {
-      throw const CustomErrorException(
+      throw const AuthErrorException(
         code: 'unknown',
         message: 'Unexpected error occurred.',
       );
@@ -53,10 +53,10 @@ class AuthRepositoryImpl implements AuthRepository {
         return newUser;
       }
       return null;
-    } on CustomErrorException catch (e) {
-      throw CustomErrorException.fromCode(e.code);
+    } on AuthErrorException catch (e) {
+      throw AuthErrorException.fromCode(e.code);
     } catch (e) {
-      throw const CustomErrorException(
+      throw const AuthErrorException(
         code: 'unknown',
         message: 'Unexpected error occurred.',
       );
@@ -67,10 +67,10 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signOut() async {
     try {
       await _authService.signOut();
-    } on CustomErrorException catch (e) {
-      throw CustomErrorException.fromCode(e.code);
+    } on AuthErrorException catch (e) {
+      throw AuthErrorException.fromCode(e.code);
     } catch (e) {
-      throw const CustomErrorException(
+      throw const AuthErrorException(
         code: 'unknown',
         message: 'Unexpected error occurred.',
       );
@@ -82,10 +82,10 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final user = _authService.getCurrentUser();
       return user != null ? UserModel.fromFirebaseUser(user) : null;
-    } on CustomErrorException catch (e) {
-      throw CustomErrorException.fromCode(e.code);
+    } on AuthErrorException catch (e) {
+      throw AuthErrorException.fromCode(e.code);
     } catch (e) {
-      throw const CustomErrorException(
+      throw const AuthErrorException(
         code: 'unknown',
         message: 'Unexpected error occurred.',
       );

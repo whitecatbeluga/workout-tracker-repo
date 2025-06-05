@@ -1,48 +1,48 @@
-class CustomErrorException implements Exception {
+class AuthErrorException implements Exception {
   final String code;
   final String message;
 
-  const CustomErrorException({required this.code, required this.message});
+  const AuthErrorException({required this.code, required this.message});
 
   @override
   String toString() => 'FirebaseErrorException(code: $code, message: $message)';
 
-  factory CustomErrorException.fromCode(String code) {
+  factory AuthErrorException.fromCode(String code) {
     switch (code) {
       case 'invalid-email':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'invalid-email',
           message: 'The email address is invalid',
         );
       case 'user-not-found':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'user-not-found',
           message: 'No user found with this email',
         );
       case 'wrong-password':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'wrong-password',
           message: 'The password is incorrect',
         );
       case 'email-already-in-use':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'email-already-in-use',
           message: 'This email is already in use',
         );
       case 'weak-password':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'weak-password',
           message: 'The password is weak',
         );
       case 'network-request-failed':
-        return const CustomErrorException(
+        return const AuthErrorException(
           code: 'network-request-failed',
-          message: 'Please check your internet connetion',
+          message: 'Please check your internet connection',
         );
       default:
-        return CustomErrorException(
+        return AuthErrorException(
           code: code,
-          message: 'An unknown error occured (code:$code)',
+          message: 'An unknown error occurred (code:$code)',
         );
     }
   }

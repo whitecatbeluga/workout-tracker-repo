@@ -1,3 +1,5 @@
+import 'package:workout_tracker_repo/data/errors/custom_error_exception.dart';
+
 import '../../domain/entities/workout.dart';
 import '../../domain/repositories/workout_repository.dart';
 import '../models/workout_model.dart';
@@ -10,44 +12,76 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
 
   @override
   Future<void> addWorkout(Workout workout) async {
-    final model = WorkoutModel(
-      id: '',
-      name: workout.name,
-      duration: workout.duration,
-      createdAt: workout.createdAt,
-    );
-    await _service.add(model.toMap());
+    try {
+      final model = WorkoutModel(
+        id: '',
+        name: workout.name,
+        duration: workout.duration,
+        createdAt: workout.createdAt,
+      );
+      await _service.add(model.toMap());
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
   }
 
   @override
-  Future<void> deleteWorkout(String id) => _service.delete(id);
+  Future<void> deleteWorkout(String id) async {
+    try {
+      _service.delete(id);
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 
   @override
   Future<Workout?> getWorkoutById(String id) async {
-    final doc = await _service.getById(id);
-    if (doc.exists) {
-      return WorkoutModel.fromMap(doc.data()!, doc.id);
+    try {
+      final doc = await _service.getById(id);
+      if (doc.exists) {
+        return WorkoutModel.fromMap(doc.data()!, doc.id);
+      }
+      return null;
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
     }
-    return null;
   }
 
   @override
   Stream<List<Workout>> getWorkouts() {
-    return _service.getAll().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return WorkoutModel.fromMap(doc.data(), doc.id);
-      }).toList();
-    });
+    try {
+      return _service.getAll().map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return WorkoutModel.fromMap(doc.data(), doc.id);
+        }).toList();
+      });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
   }
 
   @override
   Future<void> updateWorkout(Workout workout) async {
-    final model = WorkoutModel(
-      id: workout.id,
-      name: workout.name,
-      duration: workout.duration,
-      createdAt: workout.createdAt,
-    );
-    await _service.update(workout.id, model.toMap());
+    try {
+      final model = WorkoutModel(
+        id: workout.id,
+        name: workout.name,
+        duration: workout.duration,
+        createdAt: workout.createdAt,
+      );
+      await _service.update(workout.id, model.toMap());
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
   }
 }
