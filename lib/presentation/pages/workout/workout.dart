@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
-import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 
 import '../../domain/entities/program.dart';
@@ -61,68 +61,84 @@ class WorkoutPage extends StatelessWidget {
             tooltip: 'Logout',
             onPressed: () async {
               await authService.value.signOut();
-              Navigator.pushNamedAndRemoveUntil(context, AuthRoutes.login, (route) => false);
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                AuthRoutes.login,
+                (route) => false,
+              );
             },
           ),
         ],
       ),
-      body:SafeArea(child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-           padding: EdgeInsets.all(10),
-           child: Column(
-             children: [
-               Row(
-                 children: [
-                   Padding(padding: EdgeInsets.only(bottom: 6),
-                   child: Text("Quick Start",
-                     style: TextStyle(fontWeight: FontWeight.bold),
-                   ),
-                   ),
-                 ],
-               ),
-                Button(label: "Start Workout",
-                   onPressed: () {},
-                   variant: ButtonVariant.primary,
-                   fullWidth: true,
-                )
-             ],
-           ),
-         ),
-          Container(
-            padding: EdgeInsets.all(10),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    Container(padding: EdgeInsets.only(bottom: 6),
-                      child: Text("Routines",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          "Quick Start",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(child:
-                    Button(label: "Start Routine",
-                      onPressed: () {},
-                      variant: ButtonVariant.primary,
-                      )
-                    ),
-                    SizedBox(width: 10),
-                    Expanded(child:
-                      Button(label: "Explore", onPressed: () {}, variant: ButtonVariant.primary,)
-                    )
-                  ],
-                )
-              ],
+                    ],
+                  ),
+                  Button(
+                    label: "Start Workout",
+                    onPressed: () {},
+                    variant: ButtonVariant.primary,
+                    fullWidth: true,
+                  ),
+                ],
+              ),
             ),
-          ),
-          Collapsible(title: "Workout Details", program: programState),
-        ],
-      ))
+            Container(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          "Routines",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Button(
+                          label: "Start Routine",
+                          onPressed: () {},
+                          variant: ButtonVariant.primary,
+                        ),
+                      ),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: Button(
+                          label: "Explore",
+                          onPressed: () {},
+                          variant: ButtonVariant.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Collapsible(title: "Workout Details", program: programState),
+          ],
+        ),
+      ),
     );
   }
 }

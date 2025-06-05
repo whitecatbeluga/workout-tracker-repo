@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import '../../domain/entities/program.dart';
 
 class Collapsible extends StatefulWidget {
@@ -98,7 +98,7 @@ class _CollapsibleState extends State<Collapsible> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(
                       widget.program.programs.length,
-                          (index) => Text(
+                      (index) => Text(
                         widget.program.programs[index].programName ?? "",
                         style: TextStyle(color: Color(0xFF626262)),
                       ),
