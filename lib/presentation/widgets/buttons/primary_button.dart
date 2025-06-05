@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/theme/color.dart';
 
 enum ButtonVariant { primary, secondary, danger, white }
+
 enum ButtonSize { small, medium, large }
 
 class Button extends StatelessWidget {
@@ -60,9 +61,7 @@ class Button extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           backgroundColor: backgroundColor,
           elevation: 0,
           textStyle: TextStyle(
@@ -76,42 +75,44 @@ class Button extends StatelessWidget {
         ),
         child: isLoading
             ? SizedBox(
-          width: buttonHeight == 50
-              ? 18
-              : buttonHeight == 40
-              ? 16
-              : 14,
-          height: buttonHeight == 50
-              ? 18
-              : buttonHeight == 40
-              ? 16
-              : 14,
-          child: const CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 3,
-          ),
-        )
+                width: buttonHeight == 50
+                    ? 18
+                    : buttonHeight == 40
+                    ? 16
+                    : 14,
+                height: buttonHeight == 50
+                    ? 18
+                    : buttonHeight == 40
+                    ? 16
+                    : 14,
+                child: const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 3,
+                ),
+              )
             : Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (prefixIcon != null) ...[
-              Icon(prefixIcon,
-                  color: backgroundColor == Colors.white
-                      ? const Color(0xFF323232)
-                      : Colors.white),
-              const SizedBox(width: 8),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                color: backgroundColor == Colors.white
-                    ? const Color(0xFF323232)
-                    : Colors.white,
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (prefixIcon != null) ...[
+                    Icon(
+                      prefixIcon,
+                      color: backgroundColor == Colors.white
+                          ? const Color(0xFF323232)
+                          : Colors.white,
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      color: backgroundColor == Colors.white
+                          ? const Color(0xFF323232)
+                          : Colors.white,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
