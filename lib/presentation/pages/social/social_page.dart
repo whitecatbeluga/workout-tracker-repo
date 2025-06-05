@@ -4,7 +4,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../data/repositories_impl/social_repository_impl.dart';
-import '../../../domain/entities/social_with_username.dart';
+import '../../../domain/entities/social_with_user.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -133,7 +133,7 @@ class SocialPageState extends State<SocialPage> {
               ),
             ),
             Expanded(
-              child: StreamBuilder<List<SocialWithUserName>>(
+              child: StreamBuilder<List<SocialWithUser>>(
                 stream: repository.fetchPublicWorkouts(user!.uid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -167,7 +167,13 @@ class SocialPageState extends State<SocialPage> {
                           Navigator.pushNamed(
                             context,
                             SocialRoutes.visitProfile,
-                            arguments: {'name': post.userName},
+                            arguments: {
+                              'id': post.social.uid,
+                              'firstName': post.firstName,
+                              'lastName': post.lastName,
+                              'userName': post.userName,
+                              'email': post.email,
+                            },
                           );
                         },
                       );
