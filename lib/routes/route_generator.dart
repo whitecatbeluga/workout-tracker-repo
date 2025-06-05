@@ -59,7 +59,12 @@ class RouteGenerator {
           ifDenied: (_) => const LoginPage(),
         );
       case ProfileRoutes.settings:
-        return MaterialPageRoute(builder: (_) => const Settings());
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const Settings(),
+          ifDenied: (_) => const LoginPage(),
+        );
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
