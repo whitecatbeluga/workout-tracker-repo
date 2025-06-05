@@ -1,5 +1,6 @@
-import '../entities/social_with_username.dart';
+import '../entities/social_with_user.dart';
 
 abstract class SocialRepository {
-  Stream<List<SocialWithUserName>> fetchPublicWorkouts(String currentUserId);
+  Stream<List<SocialWithUser>> fetchPublicWorkouts(String currentUserId);
+  Stream<List<SocialWithUser>> fetchUserPublicWorkouts(String userId);
 }

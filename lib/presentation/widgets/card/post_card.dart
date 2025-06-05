@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../../domain/entities/social_with_username.dart';
+import '../../../domain/entities/social_with_user.dart';
 
 class PostCard extends StatelessWidget {
-  final SocialWithUserName data;
+  final SocialWithUser data;
   final VoidCallback? onTap;
   final VoidCallback? viewProfileOnTap;
 

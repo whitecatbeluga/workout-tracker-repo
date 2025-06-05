@@ -1,6 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
+import 'package:workout_tracker_repo/domain/entities/social_with_user.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
+import 'package:workout_tracker_repo/routes/social/social.dart';
 
 class ProfileHeader extends StatelessWidget {
   final String name;
@@ -214,12 +218,33 @@ class VisitProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+
+    if (args == null || args is! Map<String, dynamic>) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Visit Profile')),
+        body: const Center(child: Text('No profile data found')),
+      );
+    }
+
+    final id = args['id'] as String?;
+    final firstName = args['firstName'] as String?;
+    final lastName = args['lastName'] as String?;
+    final userName = args['userName'] as String?;
+    final email = args['email'] as String?;
+
+    if (id == null) {
+      return const Scaffold(body: Center(child: Text('User ID not provided')));
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         centerTitle: true,
-        title: Text(name ?? 'Visit Profile'),
+        title: Text(userName ?? ''),
       ),
       body: SafeArea(
         child: Container(
@@ -230,8 +255,8 @@ class VisitProfilePage extends StatelessWidget {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: ProfileHeader(
-                  name: 'John Smith Doe',
-                  email: 'john@email.com',
+                  name: '${firstName ?? ''} ${lastName ?? ''}',
+                  email: email ?? '',
                   imagePath: 'assets/images/guy1.png',
                   followers: 123,
                   following: 52,
@@ -242,6 +267,7 @@ class VisitProfilePage extends StatelessWidget {
                 child: TotalCount(routineCount: 14, workoutCount: 12),
               ),
               Container(
+                width: double.infinity,
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: Button(
                   label: 'Follow',
@@ -249,8 +275,58 @@ class VisitProfilePage extends StatelessWidget {
                   variant: ButtonVariant.secondary,
                 ),
               ),
-              // Fetch each posts made by the visited profile
-              // PostCard(name: 'John Smith Doe', email: 'john@email.com'),
+              Expanded(
+                child: StreamBuilder<List<SocialWithUser>>(
+                  stream: repository.fetchUserPublicWorkouts(id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    final posts = snapshot.data ?? [];
+
+                    if (posts.isEmpty) {
+                      return const Center(
+                        child: Text('No public posts found.'),
+                      );
+                    }
+
+                    return ListView.builder(
+                      itemCount: posts.length,
+                      itemBuilder: (context, index) {
+                        final post = posts[index];
+                        return PostCard(
+                          data: post,
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              SocialRoutes.viewPost,
+                              arguments: post,
+                            );
+                          },
+                          viewProfileOnTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              SocialRoutes.visitProfile,
+                              arguments: {
+                                'id': post.social.uid,
+                                'firstName': post.firstName,
+                                'lastName': post.lastName,
+                                'userName': post.userName,
+                                'email': post.email,
+                              },
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ],
           ),
         ),

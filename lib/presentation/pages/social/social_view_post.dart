@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/workout_detail_card.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
-import '../../../domain/entities/social_with_username.dart';
+import '../../../domain/entities/social_with_user.dart';
 
 class ViewPost extends StatelessWidget {
   const ViewPost({super.key});
@@ -10,7 +10,7 @@ class ViewPost extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args == null || args is! SocialWithUserName) {
+    if (args == null || args is! SocialWithUser) {
       return Scaffold(
         appBar: AppBar(title: const Text('Workout Detail')),
         body: const Center(child: Text('No post data found')),
@@ -35,7 +35,13 @@ class ViewPost extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   SocialRoutes.visitProfile,
-                  arguments: {'name': post.userName},
+                  arguments: {
+                    'id': post.social.uid,
+                    'firstName': post.firstName,
+                    'lastName': post.lastName,
+                    'userName': post.userName,
+                    'email': post.email,
+                  },
                 );
               },
             ),
