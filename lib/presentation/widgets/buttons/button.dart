@@ -28,9 +28,9 @@ class Button extends StatelessWidget {
   Color _getBackgroundColor() {
     switch (variant) {
       case ButtonVariant.secondary:
-        return const Color(CustomColor.secondary); // slate gray
+        return const Color(CustomColor.secondary); // secondary
       case ButtonVariant.danger:
-        return const Color(CustomColor.red); // red
+        return const Color(CustomColor.red); // danger
       case ButtonVariant.white:
         return const Color(CustomColor.white); // white
       case ButtonVariant.primary:
@@ -71,6 +71,9 @@ class Button extends StatelessWidget {
                 : buttonHeight == 40
                 ? 16
                 : 14,
+            color: backgroundColor == const Color(0xFFFFFFFF)
+                ? Colors.black
+                : Colors.white,
           ),
         ),
         child: isLoading

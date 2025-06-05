@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/auth_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/register.dart';
-import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/images/logo_hero.dart';
 import 'package:workout_tracker_repo/presentation/widgets/inputs/password_field.dart';
 import 'package:workout_tracker_repo/presentation/widgets/inputs/text_field.dart';
@@ -133,17 +133,13 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Button(
-                          label: 'LOGIN',
-                          isLoading: _isLoading,
-                          onPressed: _signInWithEmailAndPassword,
-                          size: ButtonSize.large,
-                        ),
-                      ),
-                    ],
+                  Button(
+                    label: 'LOGIN',
+                    isLoading: _isLoading,
+                    onPressed: _signInWithEmailAndPassword,
+                    size: ButtonSize.large,
+                    fullWidth: true,
+                    variant: ButtonVariant.primary,
                   ),
                   const SizedBox(height: 16),
                   Row(
