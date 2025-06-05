@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 
 class ProfileHeader extends StatelessWidget {
