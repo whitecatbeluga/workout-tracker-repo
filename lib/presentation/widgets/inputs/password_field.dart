@@ -7,11 +7,13 @@ class PasswordField extends StatefulWidget {
     required this.label,
     this.validator,
     this.controller,
+    this.variant = InputVariant.outline,
   });
 
   final String label;
   final String? Function(String?)? validator;
   final TextEditingController? controller;
+  final InputVariant variant;
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -35,6 +37,7 @@ class _PasswordFieldState extends State<PasswordField> {
       controller: widget.controller,
       obscureText: _obscureText,
       keyboardType: TextInputType.visiblePassword,
+      variant: widget.variant,
     );
   }
 }
