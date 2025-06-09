@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../domain/entities/program.dart';
 import '../../widgets/collapsible/collapsible.dart';
@@ -91,7 +92,9 @@ class WorkoutPage extends StatelessWidget {
                   ),
                   Button(
                     label: "Start Workout",
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
+                    },
                     variant: ButtonVariant.primary,
                     fullWidth: true,
                   ),

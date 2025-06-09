@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 
-class LogWorkout extends StatefulWidget {
-  const LogWorkout({super.key});
+class LogRoutine extends StatefulWidget {
+  const LogRoutine({super.key});
 
   @override
-  State<LogWorkout> createState() => _LogWorkoutState();
+  State<LogRoutine> createState() => _LogRoutineState();
 }
 
-class _LogWorkoutState extends State<LogWorkout> {
+class _LogRoutineState extends State<LogRoutine> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(kToolbarHeight),
         child: AppBar(
-          automaticallyImplyLeading: false, // disable default back button
+          automaticallyImplyLeading: false,
+          // disable default back button
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Color(0xFF323232)),
             onPressed: () {},
