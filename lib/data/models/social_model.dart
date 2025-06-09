@@ -12,6 +12,7 @@ class SocialModel extends Social {
     required super.workoutDescription,
     required super.workoutDuration,
     required super.workoutTitle,
+    required super.likedByUids,
   });
 
   factory SocialModel.fromMap(Map<String, dynamic> data, String docId) {
@@ -26,6 +27,7 @@ class SocialModel extends Social {
       workoutDescription: data['workout_description'].toString(),
       workoutDuration: data['workout_duration'].toString(),
       workoutTitle: data['workout_title'].toString(),
+      likedByUids: (data['liked_by'] as List<dynamic>? ?? []).cast<String>(),
     );
   }
 
@@ -40,6 +42,7 @@ class SocialModel extends Social {
       'workout_description': workoutDescription,
       'workout_duration': workoutDuration,
       'workout_title': workoutTitle,
+      'liked_by': likedByUids,
     };
   }
 }
