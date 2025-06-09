@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../data/repositories_impl/social_repository_impl.dart';
 import '../../../domain/entities/social_with_user.dart';
+import '../../../core/providers/user_info_provider.dart';
 
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
@@ -17,7 +19,6 @@ class SocialPageState extends State<SocialPage> {
   bool isFollowingSelected = true;
 
   final user = authService.value.getCurrentUser();
-
   final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
   @override
@@ -36,9 +37,14 @@ class SocialPageState extends State<SocialPage> {
               CircleAvatar(
                 backgroundImage: AssetImage("assets/images/guy1.png"),
               ),
-              Text(
-                'John Smith Doe',
-                style: TextStyle(fontWeight: FontWeight.w600),
+              ValueListenableBuilder<UserProfile?>(
+                valueListenable: currentUserProfile,
+                builder: (context, profile, _) {
+                  return Text(
+                    profile?.userName ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  );
+                },
               ),
             ],
           ),

@@ -1,10 +1,12 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/barchart.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
+import '../../../core/providers/user_info_provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -38,7 +40,16 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Profile'),
+        title: ValueListenableBuilder<UserProfile?>(
+          valueListenable: currentUserProfile,
+          builder: (context, profile, _) {
+            return Text(
+              profile?.userName ?? '',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            );
+          },
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -111,10 +122,20 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "John Smith Doe",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ValueListenableBuilder<UserProfile?>(
+                  valueListenable: currentUserProfile,
+                  builder: (context, profile, _) {
+                    if (profile == null) return CircularProgressIndicator();
+                    return Text(
+                      '${profile.firstName} ${profile.lastName}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    );
+                  },
                 ),
+
                 Text(widget.user?.email ?? "", style: TextStyle(fontSize: 14)),
               ],
             ),
