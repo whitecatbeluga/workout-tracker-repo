@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 class LogWorkout extends StatefulWidget {
@@ -20,7 +21,9 @@ class _LogWorkoutState extends State<LogWorkout> {
           // disable default back button
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: Color(0xFF323232)),
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(context, AuthRoutes.home);
+            },
           ),
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -152,6 +155,7 @@ class _LogWorkoutState extends State<LogWorkout> {
                 Navigator.pushNamed(context, WorkoutRoutes.addWorkoutExercise);
               },
               variant: ButtonVariant.secondary,
+              fullWidth: true,
             ),
             SizedBox(height: 5.0),
             Row(
@@ -159,7 +163,9 @@ class _LogWorkoutState extends State<LogWorkout> {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(context, AuthRoutes.home);
+                    },
                     style: TextButton.styleFrom(
                       backgroundColor: Color(0xFFEEEEEE),
                       shape: RoundedRectangleBorder(
