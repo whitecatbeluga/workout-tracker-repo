@@ -11,6 +11,7 @@ class Social {
   final String workoutDescription;
   final String workoutDuration;
   final String workoutTitle;
+  final List<String> likedByUids;
 
   Social({
     required this.id,
@@ -23,5 +24,6 @@ class Social {
     required this.workoutDescription,
     required this.workoutDuration,
     required this.workoutTitle,
+    required this.likedByUids,
   });
 }
