@@ -53,45 +53,86 @@ class SocialRepositoryImpl implements SocialRepository {
 
   @override
   Stream<List<SocialWithUser>> fetchUserPublicWorkouts(String userId) {
-  try {
-    return _firestore
-        .collection('workouts')
-        .where('user_id', isEqualTo: userId)
-        .where('visible_to_everyone', isEqualTo: true)
-        .orderBy('created_at', descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-          final results = await Future.wait(
-            snapshot.docs.map((doc) async {
-              final social = SocialModel.fromMap(doc.data(), doc.id);
+    try {
+      return _firestore
+          .collection('workouts')
+          .where('user_id', isEqualTo: userId)
+          .where('visible_to_everyone', isEqualTo: true)
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final social = SocialModel.fromMap(doc.data(), doc.id);
 
-              final userDoc = await _firestore
-                  .collection('users')
-                  .doc(social.uid)
-                  .get();
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(social.uid)
+                    .get();
 
-              final userName = userDoc.data()?['user_name'] ?? 'Unknown';
-              final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
-              final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
-              final email = userDoc.data()?['email'] ?? 'Unknown';
+                final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                final email = userDoc.data()?['email'] ?? 'Unknown';
 
-              return SocialWithUser(
-                social: social,
-                userName: userName,
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-              );
-            }),
-          );
+                return SocialWithUser(
+                  social: social,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                );
+              }),
+            );
 
-          return results;
-        });
-  } on CustomErrorException catch (_) {
-    throw CustomErrorException.fromCode(400);
-  } catch (e) {
-    throw CustomErrorException.fromCode(500);
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
   }
-}
 
+  @override
+  Stream<List<SocialWithUser>> fetchCurrentUserData(String userId) {
+    try {
+      return _firestore
+          .collection('workouts')
+          .where('user_id', isEqualTo: userId)
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final social = SocialModel.fromMap(doc.data(), doc.id);
+
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(social.uid)
+                    .get();
+
+                final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                final email = userDoc.data()?['email'] ?? 'Unknown';
+
+                return SocialWithUser(
+                  social: social,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                );
+              }),
+            );
+
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 }
