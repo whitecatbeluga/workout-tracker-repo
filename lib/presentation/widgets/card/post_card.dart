@@ -2,6 +2,44 @@ import 'package:flutter/material.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import '../../../domain/entities/social_with_user.dart';
 
+class LikesBottomSheet extends StatelessWidget {
+  const LikesBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 500,
+      child: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Likes close'),
+        ),
+      ),
+    );
+  }
+}
+
+class CommentsBottomSheet extends StatelessWidget {
+  const CommentsBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 500,
+      child: Center(
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Comments close'),
+        ),
+      ),
+    );
+  }
+}
+
 class PostCard extends StatelessWidget {
   final SocialWithUser data;
   final VoidCallback? onTap;
@@ -158,18 +196,42 @@ class PostCard extends StatelessWidget {
             ),
 
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 10),
+              padding: EdgeInsets.symmetric(horizontal: 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    padding: EdgeInsets.zero,
-                    child: Row(children: [Text('20 likes')]),
+                  TextButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const LikesBottomSheet();
+                        },
+                      );
+                    },
+                    child: Text(
+                      '${data.likedByUids.length} likes',
+                      style: TextStyle(color: Color(0xFF2C2C2C)),
+                    ),
                   ),
-                  Text('0 comments'),
+                  TextButton(
+                    onPressed: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return const CommentsBottomSheet();
+                        },
+                      );
+                    },
+                    child: Text(
+                      '${data.commentCount} comments',
+                      style: TextStyle(color: Color(0xFF2C2C2C)),
+                    ),
+                  ),
                 ],
               ),
             ),
+
             Container(
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(

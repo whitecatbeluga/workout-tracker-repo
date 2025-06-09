@@ -4,6 +4,8 @@ import '../../domain/entities/social_with_user.dart'; // ✅ Use the same one
 import '../../domain/repositories/social_repository.dart';
 import '../models/social_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/comments.dart';
+import '../../data/models/comments_model.dart';
 
 class SocialRepositoryImpl implements SocialRepository {
   final FirebaseFirestore _firestore;
@@ -32,6 +34,67 @@ class SocialRepositoryImpl implements SocialRepository {
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
                 final email = userDoc.data()?['email'] ?? 'Unknown';
 
+                final likesSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('likes')
+                    .get();
+
+                final likedByUids = likesSnapshot.docs
+                    .map((likeDoc) => likeDoc.data()['liked_by'] as String)
+                    .toList();
+
+                final commentsSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('comments')
+                    .get();
+
+                return SocialWithUser(
+                  social: social,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                  likedByUids: likedByUids,
+                  commentCount: commentsSnapshot.size,
+                );
+              }),
+            );
+
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
+  Stream<List<SocialWithUser>> fetchUserPublicWorkouts(String userId) {
+    try {
+      return _firestore
+          .collection('workouts')
+          .where('user_id', isEqualTo: userId)
+          .where('visible_to_everyone', isEqualTo: true)
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final social = SocialModel.fromMap(doc.data(), doc.id);
+
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(social.uid)
+                    .get();
+
+                final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                final email = userDoc.data()?['email'] ?? 'Unknown';
+
                 return SocialWithUser(
                   social: social,
                   userName: userName,
@@ -52,46 +115,63 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
-  Stream<List<SocialWithUser>> fetchUserPublicWorkouts(String userId) {
-  try {
-    return _firestore
-        .collection('workouts')
-        .where('user_id', isEqualTo: userId)
-        .where('visible_to_everyone', isEqualTo: true)
-        .orderBy('created_at', descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-          final results = await Future.wait(
-            snapshot.docs.map((doc) async {
-              final social = SocialModel.fromMap(doc.data(), doc.id);
+  Stream<List<SocialWithUser>> fetchCurrentUserData(String userId) {
+    try {
+      return _firestore
+          .collection('workouts')
+          .where('user_id', isEqualTo: userId)
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final social = SocialModel.fromMap(doc.data(), doc.id);
 
-              final userDoc = await _firestore
-                  .collection('users')
-                  .doc(social.uid)
-                  .get();
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(social.uid)
+                    .get();
 
-              final userName = userDoc.data()?['user_name'] ?? 'Unknown';
-              final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
-              final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
-              final email = userDoc.data()?['email'] ?? 'Unknown';
+                final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                final email = userDoc.data()?['email'] ?? 'Unknown';
 
-              return SocialWithUser(
-                social: social,
-                userName: userName,
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-              );
-            }),
-          );
+                return SocialWithUser(
+                  social: social,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                );
+              }),
+            );
 
-          return results;
-        });
-  } on CustomErrorException catch (_) {
-    throw CustomErrorException.fromCode(400);
-  } catch (e) {
-    throw CustomErrorException.fromCode(500);
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
   }
-}
 
+  Future<List<Comment>> fetchComments(String workoutId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('comments')
+          .orderBy('created_at', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => CommentsModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 }
