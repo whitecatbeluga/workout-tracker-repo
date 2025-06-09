@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+=======
+import 'package:workout_tracker_repo/presentation/widgets/buttons/primary_button.dart';
+>>>>>>> c6af73c (Routine Pages:)
 
 class LogWorkout extends StatefulWidget {
   const LogWorkout({super.key});
