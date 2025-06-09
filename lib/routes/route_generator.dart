@@ -52,7 +52,6 @@ class RouteGenerator {
           ifDenied: (_) => const LoginPage(),
         );
       case SocialRoutes.visitProfile:
-<<<<<<< HEAD
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
@@ -94,15 +93,6 @@ class RouteGenerator {
           ifAllowed: (_) => const AddExerciseRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
-=======
-        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const VisitProfilePage(), ifDenied: (_) => const LoginPage());
-      case RoutineRoutes.createRoutinePage:
-        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const CreateRoutine(), ifDenied: (_) => const LoginPage());
-      case RoutineRoutes.logWorkoutPage:
-        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const LogWorkout(), ifDenied: (_) => const LoginPage());
-      case RoutineRoutes.addExercisePage:
-        return guardedRoute(guard: () async => Authentication.isAuthenticated(), ifAllowed: (_) => const AddExerciseRoutine(), ifDenied: (_) => const LoginPage());
->>>>>>> c6af73c (Routine Pages:)
       default:
         return MaterialPageRoute(builder: (_) => const PageNotFound());
     }
