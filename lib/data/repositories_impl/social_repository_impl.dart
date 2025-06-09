@@ -4,6 +4,8 @@ import '../../domain/entities/social_with_user.dart'; // ✅ Use the same one
 import '../../domain/repositories/social_repository.dart';
 import '../models/social_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../domain/entities/comments.dart';
+import '../../data/models/comments_model.dart';
 
 class SocialRepositoryImpl implements SocialRepository {
   final FirebaseFirestore _firestore;
@@ -32,12 +34,30 @@ class SocialRepositoryImpl implements SocialRepository {
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
                 final email = userDoc.data()?['email'] ?? 'Unknown';
 
+                final likesSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('likes')
+                    .get();
+
+                final likedByUids = likesSnapshot.docs
+                    .map((likeDoc) => likeDoc.data()['liked_by'] as String)
+                    .toList();
+
+                final commentsSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('comments')
+                    .get();
+
                 return SocialWithUser(
                   social: social,
                   userName: userName,
                   firstName: firstName,
                   lastName: lastName,
                   email: email,
+                  likedByUids: likedByUids,
+                  commentCount: commentsSnapshot.size,
                 );
               }),
             );
@@ -132,6 +152,25 @@ class SocialRepositoryImpl implements SocialRepository {
     } on CustomErrorException catch (_) {
       throw CustomErrorException.fromCode(400);
     } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  Future<List<Comment>> fetchComments(String workoutId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('comments')
+          .orderBy('created_at', descending: true)
+          .get();
+
+      return snapshot.docs
+          .map((doc) => CommentsModel.fromMap(doc.data(), doc.id))
+          .toList();
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
       throw CustomErrorException.fromCode(500);
     }
   }
