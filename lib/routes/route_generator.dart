@@ -4,10 +4,7 @@ import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/add_exercise_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_workout.dart';
-<<<<<<< HEAD
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
-=======
->>>>>>> c6af73c (Routine Pages:)
 import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
