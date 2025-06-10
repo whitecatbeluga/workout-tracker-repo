@@ -241,4 +241,30 @@ class SocialRepositoryImpl implements SocialRepository {
       throw CustomErrorException.fromCode(500);
     }
   }
+
+  @override
+  Future<void> toggleLike({
+    required String workoutId,
+    required String userId,
+  }) async {
+    try {
+      final likeRef = _firestore
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('likes')
+          .doc(userId);
+
+      final likeDoc = await likeRef.get();
+
+      if (likeDoc.exists) {
+        await likeRef.delete();
+      } else {
+        await likeRef.set({'liked_by': userId});
+      }
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 }
