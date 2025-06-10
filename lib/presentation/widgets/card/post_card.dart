@@ -8,19 +8,117 @@ import 'package:workout_tracker_repo/domain/repositories/social_repository.dart'
 import '../../../domain/entities/social_with_user.dart';
 import 'package:intl/intl.dart';
 
-class LikesBottomSheet extends StatelessWidget {
-  const LikesBottomSheet({super.key});
+class LikesBottomSheet extends StatefulWidget {
+  final String workoutId;
+  final SocialRepository repository;
+
+  const LikesBottomSheet({
+    super.key,
+    required this.workoutId,
+    required this.repository,
+  });
+
+  @override
+  State<LikesBottomSheet> createState() => _LikesBottomSheetState();
+}
+
+class _LikesBottomSheetState extends State<LikesBottomSheet> {
+  late Future<List<Map<String, dynamic>>> _likesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _likesFuture = _fetchLikedUsers();
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchLikedUsers() async {
+    final firestore = FirebaseFirestore.instance;
+
+    final likesSnapshot = await firestore
+        .collection('workouts')
+        .doc(widget.workoutId)
+        .collection('likes')
+        .get();
+
+    final likedUserIds = likesSnapshot.docs
+        .map((doc) => doc.data()['liked_by'] as String?)
+        .where((id) => id != null && id.isNotEmpty)
+        .cast<String>()
+        .toList();
+
+    final users = <Map<String, dynamic>>[];
+
+    for (final uid in likedUserIds) {
+      final userDoc = await firestore.collection('users').doc(uid).get();
+      if (userDoc.exists) {
+        final data = userDoc.data()!;
+        users.add({
+          'name': '${data['first_name'] ?? ''} ${data['last_name'] ?? ''}'
+              .trim(),
+          'picture': data['account_picture'] ?? '',
+        });
+      }
+    }
+
+    return users;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 500,
-      child: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SizedBox(
+        height: 500,
+        child: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _likesFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return const Center(child: Text('Error loading likes'));
+            }
+
+            final users = snapshot.data ?? [];
+
+            if (users.isEmpty) {
+              return const Center(child: Text('No likes yet'));
+            }
+
+            return ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: users.length,
+              separatorBuilder: (context, index) => const Divider(),
+              itemBuilder: (context, index) {
+                final user = users[index];
+                final name = user['name'] ?? 'Unknown';
+                final picture = user['picture'] ?? '';
+
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundImage: picture.isNotEmpty
+                          ? NetworkImage(picture)
+                          : null,
+                      child: picture.isEmpty
+                          ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?')
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            );
           },
-          child: Text('Likes close'),
         ),
       ),
     );
@@ -217,7 +315,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   }
 }
 
-class PostCard extends StatelessWidget {
+class PostCard extends StatefulWidget {
   final SocialWithUser data;
   final VoidCallback? onTap;
   final VoidCallback? viewProfileOnTap;
@@ -230,12 +328,59 @@ class PostCard extends StatelessWidget {
   });
 
   @override
+  State<PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<PostCard> {
+  late bool isLiked;
+  late int likeCount;
+  final user = authService.value.getCurrentUser();
+
+  @override
+  void initState() {
+    super.initState();
+    isLiked = widget.data.likedByUids.contains(user?.uid);
+    likeCount = widget.data.likedByUids.length;
+  }
+
+  Future<void> _handleLike() async {
+    if (user == null) return;
+
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+
+    try {
+      await repository.toggleLike(
+        workoutId: widget.data.social.id,
+        userId: user!.uid,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        if (isLiked) {
+          isLiked = false;
+          likeCount--;
+        } else {
+          isLiked = true;
+          likeCount++;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to toggle like')));
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final createdAt = data.social.createdAt.toDate();
+    final createdAt = widget.data.social.createdAt.toDate();
     final timeAgo = timeago.format(createdAt);
 
     return InkWell(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Card(
         color: Colors.white,
         elevation: 0,
@@ -255,7 +400,7 @@ class PostCard extends StatelessWidget {
                         Material(
                           color: Colors.transparent,
                           child: InkWell(
-                            onTap: viewProfileOnTap,
+                            onTap: widget.viewProfileOnTap,
                             child: Container(
                               padding: EdgeInsets.zero,
                               child: Row(
@@ -276,7 +421,7 @@ class PostCard extends StatelessWidget {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          data.userName,
+                                          widget.data.userName,
                                           style: TextStyle(color: Colors.black),
                                         ),
                                         Text(
@@ -324,13 +469,13 @@ class PostCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          data.social.workoutTitle,
+                          widget.data.social.workoutTitle,
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        Text(data.social.workoutDescription),
+                        Text(widget.data.social.workoutDescription),
                       ],
                     ),
                   ),
@@ -345,7 +490,7 @@ class PostCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Time'),
-                              Text(data.social.workoutDuration),
+                              Text(widget.data.social.workoutDuration),
                             ],
                           ),
                         ),
@@ -355,7 +500,7 @@ class PostCard extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Volume'),
-                              Text(data.social.totalVolume.toString()),
+                              Text(widget.data.social.totalVolume.toString()),
                             ],
                           ),
                         ),
@@ -367,8 +512,8 @@ class PostCard extends StatelessWidget {
             ),
             Container(
               padding: EdgeInsets.zero,
-              child: data.social.imageUrls.isNotEmpty
-                  ? Image.network(data.social.imageUrls[0])
+              child: widget.data.social.imageUrls.isNotEmpty
+                  ? Image.network(widget.data.social.imageUrls[0])
                   : null,
             ),
 
@@ -383,12 +528,17 @@ class PostCard extends StatelessWidget {
                         context: context,
                         isScrollControlled: true,
                         builder: (BuildContext context) {
-                          return const LikesBottomSheet();
+                          return LikesBottomSheet(
+                            workoutId: widget.data.social.id,
+                            repository: SocialRepositoryImpl(
+                              FirebaseFirestore.instance,
+                            ),
+                          );
                         },
                       );
                     },
                     child: Text(
-                      '${data.likedByUids.length} likes',
+                      '$likeCount likes',
                       style: TextStyle(color: Color(0xFF2C2C2C)),
                     ),
                   ),
@@ -399,7 +549,7 @@ class PostCard extends StatelessWidget {
                         isScrollControlled: true,
                         builder: (BuildContext context) {
                           return CommentsBottomSheet(
-                            workoutId: data.social.id,
+                            workoutId: widget.data.social.id,
                             repository: SocialRepositoryImpl(
                               FirebaseFirestore.instance,
                             ),
@@ -408,7 +558,7 @@ class PostCard extends StatelessWidget {
                       );
                     },
                     child: Text(
-                      '${data.commentCount} comments',
+                      '${widget.data.commentCount} comments',
                       style: TextStyle(color: Color(0xFF2C2C2C)),
                     ),
                   ),
@@ -428,10 +578,11 @@ class PostCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    onPressed: () {
-                      print('Pressed like');
-                    },
-                    icon: Icon(Icons.thumb_up_outlined),
+                    onPressed: _handleLike,
+                    icon: Icon(
+                      isLiked ? Icons.thumb_up_sharp : Icons.thumb_up_outlined,
+                      color: isLiked ? Color(0xFF48A6A7) : null,
+                    ),
                   ),
                   IconButton(
                     onPressed: () {
@@ -444,7 +595,7 @@ class PostCard extends StatelessWidget {
                           ),
                         ),
                         builder: (context) => CommentsBottomSheet(
-                          workoutId: data.social.id,
+                          workoutId: widget.data.social.id,
                           repository: SocialRepositoryImpl(
                             FirebaseFirestore.instance,
                           ),
@@ -452,7 +603,7 @@ class PostCard extends StatelessWidget {
                       );
                     },
 
-                    icon: Icon(Icons.comment),
+                    icon: Icon(Icons.comment_outlined),
                   ),
                   IconButton(
                     onPressed: () {
