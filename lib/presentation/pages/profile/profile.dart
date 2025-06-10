@@ -19,7 +19,11 @@ class _ProfilePageState extends State<ProfilePage> {
   final user = authService.value.getCurrentUser();
 
   final List<MenuItem> menuItems = const [
-    MenuItem(title: "Statistics", icon: Icons.bar_chart, route: "/statistics"),
+    MenuItem(
+      title: "Statistics",
+      icon: Icons.bar_chart,
+      route: ProfileRoutes.statistics,
+    ),
     MenuItem(
       title: "Exercises",
       icon: Icons.fitness_center,
@@ -31,7 +35,11 @@ class _ProfilePageState extends State<ProfilePage> {
       route: "/measurements",
     ),
     MenuItem(title: "Routines", icon: Icons.fitness_center, route: "/routines"),
-    MenuItem(title: "Calendar", icon: Icons.calendar_month, route: "/calendar"),
+    MenuItem(
+      title: "Calendar",
+      icon: Icons.calendar_month,
+      route: ProfileRoutes.calendar,
+    ),
   ];
 
   @override
