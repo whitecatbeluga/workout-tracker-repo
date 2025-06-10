@@ -113,8 +113,7 @@ class _CalendarPageState extends State<CalendarPage> {
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () =>
-                  Navigator.pushNamed(context, '/profile/settings'),
+              onPressed: () => Navigator.pop(context),
             ),
             title: const Text(
               'Calendar',
