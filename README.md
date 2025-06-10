@@ -1,15 +1,17 @@
 # workout_tracker_repo
 
 ## Folder Structure Guide
+
 - https://medium.com/flutter-community/flutter-scalable-folder-files-structure-8f860faafebd
 - https://medium.com/@vortj/leveling-up-your-flutter-project-structure-fcb7099a3930
-## How to run the workout_tracker_repo 
 
-- flutter run 
+## How to run the workout_tracker_repo
+
+- flutter run
 
 if using wsl use this
-- flutter run -d web-server
 
+- flutter run -d web-server
 
 ## 📁 FOLDER STRUCTURE `LAYERED / CLEAN ARCHITECTURE`
 
@@ -41,4 +43,16 @@ if using wsl use this
 
 **UI uses WorkoutRepositoryImpl through the domain interface.**
 
+## REMOVE BRANCH EXCEPT MASTER AND BETA
 
+WINDOWS COMMAND
+
+```
+git branch | ForEach-Object { $_.Trim() } | Where-Object { $_ -ne 'master' -and $_ -ne 'beta' } | ForEach-Object { git branch -d $_ }
+```
+
+BASH / WSL
+
+```
+git branch | grep -v "master" | grep -v "beta" | xargs git branch -D
+```
