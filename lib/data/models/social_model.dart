@@ -19,7 +19,7 @@ class SocialModel extends Social {
     return SocialModel(
       id: docId,
       createdAt: data['created_at'],
-      imageUrls: List<String>.from(data['image_urls']),
+      imageUrls: List<String>.from(data['image_urls'] ?? []),
       totalSets: (data['total_sets'] as num).toInt(),
       totalVolume: (data['total_volume'] as num).toInt(),
       uid: data['user_id'].toString(),

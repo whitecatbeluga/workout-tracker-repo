@@ -1,4 +1,5 @@
 import "../../domain/entities/comments.dart";
+import "package:cloud_firestore/cloud_firestore.dart";
 
 class CommentsModel extends Comment {
   CommentsModel({
@@ -13,7 +14,7 @@ class CommentsModel extends Comment {
       id: docId,
       from: data['from'] ?? '',
       description: data['description'] ?? '',
-      createdAt: data['created_at'] ?? '',
+      createdAt: data['created_at'] ?? Timestamp.now(),
     );
   }
 
