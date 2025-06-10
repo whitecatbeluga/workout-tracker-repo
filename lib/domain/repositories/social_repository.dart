@@ -11,4 +11,5 @@ abstract class SocialRepository {
     required String userId,
     required String description,
   });
+  Future<void> toggleLike({required String workoutId, required String userId});
 }
