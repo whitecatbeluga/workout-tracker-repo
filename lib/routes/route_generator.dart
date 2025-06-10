@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/add_exercise_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_workout.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/statistics.dart';
 import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
@@ -67,6 +69,20 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const Settings(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.statistics:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const StatisticsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.calendar:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const CalendarPage(),
           ifDenied: (_) => const LoginPage(),
         );
       case RoutineRoutes.createRoutinePage:
