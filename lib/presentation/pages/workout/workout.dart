@@ -55,20 +55,24 @@ class WorkoutPage extends StatelessWidget {
     );
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Tracker'),
+        title: const Text(
+          'Workout Tracker REPO',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () async {
-              await authService.value.signOut();
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                AuthRoutes.login,
-                (route) => false,
-              );
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.logout),
+          //   tooltip: 'Logout',
+          //   onPressed: () async {
+          //     await authService.value.signOut();
+          //     Navigator.pushNamedAndRemoveUntil(
+          //       context,
+          //       AuthRoutes.login,
+          //       (route) => false,
+          //     );
+          //   },
+          // ),
         ],
       ),
       body: SafeArea(
