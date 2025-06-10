@@ -7,11 +7,31 @@
 
 ## How to run the workout_tracker_repo
 
-- flutter run
+Clone the repo
 
-if using wsl use this
+```
+https://github.com/whitecatbeluga/workout-tracker-repo
+```
 
-- flutter run -d web-server
+You install Android Studio and Emulator and Java for gradle bundler and Dart
+
+Here's the link how to install
+
+```
+https://docs.flutter.dev/get-started/install
+```
+
+After installing run this command
+
+```
+flutter run
+```
+
+If your in WSL
+
+```
+flutter run -d web-server
+```
 
 ## 📁 FOLDER STRUCTURE `LAYERED / CLEAN ARCHITECTURE`
 
