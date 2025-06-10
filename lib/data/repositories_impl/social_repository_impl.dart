@@ -1,4 +1,5 @@
 import 'package:workout_tracker_repo/data/errors/custom_error_exception.dart';
+import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 
 import '../../domain/entities/social_with_user.dart'; // ✅ Use the same one
 import '../../domain/repositories/social_repository.dart';
@@ -168,6 +169,72 @@ class SocialRepositoryImpl implements SocialRepository {
       return snapshot.docs
           .map((doc) => CommentsModel.fromMap(doc.data(), doc.id))
           .toList();
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  Future<List<CommentsWithUser>> fetchCommentsWithUserData(
+    String workoutId,
+  ) async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('workouts')
+        .doc(workoutId)
+        .collection('comments')
+        .orderBy('created_at', descending: false)
+        .get();
+
+    final comments = snapshot.docs.map((doc) {
+      return CommentsModel.fromMap(doc.data(), doc.id);
+    }).toList();
+
+    final List<CommentsWithUser> result = [];
+
+    for (final comment in comments) {
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(comment.from)
+          .get();
+
+      final userData = userDoc.data();
+      if (userData == null) continue;
+
+      result.add(
+        CommentsWithUser(
+          id: comment.id,
+          from: comment.from,
+          description: comment.description,
+          createdAt: comment.createdAt,
+          accountPicture: userData['account_picture'] ?? '',
+          firstName: userData['first_name'] ?? '',
+          lastName: userData['last_name'] ?? '',
+        ),
+      );
+    }
+
+    return result;
+  }
+
+  @override
+  Future<void> postComment({
+    required String workoutId,
+    required String userId,
+    required String description,
+  }) async {
+    try {
+      final commentData = {
+        'from': userId,
+        'description': description,
+        'created_at': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore
+          .collection('workouts')
+          .doc(workoutId)
+          .collection('comments')
+          .add(commentData);
     } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
     } catch (_) {
