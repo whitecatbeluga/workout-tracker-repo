@@ -12,4 +12,5 @@ abstract class SocialRepository {
     required String description,
   });
   Future<void> toggleLike({required String workoutId, required String userId});
+  Future<bool> checkIfFollowing(String currentUserId, String otherUserId);
 }

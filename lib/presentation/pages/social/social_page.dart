@@ -16,7 +16,7 @@ class SocialPage extends StatefulWidget {
 }
 
 class SocialPageState extends State<SocialPage> {
-  bool isFollowingSelected = true;
+  bool isFollowingSelected = false;
 
   final user = authService.value.getCurrentUser();
   final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
