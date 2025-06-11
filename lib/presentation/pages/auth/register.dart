@@ -159,72 +159,25 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
           onCompleted: () async {
-            // try {
-            //   // Validate email uniqueness
-            //   String? emailError = await FormValidators.validateEmailUniqueness(
-            //     _emailController.text,
-            //   );
-            //
-            //   if (emailError != null) {
-            //     // Show error message
-            //     if (mounted) {
-            //       // Check if widget is still mounted
-            //       ScaffoldMessenger.of(context).showSnackBar(
-            //         SnackBar(
-            //           content: Text(emailError),
-            //           backgroundColor: Colors.red,
-            //         ),
-            //       );
-            //     }
-            //     return;
-            //   }
-            //
-            //   // Proceed with registration
-            //   // _register();
-            //
-            //   ScaffoldMessenger.of(context).showSnackBar(
-            //     const SnackBar(content: Text('Registered Successfully!')),
-            //   );
-            // } catch (e) {
-            //   // Handle any unexpected errors
-            //   if (mounted) {
-            //     ScaffoldMessenger.of(context).showSnackBar(
-            //       SnackBar(
-            //         content: Text('An error occurred. Please try again.'),
-            //         backgroundColor: Colors.red,
-            //       ),
-            //     );
-            //   }
-            // }
-
             // Validate email uniqueness
             String? emailError = await FormValidators.validateEmailUniqueness(
               _emailController.text,
             );
 
             if (emailError != null) {
-              // Email is not unique, show error
-              setState(() {
-                // Hide loading indicator if you added one
-              });
-
-              // Show error message (you can customize this based on your UI)
+              // error message
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(emailError),
                   backgroundColor: Colors.red,
+                  behavior: SnackBarBehavior.floating,
+                  showCloseIcon: true,
                 ),
               );
 
-              // Optionally, you can navigate back to the email step
-              // setState(() {
-              //   _currentStep = 0; // or whatever step contains the email field
-              // });
-
-              return; // Don't proceed with registration
+              return;
             }
 
-            // Email is unique, proceed with registration
             // await _register();
 
             ScaffoldMessenger.of(context).showSnackBar(
