@@ -9,7 +9,7 @@ class FormValidators {
     }
 
     final emailRegex = RegExp(
-      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$',
     );
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
@@ -140,17 +140,33 @@ class FormValidators {
       return 'Please select your activity level';
     }
 
-    final validLevels = [
-      'Sedentary',
-      'Light',
-      'Moderate',
-      'Active',
-      'Very Active',
-    ];
+    final validLevels = ['Sedentary', 'Light', 'Moderate', 'Active', 'Fervid'];
     if (!validLevels.contains(value)) {
       return 'Please select a valid activity level';
     }
 
+    return null;
+  }
+
+  static String? validateWorkoutTypes(List<String>? values) {
+    if (values == null || values.isEmpty) {
+      return 'Please select at least 1 workout type';
+    }
+
+    final validTypes = [
+      "Cardio",
+      "Flexibility",
+      "Functional",
+      "HIIT",
+      "Mixed",
+      "Rest",
+      "Sports",
+      "Strength",
+    ];
+
+    if (!values.any((element) => validTypes.contains(element))) {
+      return 'Must contain at least 1 valid workout types';
+    }
     return null;
   }
 

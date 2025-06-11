@@ -26,6 +26,8 @@ class CustomStepper extends StatefulWidget {
     this.textColor = Colors.black87,
     this.borderRadius = 12.0,
     this.padding = const EdgeInsets.all(20.0),
+    this.isLoading = false,
+    this.loadingText = 'Processing...',
   });
 
   final List<StepperStep> steps;
@@ -36,6 +38,8 @@ class CustomStepper extends StatefulWidget {
   final Color textColor;
   final double borderRadius;
   final EdgeInsets padding;
+  final bool isLoading;
+  final String loadingText;
 
   @override
   State<CustomStepper> createState() => _CustomStepperState();
@@ -43,19 +47,68 @@ class CustomStepper extends StatefulWidget {
 
 class _CustomStepperState extends State<CustomStepper> {
   int currentStep = 0;
+  late ValueNotifier<bool> _validationNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    _validationNotifier = ValueNotifier<bool>(_isCurrentStepValid());
+
+    // Listen for validation changes periodically
+    _startValidationListener();
+  }
+
+  @override
+  void dispose() {
+    _validationNotifier.dispose();
+    super.dispose();
+  }
+
+  // Check if current step is valid without triggering error messages
+  bool _isCurrentStepValid() {
+    if (widget.steps[currentStep].validator != null) {
+      return widget.steps[currentStep].validator!();
+    }
+    return true; // If no validator, consider it valid
+  }
+
+  // Start periodic validation checking
+  void _startValidationListener() {
+    // Check validation every 500ms
+    Future.doWhile(() async {
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          final isValid = _isCurrentStepValid();
+          if (_validationNotifier.value != isValid) {
+            _validationNotifier.value = isValid;
+          }
+        }
+        return mounted;
+      }
+      return false;
+    });
+  }
+
+  // Method to trigger validation and show error messages (for button press)
+  bool _validateAndShowErrors() {
+    if (widget.steps[currentStep].validator != null) {
+      return widget.steps[currentStep].validator!();
+    }
+    return true;
+  }
 
   void _nextStep() {
-    // Validate current step if validator exists
-    if (widget.steps[currentStep].validator != null) {
-      if (!widget.steps[currentStep].validator!()) {
-        return; // Don't proceed if validation fails
-      }
+    // Validate and show errors when user tries to proceed
+    if (!_validateAndShowErrors()) {
+      return;
     }
 
     if (currentStep < widget.steps.length - 1) {
       setState(() {
         currentStep++;
       });
+      _validationNotifier.value = _isCurrentStepValid();
       widget.onStepChanged?.call(currentStep);
     } else {
       // Last step completed
@@ -68,7 +121,15 @@ class _CustomStepperState extends State<CustomStepper> {
       setState(() {
         currentStep--;
       });
+      _validationNotifier.value = _isCurrentStepValid();
       widget.onStepChanged?.call(currentStep);
+    }
+  }
+
+  // Method to manually trigger validation check (can be called from outside)
+  void validateCurrentStep() {
+    if (mounted) {
+      _validationNotifier.value = _isCurrentStepValid();
     }
   }
 
@@ -138,18 +199,6 @@ class _CustomStepperState extends State<CustomStepper> {
                             ),
                     ),
                   ),
-
-                  // Connector Line (except for last step)
-                  // if (index < widget.steps.length - 1)
-                  //   Expanded(
-                  //     child: Container(
-                  //       height: 2,
-                  //       color: isCompleted
-                  //           ? widget.primaryColor
-                  //           : Colors.grey.shade300,
-                  //       margin: const EdgeInsets.symmetric(horizontal: 8),
-                  //     ),
-                  //   ),
                 ],
               ),
             );
@@ -220,20 +269,60 @@ class _CustomStepperState extends State<CustomStepper> {
 
         const Spacer(),
 
-        // Next/Complete Button
-        ElevatedButton(
-          onPressed: _nextStep,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: widget.primaryColor,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-          child: Text(
-            currentStep == widget.steps.length - 1 ? 'Complete' : 'Next',
-            style: const TextStyle(color: Colors.white),
-          ),
+        // ElevatedButton(
+        //   onPressed: _isLoading ? null : _register,
+        //   child: _isLoading
+        //       ? const CircularProgressIndicator(color: Colors.white)
+        //       : const Text('REGISTER'),
+        // ),
+
+        // Next/Complete Button with dynamic validation
+        ValueListenableBuilder<bool>(
+          valueListenable: _validationNotifier,
+          builder: (context, isValid, child) {
+            return ElevatedButton(
+              onPressed: isValid && !widget.isLoading ? _nextStep : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isValid
+                    ? widget.primaryColor
+                    : Colors.grey.shade400,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: Row(
+                spacing: widget.isLoading ? 8 : 0,
+                children: [
+                  widget.isLoading
+                      ? SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: isValid && !widget.isLoading
+                                ? Colors.white
+                                : Colors.grey.shade600,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const SizedBox(),
+                  Text(
+                    currentStep == widget.steps.length - 1
+                        ? 'Complete'
+                        : 'Next',
+                    style: TextStyle(
+                      color: isValid && !widget.isLoading
+                          ? Colors.white
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ],
     );
