@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/calendar_workoutdata.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/calendar_workout_card.dart';
 
 class CalendarPage extends StatefulWidget {
@@ -9,8 +10,7 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  final List<DateTime> workoutDates = [];
-
+  final List<CalendarWorkoutDates> workoutDates = [];
   late Map<String, List<DateTime>> grouped;
   late List<String> sortedKeys;
   late int initialPage;
@@ -26,10 +26,78 @@ class _CalendarPageState extends State<CalendarPage> {
     initializeCalendar();
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose(); // clean up the PageController
+    super.dispose();
+  }
+
   void _toggleWorkoutModal() {
     setState(() {
       _showWorkoutModal = !_showWorkoutModal;
     });
+  }
+
+  Future<void> fetchWorkoutDates() async {
+    await Future.delayed(const Duration(seconds: 1)); // Simulate loading
+
+    //SAMPLE DATA ONLY
+    workoutDates.addAll([
+      CalendarWorkoutDates(
+        date: DateTime(2025, 6, 9, 8, 0),
+        workouts: [
+          UserWorkout(
+            id: '1',
+            title: 'Cardio Day',
+            duration: '45 mins',
+            volume: '80 kg',
+            sets: '4',
+            createdAt: DateTime(2025, 6, 11, 7, 0).toString(),
+          ),
+          UserWorkout(
+            id: '2',
+            title: 'Leg Day',
+            duration: '40 mins',
+            volume: '80 kg',
+            sets: '3',
+            createdAt: DateTime(2025, 6, 11, 8, 0).toString(),
+          ),
+          UserWorkout(
+            id: '3',
+            title: 'Back Day',
+            duration: '40 mins',
+            volume: '30 kg',
+            sets: '3',
+            createdAt: DateTime(2025, 6, 11, 9, 0).toString(),
+          ),
+        ],
+        images: [
+          'https://static.nike.com/a/images/f_auto/dpr_3.0,cs_srgb/h_363,c_limit/e88291f0-bc7b-4eae-b8ae-8fdedb43e9c9/should-i-run-before-or-after-a-strength-workout-%C2%A0.jpg',
+        ],
+      ),
+      CalendarWorkoutDates(
+        date: DateTime(2025, 6, 11, 9, 0),
+        workouts: [
+          UserWorkout(
+            id: '1',
+            title: 'Chest Day',
+            duration: '45 mins',
+            volume: '69 kg',
+            sets: '4',
+            createdAt: DateTime(2025, 6, 11, 9, 0).toString(),
+          ),
+          UserWorkout(
+            id: '2',
+            title: 'Shoulder Day',
+            duration: '40 mins',
+            volume: '23 kg',
+            sets: '3',
+            createdAt: DateTime(2025, 6, 11, 10, 0).toString(),
+          ),
+        ],
+        images: [],
+      ),
+    ]);
   }
 
   Future<void> initializeCalendar() async {
@@ -37,10 +105,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
     try {
       await fetchWorkoutDates(); // Wait until data is fetched
-
       // Now process the dates
       grouped = <String, List<DateTime>>{};
-      for (var date in workoutDates) {
+      for (var date in workoutDates.map((date) => date.date)) {
         final key = "${date.year}-${date.month.toString().padLeft(2, '0')}";
         grouped.putIfAbsent(key, () => []).add(date);
       }
@@ -84,22 +151,6 @@ class _CalendarPageState extends State<CalendarPage> {
         isLoading = false;
       });
     }
-  }
-
-  Future<void> fetchWorkoutDates() async {
-    // await Future.delayed(const Duration(seconds: 1)); // Simulate loading
-
-    workoutDates.addAll([
-      DateTime(2025, 3, 15),
-      DateTime(2025, 5, 1),
-      DateTime(2025, 5, 9),
-      DateTime(2025, 5, 15),
-      DateTime(2025, 5, 22),
-      DateTime(2025, 5, 31),
-      DateTime(2025, 6, 6),
-      DateTime(2025, 6, 9),
-      // DateTime(2025, 6, 10),
-    ]);
   }
 
   @override
@@ -297,10 +348,9 @@ class _CalendarPageState extends State<CalendarPage> {
 
   int _calculateStreak() {
     if (workoutDates.isEmpty) return 0;
-
     // Group workout dates by week of year
     Set<String> weeksWithWorkouts = {};
-    for (DateTime date in workoutDates) {
+    for (DateTime date in workoutDates.map((date) => date.date)) {
       int weekNumber = getWeekOfYear(date);
       String weekKey = "${date.year}-$weekNumber";
       weeksWithWorkouts.add(weekKey);
@@ -535,7 +585,19 @@ class _CalendarPageState extends State<CalendarPage> {
                         if (isWorkoutDay) {
                           setState(() {
                             selectedWorkout['date'] =
-                                '${_monthName(month)} $day, $year';
+                                '${_monthName(month)} $day, $year, ';
+                            final match = this.workoutDates.firstWhere(
+                              (element) =>
+                                  element.date.year == year &&
+                                  element.date.month == month &&
+                                  element.date.day == int.parse(day),
+                              orElse: () => CalendarWorkoutDates(
+                                date: DateTime(year, month, int.parse(day)),
+                                workouts: [],
+                                images: [],
+                              ),
+                            );
+                            selectedWorkout['workout'] = match.workouts;
                           });
                           _toggleWorkoutModal();
                         } else {
@@ -552,21 +614,45 @@ class _CalendarPageState extends State<CalendarPage> {
                       child: Container(
                         width: 32,
                         height: 32,
+
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          //ADD IMAGE HERE
-                          // image: DecorationImage(
-                          //   image: isWorkoutDay
-                          //       ? NetworkImage(
-                          //           'https://www.gymreapers.com/cdn/shop/articles/header-image-01_Cable-chest-workout---maximizing-your-muscle-growth.jpg?v=1721671171&width=2048',
-                          //         )
-                          //       : const NetworkImage(''),
-                          //   fit: BoxFit.cover,
-                          // ),
+                          // ADD IMAGE HERE
+                          image:
+                              isWorkoutDay &&
+                                  this.workoutDates.any(
+                                    (element) =>
+                                        element.date ==
+                                            DateTime(
+                                              year,
+                                              month,
+                                              int.parse(day),
+                                            ) &&
+                                        element.images.isNotEmpty,
+                                  )
+                              ? DecorationImage(
+                                  image: NetworkImage(
+                                    this.workoutDates
+                                        .firstWhere(
+                                          (element) =>
+                                              element.date ==
+                                              DateTime(
+                                                year,
+                                                month,
+                                                int.parse(day),
+                                              ),
+                                        )
+                                        .images
+                                        .first,
+                                  ),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                           color: isWorkoutDay
                               ? const Color(0xFFD86227)
                               : Colors.transparent,
                         ),
+
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -647,6 +733,15 @@ class _CalendarPageState extends State<CalendarPage> {
     return months[month - 1];
   }
 
+  String _formatWorkoutTime(String createdAtString) {
+    try {
+      DateTime dateTime = DateTime.parse(createdAtString);
+      return TimeOfDay.fromDateTime(dateTime).format(context);
+    } catch (e) {
+      return createdAtString; // fallback to original string if parsing fails
+    }
+  }
+
   Widget _buildBackdropLoader() {
     return Stack(
       children: [
@@ -672,12 +767,6 @@ class _CalendarPageState extends State<CalendarPage> {
               ),
               Center(
                 child: Container(
-                  // constraints: BoxConstraints(
-                  //   maxHeight:
-                  //       MediaQuery.of(context).size.height *
-                  //       0.85, // Use 85% of screen height
-                  //   maxWidth: 380,
-                  // ),
                   height: 600, // Fixed height for uniformity
                   width: 380, // Fixed width
                   margin: const EdgeInsets.symmetric(
@@ -770,50 +859,19 @@ class _CalendarPageState extends State<CalendarPage> {
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                           child: Column(
                             children: [
-                              WorkoutCard(
-                                title: 'Leg Day!',
-                                time: '42 min',
-                                volume: '3,780 kg',
-                                sets: '2',
-                                description:
-                                    'A routine designed for beginners to ease into fitness and build foundational strength.',
-                                reminderText:
-                                    'You got your workout in by 10:30 AM',
-                                margin: const EdgeInsets.only(bottom: 12),
-                                elevation: 1,
-                                onTap: () {
-                                  // Handle tap action here
-                                },
-                              ),
-                              WorkoutCard(
-                                title: 'Push Day!',
-                                time: '35 min',
-                                volume: '2,450 kg',
-                                sets: '3',
-                                description:
-                                    'Focus on chest, shoulders, and triceps with compound movements.',
-                                reminderText:
-                                    'You got your workout in by 10:30 AM',
-                                margin: const EdgeInsets.only(bottom: 12),
-                                elevation: 1,
-                                onTap: () {
-                                  // Handle tap action here
-                                },
-                              ),
-                              WorkoutCard(
-                                title: 'Cardio Session',
-                                time: '25 min',
-                                volume: '0 kg',
-                                sets: '1',
-                                description:
-                                    'High-intensity interval training to boost cardiovascular health.',
-                                reminderText:
-                                    'You got your workout in by 10:30 AM',
-                                margin: const EdgeInsets.only(bottom: 8),
-                                elevation: 1,
-                                onTap: () {
-                                  // Handle tap action here
-                                },
+                              ...selectedWorkout['workout'].map(
+                                (workout) => WorkoutCard(
+                                  title: workout.title,
+                                  time: workout.duration,
+                                  volume: workout.volume,
+                                  sets: workout.sets,
+                                  description: '',
+                                  reminderText:
+                                      'You got your workout done by ${_formatWorkoutTime(workout.createdAt)}',
+                                  elevation: 1,
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  onTap: () {},
+                                ),
                               ),
                             ],
                           ),
