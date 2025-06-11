@@ -4,4 +4,5 @@ class ProfileRoutes {
   static const settings = '$prefix/settings';
   static const statistics = '$prefix/statistics';
   static const calendar = '$prefix/calendar';
+  static const editProfile = '$prefix/edit-profile';
 }

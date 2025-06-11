@@ -8,12 +8,16 @@ class PasswordField extends StatefulWidget {
     this.validator,
     this.controller,
     this.variant = InputVariant.outline,
+    this.enableLiveValidation = false,
+    this.autoValidateMode,
   });
 
   final String label;
   final String? Function(String?)? validator;
   final TextEditingController? controller;
   final InputVariant variant;
+  final bool enableLiveValidation;
+  final AutovalidateMode? autoValidateMode;
 
   @override
   State<PasswordField> createState() => _PasswordFieldState();
@@ -38,6 +42,8 @@ class _PasswordFieldState extends State<PasswordField> {
       obscureText: _obscureText,
       keyboardType: TextInputType.visiblePassword,
       variant: widget.variant,
+      enableLiveValidation: widget.enableLiveValidation,
+      autoValidateMode: widget.autoValidateMode,
     );
   }
 }

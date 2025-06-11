@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum InputVariant { outline, subtle, flushed }
 
-class InputField extends StatelessWidget {
+class InputField extends StatefulWidget {
   const InputField({
     super.key,
     required this.label,
@@ -14,6 +14,9 @@ class InputField extends StatelessWidget {
     this.controller,
     this.obscureText = false,
     this.variant = InputVariant.outline,
+    this.enableLiveValidation = false,
+    this.autoValidateMode,
+    this.onChanged,
   });
 
   final String label;
@@ -25,63 +28,225 @@ class InputField extends StatelessWidget {
   final TextEditingController? controller;
   final bool obscureText;
   final InputVariant variant;
+  final bool enableLiveValidation;
+  final AutovalidateMode? autoValidateMode;
+  final Function(String)? onChanged;
+
+  @override
+  State<InputField> createState() => _InputFieldState();
+}
+
+class _InputFieldState extends State<InputField> {
+  String? _errorMessage;
+  bool _hasInteracted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.enableLiveValidation && widget.controller != null) {
+      widget.controller!.addListener(_onTextChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (widget.enableLiveValidation && widget.controller != null) {
+      widget.controller!.removeListener(_onTextChanged);
+    }
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (!_hasInteracted) {
+      setState(() {
+        _hasInteracted = true;
+      });
+    }
+
+    if (_hasInteracted && widget.validator != null) {
+      final error = widget.validator!(widget.controller!.text);
+      if (_errorMessage != error) {
+        setState(() {
+          _errorMessage = error;
+        });
+      }
+    }
+  }
+
+  void _handleOnChanged(String value) {
+    if (widget.enableLiveValidation && !_hasInteracted) {
+      setState(() {
+        _hasInteracted = true;
+      });
+    }
+
+    if (widget.onChanged != null) {
+      widget.onChanged!(value);
+    }
+  }
 
   InputBorder? _getEnabledBorder() {
-    switch (variant) {
+    final hasError = widget.enableLiveValidation
+        ? (_errorMessage != null && _hasInteracted)
+        : false;
+
+    switch (widget.variant) {
       case InputVariant.outline:
-        return const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        return OutlineInputBorder(
+          borderSide: BorderSide(
+            color: hasError ? Colors.red.shade600 : Color(0xFFCBD5E1),
+            width: 1.2,
+          ),
           borderRadius: BorderRadius.all(Radius.circular(8)),
         );
       case InputVariant.subtle:
         return OutlineInputBorder(
-          borderSide: BorderSide.none,
+          borderSide: hasError
+              ? BorderSide(color: Colors.red.shade600, width: 1.2)
+              : BorderSide.none,
           borderRadius: BorderRadius.circular(8),
         );
       case InputVariant.flushed:
-        return const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+        return UnderlineInputBorder(
+          borderSide: BorderSide(
+            color: hasError ? Colors.red.shade600 : Color(0xFFCBD5E1),
+            width: 1.2,
+          ),
         );
     }
   }
 
   InputBorder? _getFocusedBorder() {
-    switch (variant) {
+    final hasError = widget.enableLiveValidation
+        ? (_errorMessage != null && _hasInteracted)
+        : false;
+
+    switch (widget.variant) {
       case InputVariant.outline:
-        return const OutlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF006A71), width: 1.2),
+        return OutlineInputBorder(
+          borderSide: BorderSide(
+            color: hasError ? Colors.red.shade600 : Color(0xFF006A71),
+            width: 1.2,
+          ),
           borderRadius: BorderRadius.all(Radius.circular(8)),
         );
       case InputVariant.subtle:
         return OutlineInputBorder(
-          borderSide: BorderSide.none,
+          borderSide: hasError
+              ? BorderSide(color: Colors.red.shade600, width: 1.2)
+              : BorderSide.none,
           borderRadius: BorderRadius.circular(8),
         );
       case InputVariant.flushed:
-        return const UnderlineInputBorder(
-          borderSide: BorderSide(color: Color(0xFF006A71), width: 1.2),
+        return UnderlineInputBorder(
+          borderSide: BorderSide(
+            color: hasError ? Colors.red.shade600 : Color(0xFF006A71),
+            width: 1.2,
+          ),
+        );
+    }
+  }
+
+  InputBorder? _getErrorBorder() {
+    switch (widget.variant) {
+      case InputVariant.outline:
+        return OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade600, width: 1.2),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        );
+      case InputVariant.subtle:
+        return OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade600, width: 1.2),
+          borderRadius: BorderRadius.circular(8),
+        );
+      case InputVariant.flushed:
+        return UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade600, width: 1.2),
+        );
+    }
+  }
+
+  InputBorder? _getFocusedErrorBorder() {
+    switch (widget.variant) {
+      case InputVariant.outline:
+        return OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade700, width: 1.5),
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        );
+      case InputVariant.subtle:
+        return OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade700, width: 1.5),
+          borderRadius: BorderRadius.circular(8),
+        );
+      case InputVariant.flushed:
+        return UnderlineInputBorder(
+          borderSide: BorderSide(color: Colors.red.shade700, width: 1.5),
         );
     }
   }
 
   Color? _getFillColor() {
-    if (variant == InputVariant.subtle) {
+    if (widget.variant == InputVariant.subtle) {
       return const Color(0xFFF1F5F9); // light gray background
     }
     return null;
   }
 
-  bool get _isFilled => variant == InputVariant.subtle;
+  bool get _isFilled => widget.variant == InputVariant.subtle;
+
+  Widget? _buildSuffixIcon() {
+    final hasError = widget.enableLiveValidation && _errorMessage != null;
+    final isValid =
+        widget.enableLiveValidation &&
+        _hasInteracted &&
+        widget.controller != null &&
+        widget.controller!.text.isNotEmpty &&
+        _errorMessage == null;
+
+    // Show validation icon if live validation is enabled and field has been interacted with
+    if (widget.enableLiveValidation &&
+        _hasInteracted &&
+        widget.controller != null &&
+        widget.controller!.text.isNotEmpty) {
+      return Icon(
+        isValid ? Icons.check_circle : Icons.error,
+        color: isValid ? Colors.green : Colors.red,
+      );
+    }
+
+    // Show custom suffix icon if provided
+    if (widget.suffixIcon != null) {
+      return GestureDetector(
+        onTap: widget.onSuffixIconPressed,
+        child: Icon(widget.suffixIcon, color: Color(0xFF6F7A88)),
+      );
+    }
+
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final hasError = widget.enableLiveValidation
+        ? _errorMessage != null
+        : false;
+
     return TextFormField(
-      obscureText: obscureText,
-      controller: controller,
-      keyboardType: keyboardType,
-      validator: validator,
+      obscureText: widget.obscureText,
+      controller: widget.controller,
+      keyboardType: widget.keyboardType,
+      validator: widget.validator,
+      autovalidateMode:
+          widget.autoValidateMode ??
+          (widget.enableLiveValidation
+              ? AutovalidateMode.onUserInteraction
+              : AutovalidateMode.disabled),
+      onChanged: _handleOnChanged,
       decoration: InputDecoration(
-        floatingLabelBehavior: variant == InputVariant.subtle
+        floatingLabelStyle: TextStyle(
+          color: _errorMessage != null ? Colors.red : Color(0xFF6F7A88),
+        ),
+        floatingLabelBehavior: widget.variant == InputVariant.subtle
             ? FloatingLabelBehavior.never
             : FloatingLabelBehavior.auto,
         filled: _isFilled,
@@ -90,20 +255,152 @@ class InputField extends StatelessWidget {
           vertical: 12,
           horizontal: 12,
         ),
-        labelText: label,
-        labelStyle: const TextStyle(color: Color(0xFF6F7A88)),
+        labelText: widget.label,
+        labelStyle: TextStyle(
+          color: _errorMessage != null ? Colors.red : Color(0xFF6F7A88),
+        ),
+        errorText: widget.enableLiveValidation && _hasInteracted
+            ? _errorMessage
+            : null,
         enabledBorder: _getEnabledBorder(),
         focusedBorder: _getFocusedBorder(),
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: Color(0xFF6F7A88))
+        errorBorder: _getErrorBorder(),
+        focusedErrorBorder: _getFocusedErrorBorder(),
+        prefixIcon: widget.prefixIcon != null
+            ? Icon(widget.prefixIcon, color: Color(0xFF6F7A88))
             : null,
-        suffixIcon: suffixIcon != null
-            ? IconButton(
-                icon: Icon(suffixIcon, color: Color(0xFF6F7A88)),
-                onPressed: onSuffixIconPressed,
-              )
-            : null,
+        suffixIcon: _buildSuffixIcon(),
       ),
     );
+  }
+}
+
+// Example usage
+class InputFieldDemo extends StatefulWidget {
+  @override
+  _InputFieldDemoState createState() => _InputFieldDemoState();
+}
+
+class _InputFieldDemoState extends State<InputFieldDemo> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
+
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your email';
+    }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter your password';
+    }
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
+    }
+    return null;
+  }
+
+  String? _validateUsername(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Username cannot be empty';
+    }
+    if (value.length < 3) {
+      return 'Username must be at least 3 characters';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(value)) {
+      return 'Username can only contain letters, numbers, and underscores';
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Custom InputField with Live Validation')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            // Outline variant with live validation
+            InputField(
+              label: 'Email',
+              prefixIcon: Icons.email,
+              controller: _emailController,
+              validator: _validateEmail,
+              enableLiveValidation: true,
+              keyboardType: TextInputType.emailAddress,
+              variant: InputVariant.outline,
+            ),
+
+            SizedBox(height: 16),
+
+            // Subtle variant with live validation
+            InputField(
+              label: 'Username',
+              prefixIcon: Icons.person,
+              controller: _usernameController,
+              validator: _validateUsername,
+              enableLiveValidation: true,
+              variant: InputVariant.subtle,
+            ),
+
+            SizedBox(height: 16),
+
+            // Flushed variant with live validation
+            InputField(
+              label: 'Password',
+              prefixIcon: Icons.lock,
+              controller: _passwordController,
+              validator: _validatePassword,
+              enableLiveValidation: true,
+              obscureText: true,
+              variant: InputVariant.flushed,
+            ),
+
+            SizedBox(height: 24),
+
+            ElevatedButton(
+              onPressed: () {
+                // You can still validate manually if needed
+                final emailError = _validateEmail(_emailController.text);
+                final usernameError = _validateUsername(
+                  _usernameController.text,
+                );
+                final passwordError = _validatePassword(
+                  _passwordController.text,
+                );
+
+                if (emailError == null &&
+                    usernameError == null &&
+                    passwordError == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('All fields are valid!')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fix the errors above')),
+                  );
+                }
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _usernameController.dispose();
+    super.dispose();
   }
 }
