@@ -11,7 +11,7 @@ class UserModel extends AppUser {
   final DateTime birthDate;
   final double bmi;
   final double height;
-  final String weight;
+  final double weight;
   final List<String> workoutType;
 
   UserModel({
@@ -80,7 +80,7 @@ class UserModel extends AppUser {
       birthDate: DateTime(2000, 1, 1),
       bmi: 0,
       height: 0,
-      weight: '',
+      weight: 0,
       workoutType: [],
     );
   }
