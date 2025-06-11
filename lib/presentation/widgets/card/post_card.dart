@@ -334,6 +334,7 @@ class PostCard extends StatefulWidget {
 class _PostCardState extends State<PostCard> {
   late bool isLiked;
   late int likeCount;
+  bool isFollowing = false;
   final user = authService.value.getCurrentUser();
 
   @override
@@ -341,6 +342,7 @@ class _PostCardState extends State<PostCard> {
     super.initState();
     isLiked = widget.data.likedByUids.contains(user?.uid);
     likeCount = widget.data.likedByUids.length;
+    _loadFollowingStatus();
   }
 
   Future<void> _handleLike() async {
@@ -371,6 +373,57 @@ class _PostCardState extends State<PostCard> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Failed to toggle like')));
+    }
+  }
+
+  Future<void> _handleFollow() async {
+    if (user == null || widget.data.social.uid == user!.uid) return;
+
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+
+    try {
+      await repository.toggleFollowing(
+        userId: user!.uid,
+        followingId: widget.data.social.uid,
+      );
+
+      if (!mounted) return;
+
+      await _loadFollowingStatus();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Follow/unfollow action failed. Please try again.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _loadFollowingStatus() async {
+    if (user == null || widget.data.social.uid == user!.uid) return;
+
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+
+    try {
+      final following = await repository.checkIfFollowing(
+        user!.uid,
+        widget.data.social.uid,
+      );
+
+      if (mounted) {
+        setState(() {
+          isFollowing = following;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking follow status: $e');
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not check follow status')));
     }
   }
 
@@ -440,25 +493,30 @@ class _PostCardState extends State<PostCard> {
                           ),
                         ),
 
-                        Container(
-                          padding: EdgeInsets.zero,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.add,
-                                color: Color(0xFF006A71),
-                                size: 18,
-                              ),
-                              Text(
-                                'Follow',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF006A71),
+                        !isFollowing
+                            ? Container(
+                                padding: EdgeInsets.zero,
+                                child: TextButton(
+                                  onPressed: _handleFollow,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.add,
+                                        color: Color(0xFF006A71),
+                                        size: 18,
+                                      ),
+                                      Text(
+                                        'Follow',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF006A71),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
+                              )
+                            : SizedBox.shrink(), // renders nothing if following
                       ],
                     ),
                   ),

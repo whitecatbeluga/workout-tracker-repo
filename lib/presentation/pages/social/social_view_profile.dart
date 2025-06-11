@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
 import 'package:workout_tracker_repo/domain/entities/social_with_user.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
@@ -211,32 +212,97 @@ class TotalCount extends StatelessWidget {
   }
 }
 
-class VisitProfilePage extends StatelessWidget {
+class VisitProfilePage extends StatefulWidget {
   final String? name;
 
   const VisitProfilePage({super.key, this.name});
 
   @override
-  Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments;
+  State<VisitProfilePage> createState() => _VisitProfilePageState();
+}
+
+class _VisitProfilePageState extends State<VisitProfilePage> {
+  bool isFollowing = false;
+  final user = authService.value.getCurrentUser();
+
+  String? id;
+  String? firstName;
+  String? lastName;
+  String? userName;
+  String? email;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Delay until context is available, then extract route arguments
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments;
+      if (args != null && args is Map<String, dynamic>) {
+        setState(() {
+          id = args['id'] as String?;
+          firstName = args['firstName'] as String?;
+          lastName = args['lastName'] as String?;
+          userName = args['userName'] as String?;
+          email = args['email'] as String?;
+        });
+
+        _loadFollowingStatus();
+      }
+    });
+  }
+
+  Future<void> _loadFollowingStatus() async {
+    if (user == null) return;
 
     final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
-    if (args == null || args is! Map<String, dynamic>) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Visit Profile')),
-        body: const Center(child: Text('No profile data found')),
+    try {
+      final following = await repository.checkIfFollowing(user!.uid, id!);
+
+      if (mounted) {
+        setState(() {
+          isFollowing = following;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking follow status: $e');
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Could not check follow status')));
+    }
+  }
+
+  Future<void> _handleFollow() async {
+    if (user == null) return;
+
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+
+    try {
+      await repository.toggleFollowing(userId: user!.uid, followingId: id!);
+
+      if (!mounted) return;
+
+      await _loadFollowingStatus();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Follow/unfollow action failed. Please try again.'),
+        ),
       );
     }
+  }
 
-    final id = args['id'] as String?;
-    final firstName = args['firstName'] as String?;
-    final lastName = args['lastName'] as String?;
-    final userName = args['userName'] as String?;
-    final email = args['email'] as String?;
+  @override
+  Widget build(BuildContext context) {
+    final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
     if (id == null) {
-      return const Scaffold(body: Center(child: Text('User ID not provided')));
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -270,14 +336,17 @@ class VisitProfilePage extends StatelessWidget {
                 width: double.infinity,
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: Button(
-                  label: 'Follow',
-                  onPressed: () {},
-                  variant: ButtonVariant.secondary,
+                  label: !isFollowing ? 'Follow' : 'Following',
+                  onPressed: _handleFollow,
+                  variant: !isFollowing
+                      ? ButtonVariant.secondary
+                      : ButtonVariant.gray,
                 ),
               ),
+
               Expanded(
                 child: StreamBuilder<List<SocialWithUser>>(
-                  stream: repository.fetchUserPublicWorkouts(id),
+                  stream: repository.fetchUserPublicWorkouts(id!),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
