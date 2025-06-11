@@ -20,20 +20,16 @@ class FormValidators {
 
   // Email uniqueness validation (async)
   static Future<String?> validateEmailUniqueness(String email) async {
-    try {
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .get();
+    final querySnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .where('email', isEqualTo: email)
+        .get();
 
-      if (querySnapshot.docs.isNotEmpty) {
-        return 'Email already exists';
-      }
-
-      return null;
-    } catch (e) {
-      return 'Error checking email availability';
+    if (querySnapshot.docs.isNotEmpty) {
+      return 'Email already exists';
     }
+
+    return null;
   }
 
   // Password validation
