@@ -20,7 +20,9 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final authRepo = AuthRepositoryImpl(AuthService());
-  final _formKey = GlobalKey<FormState>();
+  final _formKey1 = GlobalKey<FormState>();
+  final _formKey2 = GlobalKey<FormState>();
+  final _formKey3 = GlobalKey<FormState>();
 
   // Controllers
   final _emailController = TextEditingController();
@@ -39,7 +41,6 @@ class _RegisterPageState extends State<RegisterPage> {
   List<String> selectedWorkoutTypes = [];
   DateTime? birthDate;
   bool _isLoading = false;
-  bool _passwordVisible = false;
 
   // Calculate BMI
   double _calculateBMI() {
@@ -62,9 +63,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate() || birthDate == null) return;
-
     setState(() => _isLoading = true);
+    // await Future.delayed(const Duration(seconds: 3));
 
     try {
       final user = UserModel(
@@ -88,6 +88,7 @@ class _RegisterPageState extends State<RegisterPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully!')),
       );
+
       Navigator.pushReplacementNamed(context, '/');
     } on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,112 +138,109 @@ class _RegisterPageState extends State<RegisterPage> {
         title: const Text('Register'),
         backgroundColor: Colors.white,
       ),
-      body: Form(
-        key: _formKey,
-        child: CustomStepper(
-          steps: [
-            StepperStep(
-              title: 'Account Information',
-              content: _buildAccountStep(),
-            ),
-            StepperStep(
-              title: 'Personal Information',
-              content: _buildPersonalStep(),
-            ),
-            StepperStep(
-              title: 'Health Information',
-              content: _buildHealthStep(),
-            ),
-            StepperStep(
-              title: 'Review Information',
-              content: _buildReviewStep(),
-            ),
-          ],
-          onCompleted: () async {
-            // Validate email uniqueness
-            String? emailError = await FormValidators.validateEmailUniqueness(
-              _emailController.text,
-            );
+      body: CustomStepper(
+        isLoading: _isLoading,
+        steps: [
+          StepperStep(
+            title: 'Account Information',
+            content: _buildAccountStep(),
+            validator: () {
+              return _formKey1.currentState?.validate() ?? false;
+            },
+          ),
+          StepperStep(
+            title: 'Personal Information',
+            content: _buildPersonalStep(),
+            validator: () {
+              return _formKey2.currentState?.validate() ?? false;
+            },
+          ),
+          StepperStep(
+            title: 'Health Information',
+            content: _buildHealthStep(),
+            validator: () {
+              return _formKey3.currentState?.validate() ?? false;
+            },
+          ),
+          StepperStep(title: 'Review Information', content: _buildReviewStep()),
+        ],
+        onCompleted: () async {
+          // Validate email uniqueness
+          String? emailError = await FormValidators.validateEmailUniqueness(
+            _emailController.text,
+          );
 
-            if (emailError != null) {
-              // error message
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(emailError),
-                  backgroundColor: Colors.red,
-                  behavior: SnackBarBehavior.floating,
-                  showCloseIcon: true,
-                ),
-              );
-
-              return;
-            }
-
-            // await _register();
-
+          if (emailError != null) {
+            // error message
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Registered Successfully!')),
+              SnackBar(
+                content: Text(emailError),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+                showCloseIcon: true,
+              ),
             );
-          },
-        ),
+
+            return;
+          }
+
+          await _register();
+        },
       ),
     );
   }
 
-  // ElevatedButton(
-  //   onPressed: _isLoading ? null : _register,
-  //   child: _isLoading
-  //       ? const CircularProgressIndicator(color: Colors.white)
-  //       : const Text('REGISTER'),
-  // ),
-
   Widget _buildAccountStep() {
     return Center(
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader('Let\'s get you set up!'),
+      child: Form(
+        key: _formKey1,
+        child: Column(
+          spacing: 16,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader('Let\'s get you set up!'),
 
-          InputField(
-            controller: _userNameController,
-            label: 'Username',
-            prefixIcon: Icons.person,
-            validator: FormValidators.validateUsername,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) =>
-                setState(() => _userNameController.text = value),
-          ),
-
-          InputField(
-            controller: _emailController,
-            label: 'Email Address',
-            prefixIcon: Icons.email,
-            keyboardType: TextInputType.emailAddress,
-            validator: FormValidators.validateEmail,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) => setState(() => _emailController.text = value),
-          ),
-
-          PasswordField(
-            controller: _passwordController,
-            label: 'Password',
-            validator: FormValidators.validatePassword,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-          ),
-
-          PasswordField(
-            controller: _confirmPasswordController,
-            label: 'Confirm Password',
-            validator: (value) => FormValidators.validateConfirmPassword(
-              value,
-              _passwordController.text,
+            InputField(
+              controller: _userNameController,
+              label: 'Username',
+              prefixIcon: Icons.person,
+              validator: FormValidators.validateUsername,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) =>
+                  setState(() => _userNameController.text = value),
             ),
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-          ),
-        ],
+
+            InputField(
+              controller: _emailController,
+              label: 'Email Address',
+              prefixIcon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
+              validator: FormValidators.validateEmail,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) =>
+                  setState(() => _emailController.text = value),
+            ),
+
+            PasswordField(
+              controller: _passwordController,
+              label: 'Password',
+              validator: FormValidators.validatePassword,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+            ),
+
+            PasswordField(
+              controller: _confirmPasswordController,
+              label: 'Confirm Password',
+              validator: (value) => FormValidators.validateConfirmPassword(
+                value,
+                _passwordController.text,
+              ),
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -258,78 +256,83 @@ class _RegisterPageState extends State<RegisterPage> {
     ];
 
     return SingleChildScrollView(
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader("Tell us more about yourself!"),
+      child: Form(
+        key: _formKey2,
+        child: Column(
+          spacing: 16,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader("Tell us more about yourself!"),
 
-          InputField(
-            controller: _firstNameController,
-            label: 'First Name',
-            prefixIcon: Icons.person,
-            validator: FormValidators.validateFirstName,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) =>
-                setState(() => _firstNameController.text = value),
-          ),
-
-          InputField(
-            controller: _lastNameController,
-            label: 'Last Name',
-            prefixIcon: Icons.person_outline,
-            validator: FormValidators.validateLastName,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) =>
-                setState(() => _lastNameController.text = value),
-          ),
-
-          InputField(
-            controller: _addressController,
-            label: 'Address',
-            prefixIcon: Icons.location_on,
-            validator: FormValidators.validateAddress,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) =>
-                setState(() => _addressController.text = value),
-          ),
-
-          CustomDropdownField(
-            label: 'Select Gender',
-            options: genderOptions,
-            prefixIcon: Icons.transgender,
-            isMultiSelect: false,
-            selectedValues: _genderController.text.isNotEmpty
-                ? [_genderController.text]
-                : null,
-            onChanged: (values) {
-              setState(() {
-                _genderController.text = values.isNotEmpty ? values.first : '';
-              });
-            },
-            validator: FormValidators.validateGender,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-          ),
-
-          CustomDatePicker(
-            label: 'Birthdate',
-            config: DatePickerConfig(
-              mode: CustomDatePickerMode.date,
-              lastDate: DateTime.now(),
-              primaryColor: Colors.blue,
-              use24HourFormat: false,
+            InputField(
+              controller: _firstNameController,
+              label: 'First Name',
+              prefixIcon: Icons.person,
+              validator: FormValidators.validateFirstName,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) =>
+                  setState(() => _firstNameController.text = value),
             ),
-            prefixIcon: Icons.calendar_month_outlined,
-            onDateSelected: (date) => setState(() => birthDate = date),
-            selectedDate: birthDate,
-            validator: (value) => FormValidators.validateBirthDate(birthDate),
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-          ),
-        ],
+
+            InputField(
+              controller: _lastNameController,
+              label: 'Last Name',
+              prefixIcon: Icons.person_outline,
+              validator: FormValidators.validateLastName,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) =>
+                  setState(() => _lastNameController.text = value),
+            ),
+
+            InputField(
+              controller: _addressController,
+              label: 'Address',
+              prefixIcon: Icons.location_on,
+              // validator: FormValidators.validateAddress,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) =>
+                  setState(() => _addressController.text = value),
+            ),
+
+            CustomDropdownField(
+              label: 'Select Gender',
+              options: genderOptions,
+              prefixIcon: Icons.transgender,
+              isMultiSelect: false,
+              selectedValues: _genderController.text.isNotEmpty
+                  ? [_genderController.text]
+                  : null,
+              onChanged: (values) {
+                setState(() {
+                  _genderController.text = values.isNotEmpty
+                      ? values.first
+                      : '';
+                });
+              },
+              validator: FormValidators.validateGender,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+            ),
+
+            CustomDatePicker(
+              label: 'Birthdate',
+              config: DatePickerConfig(
+                mode: CustomDatePickerMode.date,
+                lastDate: DateTime.now(),
+                primaryColor: Colors.blue,
+                use24HourFormat: false,
+              ),
+              prefixIcon: Icons.calendar_month_outlined,
+              onDateSelected: (date) => setState(() => birthDate = date),
+              selectedDate: birthDate,
+              validator: (value) => FormValidators.validateBirthDate(birthDate),
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -408,71 +411,80 @@ class _RegisterPageState extends State<RegisterPage> {
     ];
 
     return Center(
-      child: Column(
-        spacing: 16,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader('What is your physical details?'),
+      child: Form(
+        key: _formKey3,
+        child: Column(
+          spacing: 16,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader('What is your physical details?'),
 
-          InputField(
-            controller: _heightController,
-            label: 'Height',
-            prefixIcon: Icons.height,
-            keyboardType: TextInputType.number,
-            validator: FormValidators.validateHeight,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) {
-              setState(() => _heightController.text = value);
-              _calculateBMI();
-            },
-          ),
+            InputField(
+              controller: _heightController,
+              label: 'Height',
+              prefixIcon: Icons.height,
+              keyboardType: TextInputType.number,
+              validator: FormValidators.validateHeight,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) {
+                setState(() => _heightController.text = value);
+                _calculateBMI();
+              },
+            ),
 
-          InputField(
-            controller: _weightController,
-            label: 'Weight',
-            prefixIcon: Icons.scale,
-            keyboardType: TextInputType.number,
-            validator: FormValidators.validateWeight,
-            autoValidateMode: AutovalidateMode.onUserInteraction,
-            enableLiveValidation: true,
-            onChanged: (value) {
-              setState(() => _weightController.text = value);
-              _calculateBMI();
-            },
-          ),
+            InputField(
+              controller: _weightController,
+              label: 'Weight',
+              prefixIcon: Icons.scale,
+              keyboardType: TextInputType.number,
+              validator: FormValidators.validateWeight,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (value) {
+                setState(() => _weightController.text = value);
+                _calculateBMI();
+              },
+            ),
 
-          CustomDropdownField(
-            label: 'Activity Level',
-            options: activityLevelOptions,
-            prefixIcon: Icons.monitor_heart,
-            isMultiSelect: false,
+            CustomDropdownField(
+              label: 'Activity Level',
+              options: activityLevelOptions,
+              prefixIcon: Icons.monitor_heart,
+              isMultiSelect: false,
+              selectedValues: _activityLevelController.text.isNotEmpty
+                  ? [_activityLevelController.text]
+                  : null,
+              validator: FormValidators.validateActivityLevel,
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              enableLiveValidation: true,
+              onChanged: (values) {
+                setState(() {
+                  _activityLevelController.text = values.isNotEmpty
+                      ? values.first
+                      : '';
+                });
+              },
+            ),
 
-            selectedValues: _activityLevelController.text.isNotEmpty
-                ? [_activityLevelController.text]
-                : null,
-            onChanged: (values) {
-              setState(() {
-                _activityLevelController.text = values.isNotEmpty
-                    ? values.first
-                    : '';
-              });
-            },
-          ),
-
-          CustomDropdownField(
-            selectedValues: selectedWorkoutTypes,
-            label: 'Select Workout Types',
-            options: workoutTypeOptions,
-            prefixIcon: Icons.fitness_center,
-            isMultiSelect: true,
-            onChanged: (values) {
-              setState(() {
-                selectedWorkoutTypes = values;
-              });
-            },
-          ),
-        ],
+            CustomDropdownField(
+              selectedValues: selectedWorkoutTypes,
+              label: 'Select Workout Types',
+              options: workoutTypeOptions,
+              prefixIcon: Icons.fitness_center,
+              isMultiSelect: true,
+              validator: (values) =>
+                  FormValidators.validateWorkoutTypes(selectedWorkoutTypes),
+              autoValidateMode: AutovalidateMode.onUserInteraction,
+              // enableLiveValidation: true,
+              onChanged: (values) {
+                setState(() {
+                  selectedWorkoutTypes = values;
+                });
+              },
+            ),
+          ],
+        ),
       ),
     );
   }

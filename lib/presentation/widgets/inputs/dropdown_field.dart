@@ -97,6 +97,8 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
   }
 
   void _toggleDropdown() {
+    if (!mounted) return;
+
     if (_isOpen) {
       _closeDropdown();
     } else {
@@ -109,6 +111,7 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
 
     _overlayEntry = _createOverlayEntry();
     Overlay.of(context).insert(_overlayEntry!);
+
     if (mounted) {
       setState(() {
         _isOpen = true;
@@ -121,10 +124,27 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
       _overlayEntry!.remove();
       _overlayEntry = null;
     }
+
     if (mounted) {
       setState(() {
         _isOpen = false;
       });
+    }
+  }
+
+  void _closeDropdownSilently() {
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
+    _isOpen = false;
+  }
+
+  void _refreshOverlay() {
+    if (_overlayEntry != null && _isOpen) {
+      _overlayEntry!.remove();
+      _overlayEntry = _createOverlayEntry();
+      Overlay.of(context).insert(_overlayEntry!);
     }
   }
 
@@ -135,13 +155,11 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
 
     return OverlayEntry(
       builder: (context) => GestureDetector(
-        onTap: _closeDropdown, // Close dropdown when tapping outside
+        onTap: _closeDropdown,
         behavior: HitTestBehavior.translucent,
         child: Stack(
           children: [
-            // Invisible full-screen area to capture outside taps
             Positioned.fill(child: Container(color: Colors.transparent)),
-            // Actual dropdown content
             Positioned(
               left: offset.dx,
               top: offset.dy + size.height + 4,
@@ -160,143 +178,100 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
                         width: 1,
                       ),
                     ),
-                    child: StatefulBuilder(
-                      builder: (context, setOverlayState) {
-                        return ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: widget.options.length,
-                          itemBuilder: (context, index) {
-                            final option = widget.options[index];
-                            final isSelected = _selectedValues.contains(
-                              option.value,
-                            );
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: widget.options.length,
+                      itemBuilder: (context, index) {
+                        final option = widget.options[index];
+                        final isSelected = _selectedValues.contains(
+                          option.value,
+                        );
 
-                            return InkWell(
-                              onTap: () {
-                                List<String> newSelectedValues;
-
-                                if (widget.isMultiSelect) {
-                                  newSelectedValues = List.from(
-                                    _selectedValues,
-                                  );
-                                  if (newSelectedValues.contains(
-                                    option.value,
-                                  )) {
-                                    newSelectedValues.remove(option.value);
-                                  } else {
-                                    newSelectedValues.add(option.value);
-                                  }
-
-                                  // Update both overlay and main widget state
-                                  setOverlayState(() {
-                                    _selectedValues = newSelectedValues;
-                                  });
-
-                                  if (mounted) {
-                                    setState(() {
-                                      _controller.text = _getDisplayText();
-                                    });
-                                  }
-                                } else {
-                                  newSelectedValues = [option.value];
-                                  if (mounted) {
-                                    setState(() {
-                                      _selectedValues = newSelectedValues;
-                                      _controller.text = _getDisplayText();
-                                    });
-                                  }
-                                  _closeDropdown();
-                                }
-
-                                widget.onChanged?.call(newSelectedValues);
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (widget.isMultiSelect) ...[
-                                      Container(
-                                        width: 18,
-                                        height: 18,
-                                        decoration: BoxDecoration(
-                                          border: Border.all(
-                                            color: isSelected
-                                                ? const Color(0xFF006A71)
-                                                : const Color(0xFFCBD5E1),
-                                            width: 1.5,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            3,
-                                          ),
-                                          color: isSelected
-                                              ? const Color(0xFF006A71)
-                                              : Colors.transparent,
-                                        ),
-                                        child: isSelected
-                                            ? const Icon(
-                                                Icons.check,
-                                                size: 12,
-                                                color: Colors.white,
-                                              )
-                                            : null,
+                        return InkWell(
+                          onTap: () => _selectOption(option.value),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                if (widget.isMultiSelect) ...[
+                                  Container(
+                                    width: 18,
+                                    height: 18,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? const Color(0xFF006A71)
+                                            : const Color(0xFFCBD5E1),
+                                        width: 1.5,
                                       ),
-                                      const SizedBox(width: 12),
-                                    ],
-                                    if (option.icon != null) ...[
-                                      Icon(
-                                        option.icon,
-                                        size: 20,
-                                        color: const Color(0xFF6F7A88),
-                                      ),
-                                      const SizedBox(width: 12),
-                                    ],
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            option.label,
-                                            style: TextStyle(
-                                              color:
-                                                  isSelected &&
-                                                      !widget.isMultiSelect
-                                                  ? const Color(0xFF006A71)
-                                                  : const Color(0xFF1F2937),
-                                              fontSize: 15,
-                                              fontWeight:
-                                                  isSelected &&
-                                                      !widget.isMultiSelect
-                                                  ? FontWeight.w500
-                                                  : FontWeight.w400,
-                                            ),
-                                          ),
-                                          if (option.description != null)
-                                            Text(
-                                              option.description ?? '',
-                                              style: const TextStyle(
-                                                color: Color(0xFF6F7A88),
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                      borderRadius: BorderRadius.circular(3),
+                                      color: isSelected
+                                          ? const Color(0xFF006A71)
+                                          : Colors.transparent,
                                     ),
-                                    if (!widget.isMultiSelect && isSelected)
-                                      const Icon(
-                                        Icons.check,
-                                        size: 16,
-                                        color: Color(0xFF006A71),
+                                    child: isSelected
+                                        ? const Icon(
+                                            Icons.check,
+                                            size: 12,
+                                            color: Colors.white,
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                if (option.icon != null) ...[
+                                  Icon(
+                                    option.icon,
+                                    size: 20,
+                                    color: const Color(0xFF6F7A88),
+                                  ),
+                                  const SizedBox(width: 12),
+                                ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        option.label,
+                                        style: TextStyle(
+                                          color:
+                                              isSelected &&
+                                                  !widget.isMultiSelect
+                                              ? const Color(0xFF006A71)
+                                              : const Color(0xFF1F2937),
+                                          fontSize: 15,
+                                          fontWeight:
+                                              isSelected &&
+                                                  !widget.isMultiSelect
+                                              ? FontWeight.w500
+                                              : FontWeight.w400,
+                                        ),
                                       ),
-                                  ],
+                                      if (option.description != null)
+                                        Text(
+                                          option.description!,
+                                          style: const TextStyle(
+                                            color: Color(0xFF6F7A88),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
+                                if (!widget.isMultiSelect && isSelected)
+                                  const Icon(
+                                    Icons.check,
+                                    size: 16,
+                                    color: Color(0xFF006A71),
+                                  ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                     ),
@@ -322,16 +297,27 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
       } else {
         newSelectedValues.add(value);
       }
+
+      // Update state and refresh overlay for multi-select
+      _selectedValues = newSelectedValues;
+      _controller.text = _getDisplayText();
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      // Refresh the overlay to show updated checkbox states
+      _refreshOverlay();
     } else {
       newSelectedValues = [value];
-      _closeDropdown();
-    }
+      _selectedValues = newSelectedValues;
+      _controller.text = _getDisplayText();
 
-    if (mounted) {
-      setState(() {
-        _selectedValues = newSelectedValues;
-        _controller.text = _getDisplayText();
-      });
+      if (mounted) {
+        setState(() {});
+      }
+
+      _closeDropdown();
     }
 
     widget.onChanged?.call(newSelectedValues);
@@ -339,7 +325,7 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
 
   @override
   void dispose() {
-    _closeDropdown();
+    _closeDropdownSilently();
     _controller.dispose();
     super.dispose();
   }
@@ -351,7 +337,6 @@ class _CustomDropdownFieldState extends State<CustomDropdownField> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Using your existing InputField component
           GestureDetector(
             onTap: _toggleDropdown,
             child: AbsorbPointer(
