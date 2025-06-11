@@ -24,6 +24,6 @@ class Social {
     required this.workoutDescription,
     required this.workoutDuration,
     required this.workoutTitle,
-    required this.likedByUids,
+    required this.likedByUids, 
   });
 }

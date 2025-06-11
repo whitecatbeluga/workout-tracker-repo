@@ -176,6 +176,7 @@ class SocialRepositoryImpl implements SocialRepository {
     }
   }
 
+  @override
   Future<List<CommentsWithUser>> fetchCommentsWithUserData(
     String workoutId,
   ) async {
@@ -261,6 +262,64 @@ class SocialRepositoryImpl implements SocialRepository {
       } else {
         await likeRef.set({'liked_by': userId});
       }
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  Future<void> toggleFollowing({
+    required String userId,
+    required String followingId,
+  }) async {
+    try {
+      final followingRef = _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .doc(followingId);
+
+      final followerRef = _firestore
+          .collection('users')
+          .doc(followingId)
+          .collection('followers')
+          .doc(userId);
+
+      final followingDoc = await followingRef.get();
+
+      if (followingDoc.exists) {
+        // Unfollow
+        await Future.wait([followingRef.delete(), followerRef.delete()]);
+      } else {
+        // Follow
+        final timestamp = {'followed_at': FieldValue.serverTimestamp()};
+        await Future.wait([
+          followingRef.set(timestamp),
+          followerRef.set(timestamp),
+        ]);
+      }
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (_) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
+  Future<bool> checkIfFollowing(
+    String currentUserId,
+    String otherUserId,
+  ) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(currentUserId)
+          .collection('following')
+          .doc(otherUserId)
+          .get();
+
+      return doc.exists;
     } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
     } catch (_) {
