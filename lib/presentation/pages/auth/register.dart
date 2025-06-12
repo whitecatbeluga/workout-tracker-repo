@@ -64,7 +64,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _register() async {
     setState(() => _isLoading = true);
-    // await Future.delayed(const Duration(seconds: 3));
 
     try {
       final user = UserModel(
@@ -96,21 +95,6 @@ class _RegisterPageState extends State<RegisterPage> {
       );
     } finally {
       setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _pickBirthDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1900),
-      lastDate: now,
-    );
-    if (picked != null) {
-      setState(() {
-        birthDate = picked;
-      });
     }
   }
 
@@ -290,7 +274,7 @@ class _RegisterPageState extends State<RegisterPage> {
               controller: _addressController,
               label: 'Address',
               prefixIcon: Icons.location_on,
-              // validator: FormValidators.validateAddress,
+              validator: FormValidators.validateAddress,
               autoValidateMode: AutovalidateMode.onUserInteraction,
               enableLiveValidation: true,
               onChanged: (value) =>
@@ -519,15 +503,12 @@ class _RegisterPageState extends State<RegisterPage> {
           _buildHeader(
             'Almost done, ${_userNameController.text}! Review your Information below',
           ),
-
           _buildReviewItem(
             Icons.switch_account_rounded,
             'Username',
             _userNameController.text,
           ),
-
           _buildReviewItem(Icons.email, 'Email Address', _emailController.text),
-
           _buildReviewItem(
             Icons.account_circle_rounded,
             'Full Name',
@@ -544,7 +525,6 @@ class _RegisterPageState extends State<RegisterPage> {
             'Birthdate',
             formatDate(birthDate),
           ),
-
           _buildReviewItem(
             Icons.height,
             'Height',
@@ -555,14 +535,12 @@ class _RegisterPageState extends State<RegisterPage> {
             'Weight',
             '${_weightController.text} kg',
           ),
-
           _buildReviewItem(
             Icons.health_and_safety,
             'BMI',
             _bmiController.text,
             showBadge: true,
           ),
-
           _buildReviewItem(
             Icons.monitor_heart,
             'Activity Level',
