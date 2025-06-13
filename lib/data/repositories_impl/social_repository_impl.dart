@@ -73,6 +73,76 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  Stream<List<SocialWithUser>> fetchFollowingWorkouts(String userId) async* {
+    try {
+      final followingSnap = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .get();
+
+      final followingIds = followingSnap.docs.map((e) => e.id).toList();
+
+      if (followingIds.isEmpty) {
+        yield [];
+      } else {
+        yield* _firestore
+            .collection('workouts')
+            .where('user_id', whereIn: followingIds)
+            .orderBy('created_at', descending: true)
+            .snapshots()
+            .asyncMap((snapshot) async {
+              final results = await Future.wait(
+                snapshot.docs.map((doc) async {
+                  final social = SocialModel.fromMap(doc.data(), doc.id);
+                  final userDoc = await _firestore
+                      .collection('users')
+                      .doc(social.uid)
+                      .get();
+
+                  final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                  final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                  final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                  final email = userDoc.data()?['email'] ?? 'Unknown';
+
+                  final likesSnapshot = await _firestore
+                      .collection('workouts')
+                      .doc(doc.id)
+                      .collection('likes')
+                      .get();
+
+                  final likedByUids = likesSnapshot.docs
+                      .map((like) => like.data()['liked_by'] as String)
+                      .toList();
+
+                  final commentsSnapshot = await _firestore
+                      .collection('workouts')
+                      .doc(doc.id)
+                      .collection('comments')
+                      .get();
+
+                  return SocialWithUser(
+                    social: social,
+                    userName: userName,
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    likedByUids: likedByUids,
+                    commentCount: commentsSnapshot.size,
+                  );
+                }),
+              );
+              return results;
+            });
+      }
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
   Stream<List<SocialWithUser>> fetchUserPublicWorkouts(String userId) {
     try {
       return _firestore
