@@ -140,7 +140,9 @@ class SocialPageState extends State<SocialPage> {
             ),
             Expanded(
               child: StreamBuilder<List<SocialWithUser>>(
-                stream: repository.fetchPublicWorkouts(user!.uid),
+                stream: isFollowingSelected
+                    ? repository.fetchFollowingWorkouts(user!.uid)
+                    : repository.fetchPublicWorkouts(user!.uid),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
