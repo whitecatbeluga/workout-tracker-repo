@@ -69,11 +69,11 @@ class DefaultFirebaseOptions {
 
   static FirebaseOptions get windows => FirebaseOptions(
     apiKey: dotenv.env['WINDOWS_API_KEY']!,
-    appId: dotenv.env['WINDOS_API_ID']!,
+    appId: dotenv.env['WINDOWS_API_ID']!,
     messagingSenderId: dotenv.env['WINDOWS_MESSAGING_SENDER_ID']!,
     projectId: dotenv.env['WINDOWS_PROJECT_ID']!,
     authDomain: dotenv.env['WINDOWS_AUTH_DOMAIN'],
-    storageBucket: dotenv.env['WINDWOS_STORAGE_BUCKET'],
+    storageBucket: dotenv.env['WINDOWS_STORAGE_BUCKET'],
     measurementId: dotenv.env['WINDOWS_MEASUREMENT_ID'],
   );
 }
