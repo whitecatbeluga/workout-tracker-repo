@@ -3,6 +3,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/routes/profile/profile.dart';
 
 class Settings extends StatelessWidget {
   const Settings({super.key});
@@ -55,7 +56,13 @@ class Settings extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: InkWell(
                 borderRadius: BorderRadius.circular(10),
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    ProfileRoutes.editProfile,
+                    (route) => false,
+                  );
+                },
                 child: Container(
                   decoration: BoxDecoration(
                     border: Border.all(width: 1, color: Colors.grey.shade300),
