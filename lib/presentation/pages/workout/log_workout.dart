@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
-import '../../domain/entities/exercise.dart';
 
 class SetEntry {
   final int setNumber;
