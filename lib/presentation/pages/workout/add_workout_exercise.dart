@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:workout_tracker_repo/routes/workout/workout.dart';
-import '../../../core/providers/workout_exercise_provider.dart';
-import '../../domain/entities/exercise.dart';
+import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/domain/entities/exercise.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/exercise_service.dart';
 
 class AddWorkoutExercise extends StatefulWidget {
   const AddWorkoutExercise({super.key});
@@ -12,28 +14,66 @@ class AddWorkoutExercise extends StatefulWidget {
 
 class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
   final TextEditingController _searchController = TextEditingController();
+  final exerciseRepo = ExerciseRepositoryImpl(ExerciseService());
+  final Set<Exercise> selectedExercises = <Exercise>{};
 
-  // ✅ CHANGE: Track actual Exercise objects, not just names
-  Set<Exercise> selectedExercises = {};
+  // Add these for manual stream management
+  List<Exercise> exercises = [];
+  bool isLoading = true;
+  String? errorMessage;
+  StreamSubscription<List<Exercise>>? _streamSubscription;
 
-  // Sample exercises
-  final List<Exercise> exercises = [
-    Exercise(
-      name: 'Beginner Routine',
-      description: 'A routine for beginners.',
-      icon: Icons.fitness_center,
-    ),
-    Exercise(
-      name: 'Dumbbell Goblet Squat',
-      description: 'Works lower body strength.',
-      icon: Icons.fitness_center,
-    ),
-    Exercise(
-      name: 'Dumbbell Goblet Press',
-      description: 'Builds shoulder strength.',
-      icon: Icons.fitness_center,
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _listenToExercises();
+  }
+
+  void _listenToExercises() {
+    _streamSubscription = exerciseRepo.getExercises().listen(
+      (exerciseList) {
+        if (mounted) {
+          setState(() {
+            exercises = exerciseList;
+            selectedExercises.addAll(
+              workoutExercises.value.where(
+                (e) => exercises.any((ex) => ex.id == e.id),
+              ),
+            );
+            isLoading = false;
+            errorMessage = null;
+          });
+        }
+      },
+      onError: (error) {
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+            errorMessage = error.toString();
+          });
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _streamSubscription?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // This method now only updates selectedExercises, not the exercise list
+  void _toggleExerciseSelection(Exercise exercise) {
+    setState(() {
+      final isSelected = selectedExercises.any((e) => e.id == exercise.id);
+      if (isSelected) {
+        selectedExercises.removeWhere((e) => e.id == exercise.id);
+      } else {
+        selectedExercises.add(exercise);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +87,7 @@ class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: () {
-                  Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
-                },
+                onTap: () => Navigator.pop(context),
                 child: const Padding(
                   padding: EdgeInsets.only(left: 5.0),
                   child: Text(
@@ -60,7 +98,7 @@ class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
               ),
               const Text('Add Exercise', style: TextStyle(fontSize: 20)),
               GestureDetector(
-                onTap: () {}, // This could be another route or action
+                onTap: () {},
                 child: Container(
                   margin: const EdgeInsets.only(right: 5),
                   child: const Text(
@@ -100,7 +138,7 @@ class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
             ),
           ),
 
-          // Exercise Buttons (not yet functional)
+          // Exercise Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Row(
@@ -166,108 +204,19 @@ class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
           ),
           const SizedBox(height: 16),
 
-          // List of Exercises
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: exercises.length,
-              itemBuilder: (context, index) {
-                final exercise = exercises[index];
-                final isSelected = selectedExercises.contains(
-                  exercise,
-                ); // ✅ CHANGE
+          // List of Exercises - No more StreamBuilder here!
+          Expanded(child: _buildExerciseList()),
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: const Color(0xFFCBD5E1),
-                      width: 1,
-                    ),
-                  ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[200],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        exercise.icon,
-                        color: Colors.grey[600],
-                        size: 24,
-                      ),
-                    ),
-                    title: Text(
-                      exercise.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    subtitle: Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        exercise.description,
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      ),
-                    ),
-                    trailing: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFF4ECDC4)
-                              : Colors.grey,
-                          width: 2,
-                        ),
-                        color: isSelected
-                            ? const Color(0xFF4ECDC4)
-                            : Colors.transparent,
-                      ),
-                      child: isSelected
-                          ? const Icon(
-                              Icons.check,
-                              color: Colors.white,
-                              size: 16,
-                            )
-                          : null,
-                    ),
-                    onTap: () {
-                      setState(() {
-                        if (isSelected) {
-                          selectedExercises.remove(exercise);
-                        } else {
-                          selectedExercises.add(exercise);
-                        }
-                      });
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-
-          // ✅ FINAL BUTTON TO ADD EXERCISES TO GLOBAL NOTIFIER
+          // Add Button
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             child: ElevatedButton(
               onPressed: selectedExercises.isNotEmpty
                   ? () {
-                      // ✅ Push selected to global ValueNotifier
-                      workoutExercises.value = [
-                        ...workoutExercises.value,
-                        ...selectedExercises,
-                      ];
-
-                      Navigator.pop(context); // or navigate elsewhere
+                      // Add to global notifier
+                      workoutExercises.value = [...selectedExercises];
+                      Navigator.pop(context);
                     }
                   : null,
               style: ElevatedButton.styleFrom(
@@ -291,6 +240,138 @@ class _AddWorkoutExerciseState extends State<AddWorkoutExercise> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildExerciseList() {
+    if (isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error, color: Colors.red, size: 64),
+            const SizedBox(height: 16),
+            Text(
+              'Error: $errorMessage',
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  isLoading = true;
+                  errorMessage = null;
+                });
+                _listenToExercises();
+              },
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (exercises.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.fitness_center, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No exercises found',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      itemCount: exercises.length,
+      itemBuilder: (context, index) {
+        final exercise = exercises[index];
+        return _buildExerciseCard(exercise);
+      },
+    );
+  }
+
+  Widget _buildExerciseCard(Exercise exercise) {
+    final isSelected = selectedExercises.any((e) => e.id == exercise.id);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              Icons.fitness_center,
+              color: Colors.grey[600],
+              size: 24,
+            ),
+          ),
+          title: Text(
+            exercise.name,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+          subtitle: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              exercise.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.3,
+              ),
+            ),
+          ),
+          trailing: Container(
+            width: 24,
+            height: 24,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? const Color(0xFF4ECDC4) : Colors.grey[400]!,
+                width: 2,
+              ),
+              color: isSelected ? const Color(0xFF4ECDC4) : Colors.transparent,
+            ),
+            child: isSelected
+                ? const Icon(Icons.check, color: Colors.white, size: 16)
+                : null,
+          ),
+          onTap: () => _toggleExerciseSelection(exercise),
+        ),
       ),
     );
   }

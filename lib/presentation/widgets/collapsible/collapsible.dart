@@ -26,7 +26,6 @@ class _CollapsibleState extends State<Collapsible> {
       child: Column(
         children: [
           Row(
-            spacing: 10,
             children: [
               Expanded(
                 child: GestureDetector(
@@ -57,7 +56,7 @@ class _CollapsibleState extends State<Collapsible> {
           AnimatedCrossFade(
             firstChild: Container(),
             secondChild: Container(
-              margin: const EdgeInsets.only(top: 16.0),
+              margin: const EdgeInsets.only(top: 10.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.all(Radius.circular(8.0)),
@@ -70,7 +69,7 @@ class _CollapsibleState extends State<Collapsible> {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(14.0),
               alignment: Alignment.centerLeft,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,6 +108,7 @@ class _CollapsibleState extends State<Collapsible> {
                     onPressed: () {},
                     prefixIcon: Icons.play_arrow_rounded,
                     fullWidth: true,
+                    size: ButtonSize.large,
                   ),
                 ],
               ),
