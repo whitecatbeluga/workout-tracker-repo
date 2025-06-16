@@ -332,17 +332,18 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: TotalCount(routineCount: 14, workoutCount: 12),
               ),
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 10),
-                child: Button(
-                  label: !isFollowing ? 'Follow' : 'Following',
-                  onPressed: _handleFollow,
-                  variant: !isFollowing
-                      ? ButtonVariant.secondary
-                      : ButtonVariant.gray,
+              if (id != user!.uid)
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Button(
+                    label: !isFollowing ? 'Follow' : 'Following',
+                    onPressed: _handleFollow,
+                    variant: !isFollowing
+                        ? ButtonVariant.secondary
+                        : ButtonVariant.gray,
+                  ),
                 ),
-              ),
 
               Expanded(
                 child: StreamBuilder<List<SocialWithUser>>(
