@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
@@ -172,9 +173,16 @@ class _LogWorkoutState extends State<LogWorkout> {
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
-      leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Color(0xFF323232)),
-        onPressed: () => Navigator.pushNamed(context, AuthRoutes.home),
+      leading: BackButton(
+        onPressed: Navigator.canPop(context)
+            ? () => Navigator.pop(context)
+            : () {
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/',
+                  (route) => false,
+                );
+              },
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,7 +278,7 @@ class _LogWorkoutState extends State<LogWorkout> {
             label: 'Add Exercise',
             prefixIcon: Icons.add,
             onPressed: () =>
-                Navigator.pushNamed(context, WorkoutRoutes.addWorkoutExercise),
+                Navigator.pushNamed(context, ExerciseRoutes.addWorkoutExercise),
             variant: ButtonVariant.secondary,
             fullWidth: true,
           ),
