@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
+import 'package:workout_tracker_repo/presentation/pages/exercises/add_exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/add_exercise_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
@@ -12,6 +13,7 @@ import 'package:workout_tracker_repo/presentation/pages/workout/add_workout_exer
 import 'package:workout_tracker_repo/presentation/pages/workout/log_workout.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/save_workout_exercise.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
@@ -117,18 +119,18 @@ class RouteGenerator {
           ifAllowed: (_) => const LogWorkout(),
           ifDenied: (_) => const LoginPage(),
         );
-      case WorkoutRoutes.addWorkoutExercise:
-        return guardedRoute(
-          settings: settings,
-          guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const AddWorkoutExercise(),
-          ifDenied: (_) => const LoginPage(),
-        );
       case WorkoutRoutes.saveWorkout:
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const SaveWorkout(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ExerciseRoutes.addWorkoutExercise:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const AddExercise(),
           ifDenied: (_) => const LoginPage(),
         );
       default:
