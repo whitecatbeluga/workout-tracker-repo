@@ -14,4 +14,7 @@ abstract class SocialRepository {
   });
   Future<void> toggleLike({required String workoutId, required String userId});
   Future<bool> checkIfFollowing(String currentUserId, String otherUserId);
+  Future<List<Map<String, dynamic>>> searchUsers(String query);
+  Future<List<Map<String, dynamic>>> fetchRecents();
+  Future<void> clearAllRecents();
 }
