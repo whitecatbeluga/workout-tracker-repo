@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/errors/custom_error_exception.dart';
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 
@@ -137,6 +138,109 @@ class SocialRepositoryImpl implements SocialRepository {
             });
       }
     } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> searchUsers(String query) async {
+    if (query.isEmpty) {
+      return [];
+    }
+
+    try {
+      QuerySnapshot firstNameSnap = await _firestore
+          .collection('users')
+          .where('first_name', isGreaterThanOrEqualTo: query)
+          .where('first_name', isLessThan: query + '\uf8ff')
+          .get();
+
+      QuerySnapshot lastNameSnap = await _firestore
+          .collection('users')
+          .where('last_name', isGreaterThanOrEqualTo: query)
+          .where('last_name', isLessThan: query + '\uf8ff')
+          .get();
+
+      final allDocs = {
+        for (var doc in [...firstNameSnap.docs, ...lastNameSnap.docs])
+          doc.id: {"id": doc.id, ...doc.data() as Map<String, dynamic>},
+      }.values.toList();
+
+      return allDocs;
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
+  Future<List<Map<String, dynamic>>> fetchRecents() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return [];
+    }
+
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('recents')
+          .get();
+
+      List<Map<String, dynamic>> results = [];
+
+      for (var doc in snapshot.docs) {
+        String visitedUserId = doc.id;
+        Timestamp searchedAt = doc['searched_at'];
+
+        DocumentSnapshot userSnap = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(visitedUserId)
+            .get();
+
+        if (userSnap.exists && userSnap.data() != null) {
+          final data = userSnap.data() as Map<String, dynamic>;
+          results.add({
+            "id": userSnap.id,
+            "account_picture": data['account_picture'] as String? ?? '',
+            "first_name": data['first_name'] as String? ?? '',
+            "last_name": data['last_name'] as String? ?? '',
+            "user_name": data['user_name'] as String? ?? '',
+            "email": data['email'] as String? ?? '',
+            "searched_at": searchedAt,
+          });
+        }
+      }
+      results.sort((a, b) => b['searched_at'].compareTo(a['searched_at']));
+      return results;
+    } on FirebaseException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
+  Future<void> clearAllRecents() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return;
+    }
+
+    try {
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.uid)
+          .collection('recents')
+          .get();
+
+      for (var doc in snapshot.docs) {
+        await doc.reference.delete();
+      }
+    } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
     } catch (e) {
       throw CustomErrorException.fromCode(500);
