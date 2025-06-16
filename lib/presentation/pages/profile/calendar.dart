@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/calendar_workoutdata.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/calendar_workout_card.dart';
+import 'package:workout_tracker_repo/routes/social/social.dart';
 
 class CalendarPage extends StatefulWidget {
   const CalendarPage({super.key});
@@ -10,25 +14,28 @@ class CalendarPage extends StatefulWidget {
 }
 
 class _CalendarPageState extends State<CalendarPage> {
-  final List<CalendarWorkoutDates> workoutDates = [];
-  late Map<String, List<DateTime>> grouped;
-  late List<String> sortedKeys;
-  late int initialPage;
+  final user = authService.value.getCurrentUser();
+  final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
+  int restDays = 0;
   late final PageController _pageController;
-  bool isInitialized = false;
-  bool isLoading = false;
+  late final Stream<List<CalendarWorkoutDates>> _workoutStream;
+
   bool _showWorkoutModal = false;
   Map<String, dynamic> selectedWorkout = {'date': '', 'workout': ''};
 
   @override
   void initState() {
     super.initState();
-    initializeCalendar();
+    // Initialize the stream
+    _workoutStream = repository.fetchGroupedWorkouts(user!.uid);
+
+    // Initialize page controller
+    _pageController = PageController(initialPage: 0);
   }
 
   @override
   void dispose() {
-    _pageController.dispose(); // clean up the PageController
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -38,119 +45,83 @@ class _CalendarPageState extends State<CalendarPage> {
     });
   }
 
-  Future<void> fetchWorkoutDates() async {
-    await Future.delayed(const Duration(seconds: 1)); // Simulate loading
+  // Process workout dates for calendar display
+  Map<String, dynamic> _processWorkoutDates(
+    List<CalendarWorkoutDates> workoutDates,
+  ) {
+    // ✅ Merge workoutDates with same date (ignore time part)
+    final mergedMap = <DateTime, CalendarWorkoutDates>{};
 
-    //SAMPLE DATA ONLY
-    workoutDates.addAll([
-      CalendarWorkoutDates(
-        date: DateTime(2025, 6, 9, 8, 0),
-        workouts: [
-          UserWorkout(
-            id: '1',
-            title: 'Cardio Day',
-            duration: '45 mins',
-            volume: '80 kg',
-            sets: '4',
-            createdAt: DateTime(2025, 6, 11, 7, 0).toString(),
-          ),
-          UserWorkout(
-            id: '2',
-            title: 'Leg Day',
-            duration: '40 mins',
-            volume: '80 kg',
-            sets: '3',
-            createdAt: DateTime(2025, 6, 11, 8, 0).toString(),
-          ),
-          UserWorkout(
-            id: '3',
-            title: 'Back Day',
-            duration: '40 mins',
-            volume: '30 kg',
-            sets: '3',
-            createdAt: DateTime(2025, 6, 11, 9, 0).toString(),
-          ),
-        ],
-        images: [
-          'https://static.nike.com/a/images/f_auto/dpr_3.0,cs_srgb/h_363,c_limit/e88291f0-bc7b-4eae-b8ae-8fdedb43e9c9/should-i-run-before-or-after-a-strength-workout-%C2%A0.jpg',
-        ],
-      ),
-      CalendarWorkoutDates(
-        date: DateTime(2025, 6, 11, 9, 0),
-        workouts: [
-          UserWorkout(
-            id: '1',
-            title: 'Chest Day',
-            duration: '45 mins',
-            volume: '69 kg',
-            sets: '4',
-            createdAt: DateTime(2025, 6, 11, 9, 0).toString(),
-          ),
-          UserWorkout(
-            id: '2',
-            title: 'Shoulder Day',
-            duration: '40 mins',
-            volume: '23 kg',
-            sets: '3',
-            createdAt: DateTime(2025, 6, 11, 10, 0).toString(),
-          ),
-        ],
-        images: [],
-      ),
-    ]);
-  }
+    for (var entry in workoutDates) {
+      final dateOnly = DateTime(
+        entry.date.year,
+        entry.date.month,
+        entry.date.day,
+      );
 
-  Future<void> initializeCalendar() async {
-    setState(() => isLoading = true);
-
-    try {
-      await fetchWorkoutDates(); // Wait until data is fetched
-      // Now process the dates
-      grouped = <String, List<DateTime>>{};
-      for (var date in workoutDates.map((date) => date.date)) {
-        final key = "${date.year}-${date.month.toString().padLeft(2, '0')}";
-        grouped.putIfAbsent(key, () => []).add(date);
+      if (mergedMap.containsKey(dateOnly)) {
+        mergedMap[dateOnly]!.workouts.addAll(entry.workouts);
+        mergedMap[dateOnly]!.images.addAll(entry.images);
+      } else {
+        mergedMap[dateOnly] = CalendarWorkoutDates(
+          date: dateOnly,
+          workouts: [...entry.workouts],
+          images: [...entry.images],
+        );
       }
-
-      final now = DateTime.now();
-      final currentKey = "${now.year}-${now.month.toString().padLeft(2, '0')}";
-
-      if (!grouped.containsKey(currentKey)) {
-        grouped[currentKey] = [];
-      }
-
-      final workoutMonths = <int>[];
-      for (var dates in grouped.values) {
-        for (var date in dates) {
-          if (!workoutMonths.contains(date.month)) {
-            workoutMonths.add(date.month);
-          }
-        }
-      }
-      workoutMonths.sort();
-
-      if (workoutMonths.isNotEmpty) {
-        int earliestMonth = workoutMonths.first;
-        int latestMonth = workoutMonths.last;
-
-        for (var month = earliestMonth; month <= latestMonth; month++) {
-          final key =
-              "${DateTime.now().year}-${month.toString().padLeft(2, '0')}";
-          grouped.putIfAbsent(key, () => []);
-        }
-      }
-
-      sortedKeys = grouped.keys.toList()..sort();
-      initialPage = sortedKeys.indexOf(currentKey);
-      _pageController = PageController(initialPage: initialPage);
-    } catch (e) {
-      // print('Initialization error: $e');
-    } finally {
-      setState(() {
-        isInitialized = true;
-        isLoading = false;
-      });
     }
+
+    final processedWorkoutDates = mergedMap.values.toList();
+
+    // 🔽 Process for grouped view
+    final grouped = <String, List<DateTime>>{};
+    for (var date in processedWorkoutDates.map((date) => date.date)) {
+      final key = "${date.year}-${date.month.toString().padLeft(2, '0')}";
+      grouped.putIfAbsent(key, () => []).add(date);
+    }
+
+    // Add current month if not in grouped
+    final now = DateTime.now();
+    final currentKey = "${now.year}-${now.month.toString().padLeft(2, '0')}";
+
+    if (!grouped.containsKey(currentKey)) {
+      grouped[currentKey] = [];
+    }
+
+    // Ensure all months between first and last are present
+    final workoutMonths = <int>[];
+    for (var dates in grouped.values) {
+      for (var date in dates) {
+        if (!workoutMonths.contains(date.month)) {
+          workoutMonths.add(date.month);
+        }
+      }
+    }
+    workoutMonths.sort();
+
+    if (workoutMonths.isNotEmpty) {
+      int earliestMonth = workoutMonths.first;
+      int latestMonth = workoutMonths.last;
+
+      for (var month = earliestMonth; month <= latestMonth; month++) {
+        final key =
+            "${DateTime.now().year}-${month.toString().padLeft(2, '0')}";
+        grouped.putIfAbsent(key, () => []);
+      }
+    }
+
+    final sortedKeys = grouped.keys.toList()..sort();
+    final initialPage = sortedKeys.indexOf(currentKey);
+    restDays = DateTime.now()
+        .difference(processedWorkoutDates.map((date) => date.date).first)
+        .inDays;
+
+    return {
+      'workoutDates': processedWorkoutDates,
+      'grouped': grouped,
+      'sortedKeys': sortedKeys,
+      'initialPage': initialPage >= 0 ? initialPage : 0,
+    };
   }
 
   @override
@@ -172,22 +143,80 @@ class _CalendarPageState extends State<CalendarPage> {
             ),
             centerTitle: true,
           ),
-          body: isLoading || !isInitialized
-              ? _buildBackdropLoader()
-              : Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildStreakSection(),
-                    const SizedBox(height: 24),
-                    _buildCalendarSection(),
-                    const SizedBox(height: 24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton(
-                            onPressed: () {
+          body: StreamBuilder<List<CalendarWorkoutDates>>(
+            stream: _workoutStream,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return _buildBackdropLoader();
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, size: 48, color: Colors.red),
+                      SizedBox(height: 16),
+                      Text('Error loading workouts: ${snapshot.error}'),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            // This will rebuild the StreamBuilder and retry the stream
+                          });
+                        },
+                        child: Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final workoutDates = snapshot.data ?? [];
+              final processedData = _processWorkoutDates(workoutDates);
+
+              final processedWorkoutDates =
+                  processedData['workoutDates'] as List<CalendarWorkoutDates>;
+              final grouped =
+                  processedData['grouped'] as Map<String, List<DateTime>>;
+              final sortedKeys = processedData['sortedKeys'] as List<String>;
+              final initialPage = processedData['initialPage'] as int;
+
+              // Update page controller if needed (only once when data loads)
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_pageController.hasClients &&
+                    initialPage >= 0 &&
+                    initialPage < sortedKeys.length) {
+                  final currentPage = _pageController.page?.round() ?? 0;
+                  if (currentPage != initialPage) {
+                    _pageController.animateToPage(
+                      initialPage,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                }
+              });
+
+              return Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildStreakSection(processedWorkoutDates),
+                  const SizedBox(height: 24),
+                  _buildCalendarSection(
+                    workoutDates: processedWorkoutDates,
+                    grouped: grouped,
+                    sortedKeys: sortedKeys,
+                  ),
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () {
+                            if (_pageController.hasClients) {
                               final previousPage = (_pageController.page! - 1)
                                   .toInt();
                               if (previousPage >= 0) {
@@ -197,54 +226,62 @@ class _CalendarPageState extends State<CalendarPage> {
                                   curve: Curves.easeInOut,
                                 );
                               }
-                            },
-                            child: _calendarNavigatorButton(
-                              '',
-                              Colors.black,
-                              Icons.arrow_back_ios,
-                              Colors.black,
-                              true,
-                            ),
+                            }
+                          },
+                          child: _calendarNavigatorButton(
+                            '',
+                            Colors.black,
+                            Icons.arrow_back_ios,
+                            Colors.black,
+                            true,
                           ),
-                          ElevatedButton(
-                            onPressed: () {
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            if (_pageController.hasClients &&
+                                initialPage >= 0) {
                               _pageController.animateToPage(
                                 initialPage,
                                 duration: const Duration(milliseconds: 500),
                                 curve: Curves.easeInOut,
                               );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF006A71),
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Today'),
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF006A71),
+                            foregroundColor: Colors.white,
                           ),
-                          TextButton(
-                            onPressed: () {
+                          child: const Text('Today'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            if (_pageController.hasClients) {
                               final nextPage = (_pageController.page! + 1)
                                   .toInt();
-                              if (nextPage < grouped.keys.length) {
+                              if (nextPage < sortedKeys.length) {
                                 _pageController.animateToPage(
                                   nextPage,
                                   duration: const Duration(milliseconds: 500),
                                   curve: Curves.easeInOut,
                                 );
                               }
-                            },
-                            child: _calendarNavigatorButton(
-                              '',
-                              Colors.black,
-                              Icons.arrow_forward_ios,
-                              Colors.black,
-                              false,
-                            ),
+                            }
+                          },
+                          child: _calendarNavigatorButton(
+                            '',
+                            Colors.black,
+                            Icons.arrow_forward_ios,
+                            Colors.black,
+                            false,
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
         _buildViewWorkoutDayModal(
           isVisible: _showWorkoutModal,
@@ -273,8 +310,8 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildStreakSection() {
-    int streak = _calculateStreak();
+  Widget _buildStreakSection(List<CalendarWorkoutDates> workoutDates) {
+    int streak = _calculateStreak(workoutDates);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -321,8 +358,8 @@ class _CalendarPageState extends State<CalendarPage> {
                 ],
               ),
               child: _buildStreakAndRestCard(
-                '6',
-                'Days',
+                restDays.toString(),
+                restDays >= 2 ? 'Days' : 'Day',
                 'Rest',
                 Icons.nightlight_round,
                 Colors.teal,
@@ -346,7 +383,7 @@ class _CalendarPageState extends State<CalendarPage> {
     return weekOfYear;
   }
 
-  int _calculateStreak() {
+  int _calculateStreak(List<CalendarWorkoutDates> workoutDates) {
     if (workoutDates.isEmpty) return 0;
     // Group workout dates by week of year
     Set<String> weeksWithWorkouts = {};
@@ -485,13 +522,42 @@ class _CalendarPageState extends State<CalendarPage> {
     );
   }
 
-  Widget _buildCalendarSection() {
+  Widget _buildCalendarSection({
+    required List<CalendarWorkoutDates> workoutDates,
+    required Map<String, List<DateTime>> grouped,
+    required List<String> sortedKeys,
+  }) {
+    if (sortedKeys.isEmpty) {
+      return Container(
+        height: 380,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withAlpha((0.3 * 255).round()),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            'No workout data available',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+          ),
+        ),
+      );
+    }
+
     return SizedBox(
       height: 380,
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16),
         padding: EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 30),
-
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -518,6 +584,7 @@ class _CalendarPageState extends State<CalendarPage> {
               month: month,
               year: year,
               workoutDates: monthWorkouts,
+              allWorkoutDates: workoutDates,
             );
           },
         ),
@@ -529,6 +596,7 @@ class _CalendarPageState extends State<CalendarPage> {
     required int month,
     required int year,
     required List<DateTime> workoutDates,
+    required List<CalendarWorkoutDates> allWorkoutDates,
   }) {
     final List<List<String>> weeks = [];
     DateTime firstDay = DateTime(year, month, 1);
@@ -586,7 +654,7 @@ class _CalendarPageState extends State<CalendarPage> {
                           setState(() {
                             selectedWorkout['date'] =
                                 '${_monthName(month)} $day, $year, ';
-                            final match = this.workoutDates.firstWhere(
+                            final match = allWorkoutDates.firstWhere(
                               (element) =>
                                   element.date.year == year &&
                                   element.date.month == month &&
@@ -614,45 +682,20 @@ class _CalendarPageState extends State<CalendarPage> {
                       child: Container(
                         width: 32,
                         height: 32,
-
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          // ADD IMAGE HERE
-                          image:
-                              isWorkoutDay &&
-                                  this.workoutDates.any(
-                                    (element) =>
-                                        element.date ==
-                                            DateTime(
-                                              year,
-                                              month,
-                                              int.parse(day),
-                                            ) &&
-                                        element.images.isNotEmpty,
-                                  )
-                              ? DecorationImage(
-                                  image: NetworkImage(
-                                    this.workoutDates
-                                        .firstWhere(
-                                          (element) =>
-                                              element.date ==
-                                              DateTime(
-                                                year,
-                                                month,
-                                                int.parse(day),
-                                              ),
-                                        )
-                                        .images
-                                        .first,
-                                  ),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
                           color: isWorkoutDay
                               ? const Color(0xFFD86227)
                               : Colors.transparent,
+                          image: isWorkoutDay
+                              ? _getWorkoutImage(
+                                  year,
+                                  month,
+                                  day,
+                                  allWorkoutDates,
+                                )
+                              : null,
                         ),
-
                         child: Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
@@ -870,7 +913,32 @@ class _CalendarPageState extends State<CalendarPage> {
                                       'You got your workout done by ${_formatWorkoutTime(workout.createdAt)}',
                                   elevation: 1,
                                   margin: const EdgeInsets.only(bottom: 10),
-                                  onTap: () {},
+                                  onTap: () async {
+                                    final fetched = await repository
+                                        .fetchSocialWithUserByWorkoutId(
+                                          workout.id,
+                                        );
+                                    if (mounted) {
+                                      // Add the mounted check here
+                                      if (fetched != null) {
+                                        Navigator.pushNamed(
+                                          context,
+                                          SocialRoutes.viewPost,
+                                          arguments: fetched,
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Failed to load post.',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
                                 ),
                               ),
                             ],
@@ -884,5 +952,34 @@ class _CalendarPageState extends State<CalendarPage> {
             ],
           )
         : const SizedBox.shrink();
+  }
+
+  DecorationImage? _getWorkoutImage(
+    int year,
+    int month,
+    String day,
+    List<CalendarWorkoutDates> workoutDates,
+  ) {
+    if (day.isEmpty) return null;
+
+    final workoutData = workoutDates.firstWhere(
+      (element) =>
+          element.date.year == year &&
+          element.date.month == month &&
+          element.date.day == int.parse(day),
+      orElse: () => CalendarWorkoutDates(
+        date: DateTime(year, month, int.parse(day)),
+        workouts: [],
+        images: [],
+      ),
+    );
+    final validImage = workoutData.images.firstWhere(
+      (img) => img.trim().isNotEmpty,
+      orElse: () => '',
+    );
+
+    return validImage.isNotEmpty
+        ? DecorationImage(image: NetworkImage(validImage), fit: BoxFit.cover)
+        : null;
   }
 }

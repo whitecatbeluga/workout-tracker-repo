@@ -7,6 +7,7 @@ import '../models/social_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/comments.dart';
 import '../../data/models/comments_model.dart';
+import '../../presentation/domain/entities/calendar_workoutdata.dart';
 
 class SocialRepositoryImpl implements SocialRepository {
   final FirebaseFirestore _firestore;
@@ -324,6 +325,127 @@ class SocialRepositoryImpl implements SocialRepository {
       throw CustomErrorException.fromCode(400);
     } catch (_) {
       throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  Stream<List<CalendarWorkoutDates>> fetchGroupedWorkouts(String userId) {
+    return _firestore
+        .collection('workouts')
+        .where('user_id', isEqualTo: userId)
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          final Map<DateTime, List<QueryDocumentSnapshot<Map<String, dynamic>>>>
+          groupedByDate = {};
+
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final Timestamp ts = data['created_at'];
+            final DateTime fullDate = ts.toDate();
+
+            // Strip time: use only year, month, day
+            final DateTime dateOnly = DateTime(
+              fullDate.year,
+              fullDate.month,
+              fullDate.day,
+              fullDate.hour,
+              fullDate.minute,
+            );
+
+            groupedByDate.putIfAbsent(dateOnly, () => []).add(doc);
+          }
+
+          return groupedByDate.entries.map((entry) {
+            final date = entry.key;
+            final workouts = entry.value;
+
+            final userWorkouts = workouts.map((doc) {
+              final data = doc.data();
+
+              return UserWorkout(
+                id: doc.id,
+                title: data['workout_title'] ?? '',
+                duration: data['workout_duration']?.toString() ?? '',
+                volume: data['total_volume']?.toString() ?? '',
+                sets: data['total_sets']?.toString() ?? '',
+                createdAt: (data['created_at'] as Timestamp)
+                    .toDate()
+                    .toString(), // or format as needed
+              );
+            }).toList();
+
+            final List<String> images = [];
+
+            for (var doc in workouts) {
+              final data = doc.data();
+
+              final urls = data['image_urls'];
+              if (urls is List) {
+                for (var url in urls) {
+                  if (url is String) {
+                    images.add(url);
+                  }
+                }
+              }
+            }
+
+            return CalendarWorkoutDates(
+              date: date, // ✅ this is a proper DateTime with only Y/M/D
+              workouts: userWorkouts,
+              images: images.cast<String>(),
+            );
+          }).toList();
+        });
+  }
+
+  Future<SocialWithUser?> fetchSocialWithUserByWorkoutId(
+    String workoutId,
+  ) async {
+    try {
+      final doc = await _firestore.collection('workouts').doc(workoutId).get();
+      if (!doc.exists) return null;
+
+      final social = SocialModel.fromMap(doc.data()!, doc.id);
+
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(social.uid)
+          .get();
+      final userData = userDoc.data() ?? {};
+
+      final userName = userData['user_name'] ?? 'Unknown';
+      final firstName = userData['first_name'] ?? 'Unknown';
+      final lastName = userData['last_name'] ?? 'Unknown';
+      final email = userData['email'] ?? 'Unknown';
+
+      final likesSnapshot = await _firestore
+          .collection('workouts')
+          .doc(doc.id)
+          .collection('likes')
+          .get();
+
+      final likedByUids = likesSnapshot.docs
+          .map((likeDoc) => likeDoc.data()['liked_by'] as String)
+          .toList();
+
+      final commentsSnapshot = await _firestore
+          .collection('workouts')
+          .doc(doc.id)
+          .collection('comments')
+          .get();
+
+      return SocialWithUser(
+        social: social,
+        userName: userName,
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        likedByUids: likedByUids,
+        commentCount: commentsSnapshot.size,
+      );
+    } catch (e) {
+      print('Error fetching workout post: $e');
+      return null;
     }
   }
 }
