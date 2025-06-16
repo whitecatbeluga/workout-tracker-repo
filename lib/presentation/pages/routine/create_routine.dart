@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/routes/routine/routine.dart';
 
 class CreateRoutine extends StatefulWidget {
   const CreateRoutine({super.key});
@@ -20,7 +21,17 @@ class _CreateRoutineState extends State<CreateRoutine> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-                onTap: () {}, // your cancel action
+                onTap: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      '/',
+                      (route) => false,
+                    );
+                  }
+                },
                 child: Padding(
                   padding: const EdgeInsets.only(left: 5.0),
                   child: Text(
@@ -110,6 +121,8 @@ class _CreateRoutineState extends State<CreateRoutine> {
           prefixIcon: Icons.add,
           onPressed: () {},
           variant: ButtonVariant.secondary,
+          fullWidth: true,
+          size: ButtonSize.large,
         ),
       ),
     );

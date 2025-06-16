@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../domain/entities/program.dart';
@@ -54,79 +55,60 @@ class WorkoutPage extends StatelessWidget {
       ],
     );
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text(
           'Workout Tracker REPO',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          // IconButton(
-          //   icon: const Icon(Icons.logout),
-          //   tooltip: 'Logout',
-          //   onPressed: () async {
-          //     await authService.value.signOut();
-          //     Navigator.pushNamedAndRemoveUntil(
-          //       context,
-          //       AuthRoutes.login,
-          //       (route) => false,
-          //     );
-          //   },
-          // ),
-        ],
       ),
       body: SafeArea(
         child: Column(
+          spacing: 20,
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Container(
-              padding: EdgeInsets.all(10),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 6),
-                        child: Text(
-                          "Quick Start",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [_buildHeader("Quick Start")]),
                   Button(
-                    label: "Start Workout",
+                    prefixIcon: Icons.add,
+                    label: "Start Empty Workout",
                     onPressed: () {
                       Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
                     },
-                    variant: ButtonVariant.primary,
+                    variant: ButtonVariant.secondary,
                     fullWidth: true,
+                    size: ButtonSize.large,
                   ),
                 ],
               ),
             ),
             Container(
-              padding: EdgeInsets.all(10),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.only(bottom: 6),
-                        child: Text(
-                          "Routines",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
+                  Row(children: [_buildHeader("Routines")]),
                   Row(
                     children: [
                       Expanded(
                         child: Button(
-                          label: "Start Routine",
-                          onPressed: () {},
-                          variant: ButtonVariant.primary,
+                          label: "New Routine",
+                          onPressed: () {
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              RoutineRoutes.createRoutinePage,
+                              (route) => false,
+                            );
+                          },
+                          variant: ButtonVariant.secondary,
+                          size: ButtonSize.large,
+                          prefixIcon: Icons.grid_view,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       SizedBox(width: 10),
@@ -134,7 +116,11 @@ class WorkoutPage extends StatelessWidget {
                         child: Button(
                           label: "Explore",
                           onPressed: () {},
-                          variant: ButtonVariant.primary,
+                          variant: ButtonVariant.secondary,
+                          size: ButtonSize.large,
+                          prefixIcon: Icons.search,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
@@ -145,6 +131,16 @@ class WorkoutPage extends StatelessWidget {
             Collapsible(title: "Workout Details", program: programState),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(String label) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 6),
+      child: Text(
+        label,
+        style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
       ),
     );
   }
