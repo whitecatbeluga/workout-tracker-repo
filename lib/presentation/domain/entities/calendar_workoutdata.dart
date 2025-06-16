@@ -8,6 +8,10 @@ class CalendarWorkoutDates {
     required this.workouts,
     required this.images,
   });
+
+  @override
+  String toString() =>
+      'CalendarWorkoutDates(date: $date, workouts: $workouts, images: $images)';
 }
 
 class UserWorkout {
