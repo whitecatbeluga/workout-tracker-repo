@@ -1,8 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/workout_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/graphfilter.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/barchart.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
@@ -16,7 +19,9 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  String selectedFilter = 'Week';
   final user = authService.value.getCurrentUser();
+  final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
 
   final List<MenuItem> menuItems = const [
     MenuItem(
@@ -75,7 +80,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: SingleChildScrollView(
         child: Center(
           child: Column(
-            spacing: 26,
+            spacing: 15,
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -91,7 +96,46 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-              Padding(padding: EdgeInsets.all(16.0), child: BarChartWidget()),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: GraphFilter(
+                        selectedValue: selectedFilter,
+                        onChanged: (newValue) {
+                          setState(() {
+                            selectedFilter = newValue;
+                          });
+                        },
+                      ),
+                    ),
+                    StreamBuilder(
+                      stream: workoutRepo.getWorkoutsByUserId(user!.uid),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                CircularProgressIndicator(),
+                                SizedBox(height: 10),
+                                Text('Fetching your workouts...'),
+                              ],
+                            ),
+                          );
+                        }
+                        final workouts = snapshot.data ?? [];
+                        return BarChartWidget(
+                          filter: selectedFilter,
+                          workouts: workouts,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
               MenuList(menuItems: menuItems),
             ],
           ),

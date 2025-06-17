@@ -18,4 +18,10 @@ class WorkoutService {
 
   Stream<QuerySnapshot<Map<String, dynamic>>> getAll() =>
       _firestore.collection(_collection).snapshots();
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getByUserId(String userId) =>
+      _firestore
+          .collection(_collection)
+          .where('user_id', isEqualTo: userId)
+          .snapshots();
 }
