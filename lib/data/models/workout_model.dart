@@ -13,15 +13,16 @@ class WorkoutModel extends Workout {
       id: docId,
       name: data['name'] ?? '',
       duration: data['duration'] ?? 0,
-      createdAt: (data['createdAt']).toDate(),
+      createdAt: (data['created_at']).toDate(),
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'duration': duration,
-      'createdAt': createdAt,
-    };
+    return {'name': name, 'duration': duration, 'createdAt': createdAt};
+  }
+
+  @override
+  String toString() {
+    return 'WorkoutModel{id: $id, name: $name, duration: $duration, createdAt: $createdAt}';
   }
 }
