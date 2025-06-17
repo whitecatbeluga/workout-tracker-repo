@@ -177,8 +177,8 @@ class BarChartWidgetState extends State<BarChartWidget> {
       monthStats.add(MonthStat(month: month, count: count));
     }
 
-    print('WORKOUT DATES : $workoutDates');
-    print('MONTH STATS : $monthStats');
+    // print('WORKOUT DATES : $workoutDates');
+    // print('MONTH STATS : $monthStats');
   }
 }
 
