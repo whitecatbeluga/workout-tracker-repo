@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
-import 'package:workout_tracker_repo/routes/routine/routine.dart';
+import 'package:workout_tracker_repo/presentation/widgets/card/log_exercise_card.dart';
+import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 
 class CreateRoutine extends StatefulWidget {
   const CreateRoutine({super.key});
@@ -10,6 +12,8 @@ class CreateRoutine extends StatefulWidget {
 }
 
 class _CreateRoutineState extends State<CreateRoutine> {
+  final Map<String, List<SetEntry>> exerciseSets = {};
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -87,26 +91,9 @@ class _CreateRoutineState extends State<CreateRoutine> {
             ),
             SizedBox(height: 20.0),
             Expanded(
-              child: Column(
-                children: [
-                  SizedBox(height: 10.0),
-                  Icon(
-                    Icons.fitness_center_rounded,
-                    size: 90.0,
-                    color: Color(0xFF626262),
-                  ),
-                  SizedBox(height: 10.0),
-                  SizedBox(height: 10.0),
-                  Text(
-                    'Get Started',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 5.0),
-                  Text(
-                    'Get started by adding an exercise to your routine.',
-                    style: TextStyle(fontSize: 14, color: Color(0xFF000000)),
-                  ),
-                ],
+              child: LogExerciseCard(
+                workoutExercises: routineExercises,
+                exerciseSets: exerciseSets,
               ),
             ),
           ],
@@ -119,7 +106,11 @@ class _CreateRoutineState extends State<CreateRoutine> {
         child: Button(
           label: 'Add Exercise',
           prefixIcon: Icons.add,
-          onPressed: () {},
+          onPressed: () => Navigator.pushNamed(
+            context,
+            ExerciseRoutes.addWorkoutExercise,
+            arguments: {'isLogWorkout': false},
+          ),
           variant: ButtonVariant.secondary,
           fullWidth: true,
           size: ButtonSize.large,
