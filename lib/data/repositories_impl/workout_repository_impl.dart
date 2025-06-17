@@ -84,4 +84,19 @@ class WorkoutRepositoryImpl implements WorkoutRepository {
       throw CustomErrorException.fromCode(500);
     }
   }
+
+  @override
+  Stream<List<Workout>> getWorkoutsByUserId(String userId) {
+    try {
+      return _service.getByUserId(userId).map((snapshot) {
+        return snapshot.docs.map((doc) {
+          return WorkoutModel.fromMap(doc.data(), doc.id);
+        }).toList();
+      });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 }

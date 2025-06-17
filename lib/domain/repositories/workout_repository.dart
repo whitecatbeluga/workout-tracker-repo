@@ -6,4 +6,5 @@ abstract class WorkoutRepository {
   Future<void> deleteWorkout(String id);
   Future<Workout?> getWorkoutById(String id);
   Stream<List<Workout>> getWorkouts();
+  Stream<List<Workout>> getWorkoutsByUserId(String userId);
 }
