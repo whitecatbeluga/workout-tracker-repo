@@ -2,6 +2,7 @@ import './social.dart';
 
 class SocialWithUser {
   final Social social;
+  final String accountPicture;
   final String userName;
   final String firstName;
   final String lastName;
@@ -11,6 +12,7 @@ class SocialWithUser {
 
   SocialWithUser({
     required this.social,
+    required this.accountPicture,
     required this.userName,
     required this.firstName,
     required this.lastName,

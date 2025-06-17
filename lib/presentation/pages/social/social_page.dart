@@ -34,9 +34,30 @@ class SocialPageState extends State<SocialPage> {
           child: Row(
             spacing: 10,
             children: [
-              CircleAvatar(
-                backgroundImage: AssetImage("assets/images/guy1.png"),
+              ValueListenableBuilder<UserProfile?>(
+                valueListenable: currentUserProfile,
+                builder: (context, profile, _) {
+                  return CircleAvatar(
+                    backgroundImage:
+                        (profile != null &&
+                            profile.accountPicture != null &&
+                            profile.accountPicture!.isNotEmpty)
+                        ? NetworkImage(profile.accountPicture!)
+                        : null,
+                    child:
+                        (profile == null ||
+                            profile.accountPicture == null ||
+                            profile.accountPicture!.isEmpty)
+                        ? Text(
+                            profile?.userName.isNotEmpty == true
+                                ? profile!.userName[0].toUpperCase()
+                                : '?',
+                          )
+                        : null,
+                  );
+                },
               ),
+
               ValueListenableBuilder<UserProfile?>(
                 valueListenable: currentUserProfile,
                 builder: (context, profile, _) {
@@ -177,6 +198,7 @@ class SocialPageState extends State<SocialPage> {
                             SocialRoutes.visitProfile,
                             arguments: {
                               'id': post.social.uid,
+                              'accountPicture': post.accountPicture,
                               'firstName': post.firstName,
                               'lastName': post.lastName,
                               'userName': post.userName,

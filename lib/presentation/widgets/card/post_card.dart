@@ -459,14 +459,23 @@ class _PostCardState extends State<PostCard> {
                               child: Row(
                                 spacing: 10,
                                 children: [
-                                  Container(
-                                    padding: EdgeInsets.zero,
-                                    child: CircleAvatar(
-                                      backgroundImage: AssetImage(
-                                        'assets/images/guy1.png',
-                                      ),
-                                    ),
+                                  CircleAvatar(
+                                    backgroundImage:
+                                        widget.data.accountPicture != null
+                                        ? NetworkImage(
+                                            widget.data.accountPicture,
+                                          )
+                                        : null,
+                                    child: widget.data.accountPicture != null
+                                        ? Text(
+                                            widget.data.userName.isNotEmpty
+                                                ? widget.data.userName[0]
+                                                      .toUpperCase()
+                                                : '?',
+                                          )
+                                        : null,
                                   ),
+
                                   Container(
                                     padding: EdgeInsets.zero,
                                     child: Column(
