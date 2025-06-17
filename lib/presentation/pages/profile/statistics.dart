@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/workout_service.dart';
+import 'package:workout_tracker_repo/domain/entities/workout.dart';
 
-class StatisticsPage extends StatelessWidget {
+class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
+
+  @override
+  State<StatisticsPage> createState() => _StatisticsPageState();
+}
+
+class _StatisticsPageState extends State<StatisticsPage> {
+  final user = authService.value.getCurrentUser();
+  final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
+  late List<Workout> workouts = [];
 
   @override
   Widget build(BuildContext context) {
@@ -19,30 +32,70 @@ class StatisticsPage extends StatelessWidget {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(15.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Workout Frequency Section
-            _buildWorkoutFrequencySection(),
-            const SizedBox(height: 15),
+        child: StreamBuilder(
+          stream: workoutRepo.getWorkoutsByUserId(user!.uid),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: const [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 10),
+                    Text('Calculating your workouts...'),
+                  ],
+                ),
+              );
+            }
+            final workouts = snapshot.data ?? [];
 
-            // Workout Summary Section
-            _buildWorkoutSummarySection(),
-            const SizedBox(height: 15),
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildWorkoutFrequencySection(workouts),
+                const SizedBox(height: 15),
 
-            // // Volume over time Section
-            _buildVolumeOverTimeSection(),
-            const SizedBox(height: 15),
+                _buildWorkoutSummarySection(workouts),
+                const SizedBox(height: 15),
 
-            // // Routine usage stats Section
-            _buildRoutineUsageStatsSection(),
-          ],
+                _buildVolumeOverTimeSection(workouts),
+                const SizedBox(height: 15),
+
+                _buildRoutineUsageStatsSection(),
+              ],
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildWorkoutFrequencySection() {
+  Widget _buildWorkoutFrequencySection(List<Workout> workouts) {
+    DateTime startOfThisWeek = DateTime.now().subtract(
+      Duration(days: DateTime.now().weekday - 1),
+    );
+    DateTime startOfLastWeek = startOfThisWeek.subtract(
+      const Duration(days: 7),
+    );
+    DateTime endOfLastWeek = startOfThisWeek.subtract(const Duration(days: 1));
+    int thisWeekCount = workouts
+        .where(
+          (workout) =>
+              workout.createdAt.day >= startOfThisWeek.day &&
+              workout.createdAt.month >= startOfThisWeek.month,
+        )
+        .length;
+    int lastWeekCount = workouts
+        .where(
+          (workout) =>
+              workout.createdAt.day >= startOfLastWeek.day &&
+              workout.createdAt.month >= startOfLastWeek.month &&
+              workout.createdAt.day <= endOfLastWeek.day &&
+              workout.createdAt.month <= endOfLastWeek.month,
+        )
+        .length;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -90,7 +143,7 @@ class StatisticsPage extends StatelessWidget {
                 child: _buildFrequencyCard(
                   'This week',
                   '12',
-                  'exercises',
+                  'routines',
                   3,
                   Colors.teal,
                 ),
@@ -99,10 +152,10 @@ class StatisticsPage extends StatelessWidget {
               Expanded(
                 child: _buildFrequencyCard(
                   'This week',
-                  '20',
+                  thisWeekCount.toString(),
                   'workouts',
-                  9,
-                  Colors.teal,
+                  thisWeekCount - lastWeekCount,
+                  thisWeekCount - lastWeekCount > 0 ? Colors.teal : Colors.red,
                 ),
               ),
             ],
@@ -153,7 +206,9 @@ class StatisticsPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: _statIndicator(
-                  icon: Icons.arrow_upward,
+                  icon: changeColor == Colors.teal
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward,
                   value: change.toString(),
                   color: changeColor,
                 ),
@@ -165,7 +220,16 @@ class StatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildWorkoutSummarySection() {
+  Widget _buildWorkoutSummarySection(List<Workout> workouts) {
+    int totalWorkouts = workouts.length;
+    int totalVolume = workouts.fold(
+      0,
+      (sum, workout) => sum + (workout.volume?.toInt() ?? 0),
+    );
+    int totalDuration = workouts.fold(
+      0,
+      (sum, workout) => sum + (workout.duration),
+    );
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -200,11 +264,23 @@ class StatisticsPage extends StatelessWidget {
                       width: 80,
                       height: 80,
                       child: CircularProgressIndicator(
-                        value: 0.6,
+                        value: int.parse(DateTime.now().month.toString()) / 12,
                         strokeWidth: 17,
-                        backgroundColor: Color(0xFF48A6A7),
+                        backgroundColor: Color(
+                          0xFF006A71,
+                        ).withAlpha((0.2 * 255).round()),
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           Color(0xFF006A71),
+                        ),
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        '${DateTime.now().year}',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF006A71),
                         ),
                       ),
                     ),
@@ -216,11 +292,17 @@ class StatisticsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSummaryRow('Total Workouts:', '4 workouts'),
+                    _buildSummaryRow(
+                      'Total Workouts:',
+                      "$totalWorkouts ${totalWorkouts == 1 ? 'workout' : 'workouts'}",
+                    ),
                     const SizedBox(height: 8),
-                    _buildSummaryRow('Total Duration:', '6h 24min'),
+                    _buildSummaryRow(
+                      'Total Duration:',
+                      "${(totalDuration / 60).toStringAsFixed(0)} hours",
+                    ),
                     const SizedBox(height: 8),
-                    _buildSummaryRow('Total Volume:', '59 kg'),
+                    _buildSummaryRow('Total Volume:', "$totalVolume kg"),
                   ],
                 ),
               ),
@@ -244,7 +326,42 @@ class StatisticsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildVolumeOverTimeSection() {
+  Widget _buildVolumeOverTimeSection(List<Workout> workouts) {
+    print('\x1B[2J\x1B[1;1H');
+    DateTime startOfThisWeek = DateTime.now().subtract(
+      Duration(days: DateTime.now().weekday - 1),
+    );
+    DateTime startOfLastWeek = startOfThisWeek.subtract(
+      const Duration(days: 7),
+    );
+    DateTime endOfLastWeek = startOfThisWeek.subtract(const Duration(days: 1));
+
+    int totalKgThisWeek = 0;
+    int totalSetsThisWeek = 0;
+    for (var workout in workouts) {
+      if (workout.createdAt.day >= startOfThisWeek.day &&
+          workout.createdAt.month >= startOfThisWeek.month) {
+        print(workout);
+        totalKgThisWeek += (workout.volume ?? 0);
+        totalSetsThisWeek += (workout.sets ?? 0);
+      }
+    }
+
+    int totalKgLastWeek = 0;
+    int totalSetsLastWeek = 0;
+    for (var workout in workouts) {
+      if (workout.createdAt.day >= startOfLastWeek.day &&
+          workout.createdAt.month >= startOfLastWeek.month &&
+          workout.createdAt.day <= endOfLastWeek.day &&
+          workout.createdAt.month <= endOfLastWeek.month) {
+        totalKgLastWeek += (workout.volume ?? 0);
+        totalSetsLastWeek += (workout.sets ?? 0);
+      }
+    }
+
+    print('totalSetsThisWeek $totalSetsThisWeek');
+    print('totalSetsLastWeek $totalSetsLastWeek');
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -282,20 +399,24 @@ class StatisticsPage extends StatelessWidget {
               Expanded(
                 child: _buildVolumeCard(
                   'Weight Lifted',
-                  '79',
+                  '$totalKgThisWeek',
                   'kg',
-                  1,
-                  Colors.teal,
+                  totalKgThisWeek - totalKgLastWeek,
+                  totalKgThisWeek - totalKgLastWeek > 0
+                      ? Colors.teal
+                      : Colors.red,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _buildVolumeCard(
                   'Total Sets',
-                  '35',
+                  '$totalSetsThisWeek',
                   'sets',
-                  23,
-                  Colors.teal,
+                  totalSetsThisWeek - totalSetsLastWeek,
+                  totalSetsThisWeek - totalSetsLastWeek > 0
+                      ? Colors.teal
+                      : Colors.red,
                 ),
               ),
             ],
@@ -344,8 +465,10 @@ class StatisticsPage extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: _statIndicator(
-              icon: Icons.arrow_upward,
-              value: change.toString(),
+              icon: changeColor == Colors.teal
+                  ? Icons.arrow_upward
+                  : Icons.arrow_downward,
+              value: change < 0 ? (-change).toString() : change.toString(),
               color: changeColor,
             ),
           ),
