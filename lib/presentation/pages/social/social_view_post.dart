@@ -37,6 +37,7 @@ class ViewPost extends StatelessWidget {
                   SocialRoutes.visitProfile,
                   arguments: {
                     'id': post.social.uid,
+                    'accountPicture': post.accountPicture,
                     'firstName': post.firstName,
                     'lastName': post.lastName,
                     'userName': post.userName,
