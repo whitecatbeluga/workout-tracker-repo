@@ -202,6 +202,7 @@ class _SearchPageState extends State<SearchPage> {
                                 SocialRoutes.visitProfile,
                                 arguments: {
                                   'id': user['id'],
+                                  'accountPicture': user['account_picture'],
                                   'firstName': user['first_name'],
                                   'lastName': user['last_name'],
                                   'userName': user['user_name'],
