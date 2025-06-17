@@ -32,6 +32,8 @@ class SocialRepositoryImpl implements SocialRepository {
                     .collection('users')
                     .doc(social.uid)
                     .get();
+                final accountPicture =
+                    userDoc.data()?['account_picture'] ?? 'Unknown';
                 final userName = userDoc.data()?['user_name'] ?? 'Unknown';
                 final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
@@ -55,6 +57,7 @@ class SocialRepositoryImpl implements SocialRepository {
 
                 return SocialWithUser(
                   social: social,
+                  accountPicture: accountPicture,
                   userName: userName,
                   firstName: firstName,
                   lastName: lastName,
@@ -102,6 +105,8 @@ class SocialRepositoryImpl implements SocialRepository {
                       .doc(social.uid)
                       .get();
 
+                  final accountPicture =
+                      userDoc.data()?['account_picture'] ?? 'Unknown';
                   final userName = userDoc.data()?['user_name'] ?? 'Unknown';
                   final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
                   final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
@@ -125,6 +130,7 @@ class SocialRepositoryImpl implements SocialRepository {
 
                   return SocialWithUser(
                     social: social,
+                    accountPicture: accountPicture,
                     userName: userName,
                     firstName: firstName,
                     lastName: lastName,
@@ -266,6 +272,8 @@ class SocialRepositoryImpl implements SocialRepository {
                     .doc(social.uid)
                     .get();
 
+                final accountPicture =
+                    userDoc.data()?['account_picture'] ?? 'Unknown';
                 final userName = userDoc.data()?['user_name'] ?? 'Unknown';
                 final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
@@ -273,6 +281,7 @@ class SocialRepositoryImpl implements SocialRepository {
 
                 return SocialWithUser(
                   social: social,
+                  accountPicture: accountPicture,
                   userName: userName,
                   firstName: firstName,
                   lastName: lastName,
@@ -308,12 +317,15 @@ class SocialRepositoryImpl implements SocialRepository {
                     .doc(social.uid)
                     .get();
 
+                final accountPicture =
+                    userDoc.data()?['account_picture'] ?? 'Unknown';
                 final userName = userDoc.data()?['user_name'] ?? 'Unknown';
                 final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
                 final email = userDoc.data()?['email'] ?? 'Unknown';
 
                 return SocialWithUser(
+                  accountPicture: accountPicture,
                   social: social,
                   userName: userName,
                   firstName: firstName,
@@ -587,6 +599,7 @@ class SocialRepositoryImpl implements SocialRepository {
           .get();
       final userData = userDoc.data() ?? {};
 
+      final accountPicture = userDoc.data()?['account_picture'] ?? 'Unknown';
       final userName = userData['user_name'] ?? 'Unknown';
       final firstName = userData['first_name'] ?? 'Unknown';
       final lastName = userData['last_name'] ?? 'Unknown';
@@ -610,6 +623,7 @@ class SocialRepositoryImpl implements SocialRepository {
 
       return SocialWithUser(
         social: social,
+        accountPicture: accountPicture,
         userName: userName,
         firstName: firstName,
         lastName: lastName,

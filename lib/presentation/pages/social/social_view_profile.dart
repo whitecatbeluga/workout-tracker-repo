@@ -13,6 +13,7 @@ class ProfileHeader extends StatelessWidget {
   final String imagePath;
   final int followers;
   final int following;
+  final String userName;
 
   const ProfileHeader({
     super.key,
@@ -21,6 +22,7 @@ class ProfileHeader extends StatelessWidget {
     required this.imagePath,
     required this.followers,
     required this.following,
+    required this.userName,
   });
 
   @override
@@ -33,7 +35,16 @@ class ProfileHeader extends StatelessWidget {
           child: Row(
             spacing: 10,
             children: [
-              CircleAvatar(backgroundImage: AssetImage(imagePath)),
+              CircleAvatar(
+                backgroundImage: imagePath != null
+                    ? NetworkImage(imagePath)
+                    : null,
+                child: imagePath != null
+                    ? Text(
+                        userName.isNotEmpty ? userName[0].toUpperCase() : "?",
+                      )
+                    : null,
+              ),
               Container(
                 padding: EdgeInsets.all(0),
                 child: Column(
@@ -226,6 +237,7 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
   final user = authService.value.getCurrentUser();
 
   String? id;
+  String? accountPicture;
   String? firstName;
   String? lastName;
   String? userName;
@@ -241,6 +253,7 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
       if (args != null && args is Map<String, dynamic>) {
         setState(() {
           id = args['id'] as String?;
+          accountPicture = args['accountPicture'] as String?;
           firstName = args['firstName'] as String?;
           lastName = args['lastName'] as String?;
           userName = args['userName'] as String?;
@@ -321,9 +334,10 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10),
                 child: ProfileHeader(
+                  userName: userName ?? '',
                   name: '${firstName ?? ''} ${lastName ?? ''}',
                   email: email ?? '',
-                  imagePath: 'assets/images/guy1.png',
+                  imagePath: accountPicture ?? '',
                   followers: 123,
                   following: 52,
                 ),

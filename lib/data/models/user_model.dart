@@ -13,6 +13,7 @@ class UserModel extends AppUser {
   final double height;
   final double weight;
   final List<String> workoutType;
+  final String? accountPicture;
 
   UserModel({
     required super.uid,
@@ -28,6 +29,7 @@ class UserModel extends AppUser {
     required this.height,
     required this.weight,
     required this.workoutType,
+    this.accountPicture,
   });
 
   Map<String, dynamic> toMap() {
@@ -46,6 +48,7 @@ class UserModel extends AppUser {
       'weight': weight,
       'workout_type': workoutType,
       'createdAt': FieldValue.serverTimestamp(),
+      'account_picture': accountPicture,
     };
   }
 
@@ -64,6 +67,7 @@ class UserModel extends AppUser {
       height: map['height'],
       weight: map['weight'],
       workoutType: List<String>.from(map['workout_type']),
+      accountPicture: map['account_picture'],
     );
   }
 
@@ -82,6 +86,7 @@ class UserModel extends AppUser {
       height: 0,
       weight: 0,
       workoutType: [],
+      accountPicture: '',
     );
   }
 }
