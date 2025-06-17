@@ -15,6 +15,7 @@ Future<void> loadCurrentUserProfile() async {
 
     final data = doc.data();
     currentUserProfile.value = UserProfile(
+      accountPicture: data?['account_picture'] ?? 'Unknown',
       userName: data?['user_name'] ?? 'Unknown',
       firstName: data?['first_name'] ?? 'Unknown',
       lastName: data?['last_name'] ?? 'Unknown',
