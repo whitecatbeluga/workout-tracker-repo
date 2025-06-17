@@ -5,6 +5,12 @@ import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/exercise_service.dart';
 
+class AddExerciseArguments {
+  final bool isLogWorkout;
+
+  const AddExerciseArguments({required this.isLogWorkout});
+}
+
 class AddExercise extends StatefulWidget {
   const AddExercise({super.key});
 
@@ -23,10 +29,46 @@ class _AddExerciseState extends State<AddExercise> {
   String? errorMessage;
   StreamSubscription<List<Exercise>>? _streamSubscription;
 
+  // Cache the arguments
+  AddExerciseArguments? _arguments;
+  bool get isLogWorkout => _arguments?.isLogWorkout ?? false;
+
   @override
   void initState() {
     super.initState();
-    _listenToExercises();
+    // Don't call _getArguments here - ModalRoute might not be ready
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Get arguments once and cache them
+    if (_arguments == null) {
+      _arguments = _getArguments(context);
+      _listenToExercises();
+    }
+  }
+
+  AddExerciseArguments? _getArguments(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments;
+
+    // Handle different argument types
+    if (args is AddExerciseArguments) {
+      return args;
+    }
+
+    if (args is Map<String, dynamic>) {
+      return AddExerciseArguments(
+        isLogWorkout: args['isLogWorkout'] as bool? ?? false,
+      );
+    }
+
+    if (args is bool) {
+      return AddExerciseArguments(isLogWorkout: args);
+    }
+
+    return null;
   }
 
   void _listenToExercises() {
@@ -35,11 +77,19 @@ class _AddExerciseState extends State<AddExercise> {
         if (mounted) {
           setState(() {
             exercises = exerciseList;
-            selectedExercises.addAll(
-              workoutExercises.value.where(
-                (e) => exercises.any((ex) => ex.id == e.id),
-              ),
-            );
+            if (isLogWorkout) {
+              selectedExercises.addAll(
+                workoutExercises.value.where(
+                  (e) => exercises.any((ex) => ex.id == e.id),
+                ),
+              );
+            } else {
+              selectedExercises.addAll(
+                routineExercises.value.where(
+                  (e) => exercises.any((ex) => ex.id == e.id),
+                ),
+              );
+            }
             isLoading = false;
             errorMessage = null;
           });
@@ -204,7 +254,7 @@ class _AddExerciseState extends State<AddExercise> {
           ),
           const SizedBox(height: 16),
 
-          // List of Exercises - No more StreamBuilder here!
+          // List of Exercises
           Expanded(child: _buildExerciseList()),
 
           // Add Button
@@ -214,8 +264,11 @@ class _AddExerciseState extends State<AddExercise> {
             child: ElevatedButton(
               onPressed: selectedExercises.isNotEmpty
                   ? () {
-                      // Add to global notifier
-                      workoutExercises.value = [...selectedExercises];
+                      if (isLogWorkout) {
+                        workoutExercises.value = [...selectedExercises];
+                      } else {
+                        routineExercises.value = [...selectedExercises];
+                      }
                       Navigator.pop(context);
                     }
                   : null,

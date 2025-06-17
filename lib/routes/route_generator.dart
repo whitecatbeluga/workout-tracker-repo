@@ -3,13 +3,11 @@ import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/presentation/pages/exercises/add_exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
-import 'package:workout_tracker_repo/presentation/pages/routine/add_exercise_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/statistics.dart';
 import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
-import 'package:workout_tracker_repo/presentation/pages/workout/add_workout_exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/log_workout.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/save_workout_exercise.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
@@ -103,13 +101,6 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const LogRoutine(),
-          ifDenied: (_) => const LoginPage(),
-        );
-      case RoutineRoutes.addExercisePage:
-        return guardedRoute(
-          settings: settings,
-          guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const AddExerciseRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
       case WorkoutRoutes.logWorkout:
