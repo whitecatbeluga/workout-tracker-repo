@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/core/providers/user_info_provider.dart';
+import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
 
-class Settings extends StatelessWidget {
+class Settings extends StatefulWidget {
   const Settings({super.key});
 
-  // final user = authService.value.getCurrentUser();
+  @override
+  State<Settings> createState() => _SettingsState();
+}
 
+class _SettingsState extends State<Settings> {
+  final user = authService.value.getCurrentUser();
   final List<MenuItem> menuItems = const [
     MenuItem(
       title: "Account Details",
@@ -78,25 +84,48 @@ class Settings extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           spacing: 10,
                           children: [
-                            ClipOval(
-                              child: SizedBox.fromSize(
-                                size: Size.fromRadius(22),
-                                child: Image.asset("assets/images/default.jpg"),
-                              ),
+                            ValueListenableBuilder<UserProfile?>(
+                              valueListenable: currentUserProfile,
+                              builder: (context, profile, _) {
+                                return CircleAvatar(
+                                  backgroundImage:
+                                      (profile != null &&
+                                          profile.accountPicture != null &&
+                                          profile.accountPicture!.isNotEmpty)
+                                      ? NetworkImage(profile.accountPicture!)
+                                      : null,
+                                  child:
+                                      (profile == null ||
+                                          profile.accountPicture == null ||
+                                          profile.accountPicture!.isEmpty)
+                                      ? Text(
+                                          profile?.userName.isNotEmpty == true
+                                              ? profile!.userName[0]
+                                                    .toUpperCase()
+                                              : '?',
+                                        )
+                                      : null,
+                                );
+                              },
                             ),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  "John Smith Doe",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                ValueListenableBuilder<UserProfile?>(
+                                  valueListenable: currentUserProfile,
+                                  builder: (context, profile, _) {
+                                    if (profile == null) return CircularProgressIndicator();
+                                    return Text(
+                                      '${profile.firstName} ${profile.lastName}',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    );
+                                  },
                                 ),
-                                // Text(user?.email ?? "", style: TextStyle(fontSize: 14)),
                                 Text(
-                                  "Johndoe@email.com",
+                                  user?.email ?? "",
                                   style: TextStyle(fontSize: 14),
                                 ),
                               ],
