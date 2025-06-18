@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/presentation/pages/exercises/add_exercise.dart';
+import 'package:workout_tracker_repo/presentation/pages/exercises/exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
@@ -122,6 +123,13 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const AddExercise(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ExerciseRoutes.exercises:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const ExcercisesPage(),
           ifDenied: (_) => const LoginPage(),
         );
       default:
