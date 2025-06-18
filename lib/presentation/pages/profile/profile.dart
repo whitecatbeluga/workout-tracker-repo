@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/workout_service.dart';
@@ -155,6 +156,36 @@ class ProfileHeader extends StatefulWidget {
 }
 
 class _ProfileHeaderState extends State<ProfileHeader> {
+  int followerCount = 0;
+  int followingCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCounts();
+  }
+
+  Future<void> fetchCounts() async {
+    if (widget.user?.uid == null) return;
+    final uid = widget.user!.uid;
+
+    final followersSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('followers')
+        .get();
+    final followingSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('following')
+        .get();
+
+    setState(() {
+      followerCount = followersSnapshot.docs.length;
+      followingCount = followingSnapshot.docs.length;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -165,11 +196,28 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            ClipOval(
-              child: SizedBox.fromSize(
-                size: Size.fromRadius(22),
-                child: Image.asset("assets/images/default.jpg"),
-              ),
+            ValueListenableBuilder<UserProfile?>(
+              valueListenable: currentUserProfile,
+              builder: (context, profile, _) {
+                return CircleAvatar(
+                  backgroundImage:
+                      (profile != null &&
+                          profile.accountPicture != null &&
+                          profile.accountPicture!.isNotEmpty)
+                      ? NetworkImage(profile.accountPicture!)
+                      : null,
+                  child:
+                      (profile == null ||
+                          profile.accountPicture == null ||
+                          profile.accountPicture!.isEmpty)
+                      ? Text(
+                          profile?.userName.isNotEmpty == true
+                              ? profile!.userName[0].toUpperCase()
+                              : '?',
+                        )
+                      : null,
+                );
+              },
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,7 +248,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "123",
+                  followerCount.toString(),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text("Followers", style: TextStyle(fontSize: 14)),
@@ -210,7 +258,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "56",
+                  followingCount.toString(),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
                 Text("Following", style: TextStyle(fontSize: 14)),

@@ -5,6 +5,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 import 'package:workout_tracker_repo/domain/repositories/social_repository.dart';
+import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../domain/entities/social_with_user.dart';
 import 'package:intl/intl.dart';
 
@@ -53,9 +54,14 @@ class _LikesBottomSheetState extends State<LikesBottomSheet> {
       if (userDoc.exists) {
         final data = userDoc.data()!;
         users.add({
+          'id': uid,
+          'userName': data['user_name'] ?? '',
           'name': '${data['first_name'] ?? ''} ${data['last_name'] ?? ''}'
               .trim(),
+          'firstName': data['first_name'] ?? '',
+          'lastName': data['last_name'] ?? '',
           'picture': data['account_picture'] ?? '',
+          'email': data['email'] ?? '',
         });
       }
     }
@@ -93,28 +99,51 @@ class _LikesBottomSheetState extends State<LikesBottomSheet> {
               separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) {
                 final user = users[index];
+                final id = user['id'] ?? '';
                 final name = user['name'] ?? 'Unknown';
                 final picture = user['picture'] ?? '';
+                final firstName = user['firstName'] ?? '';
+                final lastName = user['lastName'] ?? '';
+                final userName = user['userName'] ?? '';
+                final email = user['email'] ?? '';
 
-                return Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundImage: picture.isNotEmpty
-                          ? NetworkImage(picture)
-                          : null,
-                      child: picture.isEmpty
-                          ? Text(name.isNotEmpty ? name[0].toUpperCase() : '?')
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      SocialRoutes.visitProfile,
+                      arguments: {
+                        'id': id,
+                        'accountPicture': picture,
+                        'firstName': firstName,
+                        'lastName': lastName,
+                        'userName': userName,
+                        'email': email,
+                      },
+                    );
+                  },
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: picture.isNotEmpty
+                            ? NetworkImage(picture)
+                            : null,
+                        child: picture.isEmpty
+                            ? Text(
+                                name.isNotEmpty ? name[0].toUpperCase() : '?',
+                              )
+                            : null,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Text(
+                        name,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 );
               },
             );
@@ -228,51 +257,67 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                         'MMMM d, y h:mm a',
                       ).format(comment.createdAt.toDate());
 
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: comment.accountPicture.isNotEmpty
-                                ? NetworkImage(comment.accountPicture)
-                                : null,
-                            child: comment.accountPicture.isEmpty
-                                ? Text(
-                                    comment.firstName.isNotEmpty
-                                        ? comment.firstName[0].toUpperCase()
-                                        : '?',
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  '${comment.firstName} ${comment.lastName}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  comment.description,
-                                  style: const TextStyle(
-                                    color: Color(0xFF444444),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                Text(
-                                  formattedDate,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w300,
-                                  ),
-                                ),
-                              ],
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            SocialRoutes.visitProfile,
+                            arguments: {
+                              'id': comment.from,
+                              'accountPicture': comment.accountPicture,
+                              'firstName': comment.firstName,
+                              'lastName': comment.lastName,
+                              'userName': comment.userName,
+                              'email': comment.email,
+                            },
+                          );
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              backgroundImage: comment.accountPicture.isNotEmpty
+                                  ? NetworkImage(comment.accountPicture)
+                                  : null,
+                              child: comment.accountPicture.isEmpty
+                                  ? Text(
+                                      comment.firstName.isNotEmpty
+                                          ? comment.firstName[0].toUpperCase()
+                                          : '?',
+                                    )
+                                  : null,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${comment.firstName} ${comment.lastName}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    comment.description,
+                                    style: const TextStyle(
+                                      color: Color(0xFF444444),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    formattedDate,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w300,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       );
                     },
                   );
