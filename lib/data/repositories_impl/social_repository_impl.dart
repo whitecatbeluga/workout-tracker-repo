@@ -279,6 +279,22 @@ class SocialRepositoryImpl implements SocialRepository {
                 final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
                 final email = userDoc.data()?['email'] ?? 'Unknown';
 
+                final likesSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('likes')
+                    .get();
+
+                final likedByUids = likesSnapshot.docs
+                    .map((like) => like.data()['liked_by'] as String)
+                    .toList();
+
+                final commentsSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('comments')
+                    .get();
+
                 return SocialWithUser(
                   social: social,
                   accountPicture: accountPicture,
@@ -286,6 +302,8 @@ class SocialRepositoryImpl implements SocialRepository {
                   firstName: firstName,
                   lastName: lastName,
                   email: email,
+                  likedByUids: likedByUids,
+                  commentCount: commentsSnapshot.size,
                 );
               }),
             );
@@ -398,6 +416,8 @@ class SocialRepositoryImpl implements SocialRepository {
           accountPicture: userData['account_picture'] ?? '',
           firstName: userData['first_name'] ?? '',
           lastName: userData['last_name'] ?? '',
+          userName: userData['user_name'] ?? '',
+          email: userData['email'] ?? '',
         ),
       );
     }
@@ -634,6 +654,30 @@ class SocialRepositoryImpl implements SocialRepository {
     } catch (e) {
       print('Error fetching workout post: $e');
       return null;
+    }
+  }
+
+  Future<Map<String, int>> fetchFollowerFollowingCounts(String userId) async {
+    try {
+      final followersSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('followers')
+          .get();
+
+      final followingSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('following')
+          .get();
+
+      return {
+        'followers': followersSnapshot.size,
+        'following': followingSnapshot.size,
+      };
+    } catch (e) {
+      print('Error fetching follower/following counts: $e');
+      return {'followers': 0, 'following': 0};
     }
   }
 }

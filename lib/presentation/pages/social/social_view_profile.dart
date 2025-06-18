@@ -260,8 +260,32 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
           email = args['email'] as String?;
         });
 
+        fetchCounts();
         _loadFollowingStatus();
       }
+    });
+  }
+
+  int followerCount = 0;
+  int followingCount = 0;
+
+  Future<void> fetchCounts() async {
+    if (id == null) return;
+
+    final followersSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(id)
+        .collection('followers')
+        .get();
+    final followingSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(id)
+        .collection('following')
+        .get();
+
+    setState(() {
+      followerCount = followersSnapshot.docs.length;
+      followingCount = followingSnapshot.docs.length;
     });
   }
 
@@ -299,6 +323,7 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
       if (!mounted) return;
 
       await _loadFollowingStatus();
+      await fetchCounts();
     } catch (e) {
       if (!mounted) return;
 
@@ -338,8 +363,8 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
                   name: '${firstName ?? ''} ${lastName ?? ''}',
                   email: email ?? '',
                   imagePath: accountPicture ?? '',
-                  followers: 123,
-                  following: 52,
+                  followers: followerCount,
+                  following: followingCount,
                 ),
               ),
               Container(
