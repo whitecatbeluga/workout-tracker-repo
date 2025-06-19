@@ -50,7 +50,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (height != null && weight != null && height > 0 && weight > 0) {
       setState(() {
-        bmi = (weight * 10000) / (height * height);
+        bmi = weight / (height * height);
         _bmiController.text = bmi!.toStringAsFixed(1);
       });
     } else {

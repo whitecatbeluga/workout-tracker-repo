@@ -113,7 +113,7 @@ class LinechartWidget extends StatelessWidget {
           borderData: FlBorderData(show: true),
           lineBarsData: [
             LineChartBarData(
-              isCurved: false,
+              isCurved: true,
               color: Colors.teal,
               barWidth: 2,
               belowBarData: BarAreaData(show: false),
