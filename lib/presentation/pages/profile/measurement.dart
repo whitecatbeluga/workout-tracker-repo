@@ -6,6 +6,7 @@ import 'package:workout_tracker_repo/domain/entities/measurement.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/linechart.dart';
 import 'package:intl/intl.dart';
+import 'package:workout_tracker_repo/routes/profile/profile.dart';
 
 class MeasurementPage extends StatefulWidget {
   const MeasurementPage({super.key});
@@ -22,6 +23,7 @@ class _MeasurementPageState extends State<MeasurementPage> {
   bool isWeight = false;
   late Stream<List<Measurement>> measurementStream;
   String selectedFilter = 'All time';
+  DateTime? latestLog;
 
   @override
   void initState() {
@@ -31,6 +33,9 @@ class _MeasurementPageState extends State<MeasurementPage> {
 
   // Move filter logic to a separate method
   List<Measurement> _applyFilter(List<Measurement> allMeasurements) {
+    latestLog = allMeasurements.isNotEmpty
+        ? allMeasurements.reversed.first.date
+        : null;
     if (selectedFilter == 'Last 3 months') {
       return allMeasurements
           .where(
@@ -135,6 +140,25 @@ class _MeasurementPageState extends State<MeasurementPage> {
 
           // Update measurements and apply current filter
           measurements = snapshot.data!;
+          if (measurements.length == 1) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.hourglass_empty_outlined,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'You have only one measurement recorded, \nplease add more measurements to see improvements',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
           filteredMeasurements = _applyFilter(measurements);
 
           // Handle empty list
@@ -301,7 +325,21 @@ class _MeasurementPageState extends State<MeasurementPage> {
         child: Center(
           child: Button(
             label: 'Log Measurements',
-            onPressed: () {},
+            onPressed: () {
+              if (latestLog != null &&
+                  latestLog?.month == DateTime.now().month) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'For better results, log measurements once a month',
+                    ),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } else {
+                Navigator.pushNamed(context, ProfileRoutes.addMeasurement);
+              }
+            },
             prefixIcon: Icons.add,
             size: ButtonSize.large,
             fullWidth: true,

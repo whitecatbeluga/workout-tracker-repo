@@ -7,4 +7,5 @@ class ProfileRoutes {
   static const calendar = '$prefix/calendar';
   static const editProfile = '$prefix/edit-profile';
   static const measurements = '$prefix/measurements';
+  static const addMeasurement = '$prefix/add-measurement';
 }
