@@ -9,7 +9,6 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/graphfilter.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/barchart.dart';
-import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
 import '../../../core/providers/user_info_provider.dart';
 
@@ -34,12 +33,12 @@ class _ProfilePageState extends State<ProfilePage> {
     MenuItem(
       title: "Exercises",
       icon: Icons.fitness_center,
-      route: ExerciseRoutes.exercises,
+      route: ProfileRoutes.exercises,
     ),
     MenuItem(
       title: "Measurements",
       icon: Icons.health_and_safety,
-      route: "/measurements",
+      route: ProfileRoutes.measurements,
     ),
     MenuItem(title: "Routines", icon: Icons.fitness_center, route: "/routines"),
     MenuItem(
