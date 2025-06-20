@@ -73,7 +73,93 @@ class _LogWorkoutState extends State<LogWorkout> {
             },
             child: Row(
               children: [
-                Icon(Icons.timer, color: Color(0xFF000000)),
+                GestureDetector(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        Duration timerDuration = const Duration(minutes: 1);
+                        bool isRunning = false;
+                        late StateSetter dialogSetState;
+
+                        return StatefulBuilder(
+                          builder: (context, setState) {
+                            dialogSetState = setState;
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              title: const Center(
+                                child: Text(
+                                  'Clock',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              content: SizedBox(
+                                width: 500,
+                                height: 350,
+                                child: Column(
+                                  children: [
+                                    Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          '${timerDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${(timerDuration.inSeconds.remainder(60)).toString().padLeft(2, '0')}',
+                                          style: const TextStyle(
+                                            fontSize: 48,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Button(
+                                      label: 'Start',
+                                      fullWidth: true,
+                                      onPressed: isRunning
+                                          ? null
+                                          : () {
+                                              dialogSetState(() {
+                                                isRunning = true;
+                                              });
+
+                                              Future.delayed(
+                                                const Duration(seconds: 1),
+                                                () async {
+                                                  while (timerDuration
+                                                              .inSeconds >
+                                                          0 &&
+                                                      isRunning) {
+                                                    await Future.delayed(
+                                                      const Duration(
+                                                        seconds: 1,
+                                                      ),
+                                                    );
+                                                    dialogSetState(() {
+                                                      timerDuration -=
+                                                          const Duration(
+                                                            seconds: 1,
+                                                          );
+                                                    });
+                                                  }
+                                                  if (timerDuration.inSeconds ==
+                                                      0) {
+                                                    Navigator.of(context).pop();
+                                                  }
+                                                },
+                                              );
+                                            },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                  child: const Icon(Icons.timer, color: Color(0xFF000000)),
+                ),
+
                 SizedBox(width: 5),
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
