@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,8 @@ class _SaveWorkoutState extends State<SaveWorkout> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   bool _visibleToEveryone = true;
+
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -133,10 +136,11 @@ class _SaveWorkoutState extends State<SaveWorkout> {
       children: [
         Scaffold(
           appBar: AppBar(
+            backgroundColor: Colors.white,
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Log Workout', style: TextStyle(fontSize: 20)),
+                const Text('Save Workout', style: TextStyle(fontSize: 20)),
                 GestureDetector(
                   onTap: _isUploading ? null : _saveWorkout,
                   child: Container(
@@ -163,132 +167,297 @@ class _SaveWorkoutState extends State<SaveWorkout> {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-          body: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                // Title input
-                TextField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Workout Title',
-                    border: OutlineInputBorder(),
-                  ),
-                  enabled: !_isUploading,
-                ),
-                const SizedBox(height: 12),
-
-                // Description input
-                TextField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Workout Description',
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
-                  enabled: !_isUploading,
-                ),
-                const SizedBox(height: 12),
-
-                // Visible to everyone toggle
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Visible to Everyone',
-                      style: TextStyle(fontSize: 16),
+          body: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  // Title input
+                  TextField(
+                    controller: _titleController,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    decoration: const InputDecoration(
+                      hintText: 'Workout Title',
+                      hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                      border: UnderlineInputBorder(),
+                      enabledBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.grey),
+                      ),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
                     ),
-                    Switch(
-                      value: _visibleToEveryone,
-                      onChanged: _isUploading
-                          ? null
-                          : (val) {
-                              setState(() {
-                                _visibleToEveryone = val;
-                              });
-                            },
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                ElevatedButton.icon(
-                  onPressed: _isUploading ? null : _captureImage,
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Capture Image'),
-                ),
-                const SizedBox(height: 10),
-                if (_capturedImages.isNotEmpty)
-                  SizedBox(
-                    height: 100,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _capturedImages.length,
-                      itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Image.file(_capturedImages[index]),
-                        );
-                      },
-                    ),
+                    enabled: !_isUploading,
                   ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: workoutExercises.value.isEmpty
-                      ? const Center(child: Text("No workout data available."))
-                      : ListView.builder(
-                          itemCount: workoutExercises.value.length,
-                          itemBuilder: (context, index) {
-                            final exercise = workoutExercises.value[index];
-                            final sets = savedExerciseSets[exercise.name] ?? [];
 
-                            return Card(
-                              margin: const EdgeInsets.symmetric(vertical: 10),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      exercise.name,
-                                      style: const TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 10),
-                                    ...sets.map((set) {
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          vertical: 4.0,
-                                        ),
-                                        child: Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text('Set ${set.setNumber}'),
-                                            Text('${set.kg} kg'),
-                                            Text('${set.reps} reps'),
-                                            Icon(
-                                              set.isCompleted
-                                                  ? Icons.check_circle
-                                                  : Icons.cancel,
-                                              color: set.isCompleted
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                  const SizedBox(height: 12),
+
+                  Row(
+                    spacing: 70,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Duration', style: TextStyle(fontSize: 16)),
+                          Text(
+                            '18s',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF48A6A7),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Volume', style: TextStyle(fontSize: 16)),
+                          Text('0kg', style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Sets', style: TextStyle(fontSize: 16)),
+                          Text('0', style: TextStyle(fontSize: 16)),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('When', style: TextStyle(fontSize: 16)),
+                          Text(
+                            '28, Apr 2025, 9:14 AM',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF48A6A7),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  GestureDetector(
+                    onTap: () {
+                      _captureImage();
+                    },
+                    child: Row(
+                      spacing: 20,
+                      children: [
+                        DottedBorder(
+                          color: Colors.grey,
+                          strokeWidth: 1,
+                          borderType: BorderType.RRect,
+                          radius: Radius.circular(4),
+                          dashPattern: [6, 3],
+                          child: Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Icon(Icons.photo, color: Colors.grey),
+                          ),
                         ),
-                ),
-              ],
+                        Text(
+                          'Add a Photo / Video',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Container(
+                    padding: EdgeInsets.zero,
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Description'),
+                        TextField(
+                          controller: _descriptionController,
+                          decoration: const InputDecoration(
+                            hintText:
+                                'How did your workout go? Leave some notes here...',
+                            border: InputBorder.none,
+                          ),
+                          maxLines: 3,
+                          enabled: !_isUploading,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Visibility', style: TextStyle(fontSize: 16)),
+
+                      GestureDetector(
+                        onTap: _isUploading
+                            ? null
+                            : () {
+                                showModalBottomSheet(
+                                  context: context,
+                                  shape: const RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.vertical(
+                                      top: Radius.circular(16),
+                                    ),
+                                  ),
+                                  builder: (context) => OptionsBottomSheet(
+                                    selectedOption: _visibleToEveryone
+                                        ? 'Everyone'
+                                        : 'Private',
+                                    onOptionSelected: (newValue) {
+                                      setState(() {
+                                        _visibleToEveryone =
+                                            newValue == 'Everyone';
+                                      });
+                                    },
+                                  ),
+                                );
+                              },
+                        behavior: HitTestBehavior.opaque,
+                        child: Row(
+                          children: [
+                            Text(
+                              _visibleToEveryone ? 'Everyone' : 'Private',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _isUploading
+                                    ? Colors.grey
+                                    : Colors.black,
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              color: _isUploading ? Colors.grey : Colors.black,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Visible to everyone toggle
+                  // Row(
+                  //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //   children: [
+                  //     const Text(
+                  //       'Visible to Everyone',
+                  //       style: TextStyle(fontSize: 16),
+                  //     ),
+                  //     Switch(
+                  //       value: _visibleToEveryone,
+                  //       onChanged: _isUploading
+                  //           ? null
+                  //           : (val) {
+                  //               setState(() {
+                  //                 _visibleToEveryone = val;
+                  //               });
+                  //             },
+                  //     ),
+                  //   ],
+                  // ),
+                  const SizedBox(height: 12),
+
+                  // ElevatedButton.icon(
+                  //   onPressed: _isUploading ? null : _captureImage,
+                  //   icon: const Icon(Icons.camera_alt),
+                  //   label: const Text('Capture Image'),
+                  // ),
+                  const SizedBox(height: 10),
+                  if (_capturedImages.isNotEmpty)
+                    SizedBox(
+                      height: 100,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _capturedImages.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: Image.file(_capturedImages[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: workoutExercises.value.isEmpty
+                        ? const Center(
+                            child: Text("No workout data available."),
+                          )
+                        : ListView.builder(
+                            itemCount: workoutExercises.value.length,
+                            itemBuilder: (context, index) {
+                              final exercise = workoutExercises.value[index];
+                              final sets =
+                                  savedExerciseSets[exercise.name] ?? [];
+
+                              return Card(
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        exercise.name,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      ...sets.map((set) {
+                                        return Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 4.0,
+                                          ),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Text('Set ${set.setNumber}'),
+                                              Text('${set.kg} kg'),
+                                              Text('${set.reps} reps'),
+                                              Icon(
+                                                set.isCompleted
+                                                    ? Icons.check_circle
+                                                    : Icons.cancel,
+                                                color: set.isCompleted
+                                                    ? Colors.green
+                                                    : Colors.red,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -300,6 +469,53 @@ class _SaveWorkoutState extends State<SaveWorkout> {
             child: const Center(child: CircularProgressIndicator()),
           ),
       ],
+    );
+  }
+}
+
+class OptionsBottomSheet extends StatefulWidget {
+  final String selectedOption;
+  final void Function(String) onOptionSelected;
+
+  const OptionsBottomSheet({
+    super.key,
+    required this.selectedOption,
+    required this.onOptionSelected,
+  });
+
+  @override
+  State<OptionsBottomSheet> createState() => _OptionsBottomSheetState();
+}
+
+class _OptionsBottomSheetState extends State<OptionsBottomSheet> {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        top: 20,
+        left: 16,
+        right: 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [_buildOption('Everyone'), _buildOption('Private')],
+      ),
+    );
+  }
+
+  Widget _buildOption(String option) {
+    final isSelected = widget.selectedOption == option;
+    return ListTile(
+      leading: Icon(
+        isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+        color: isSelected ? Colors.blue : Colors.grey,
+      ),
+      title: Text(option),
+      onTap: () {
+        widget.onOptionSelected(option);
+        Navigator.pop(context);
+      },
     );
   }
 }
