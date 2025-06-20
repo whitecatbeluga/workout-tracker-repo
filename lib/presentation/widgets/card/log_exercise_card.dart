@@ -1,21 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
-
-class SetEntry {
-  final int setNumber;
-  final String previous;
-  double kg;
-  int reps;
-  bool isCompleted;
-
-  SetEntry({
-    required this.setNumber,
-    required this.previous,
-    this.kg = 0,
-    this.reps = 0,
-    this.isCompleted = false,
-  });
-}
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 
 class LogExerciseCard extends StatefulWidget {
   const LogExerciseCard({
