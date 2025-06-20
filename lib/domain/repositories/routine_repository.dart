@@ -2,7 +2,7 @@ import '../../domain/entities/routine.dart';
 
 abstract class RoutineRepository {
   // Folder operations
-  Future<List<Folder>> getFolders(String userId);
+  Stream<List<Folder>> streamFolders(String userId);
   Future<Folder> createFolder(String userId, String folderName);
   Future<void> updateFolderName(String userId, String folderId, String newName);
   Future<void> deleteFolder(String userId, String folderId);
@@ -15,13 +15,13 @@ abstract class RoutineRepository {
   // Routine operations
   Future<Routine> getRoutine(String routineId);
   Future<List<Routine>> getRoutinesByIds(List<String> routineIds);
-  Future<List<Folder>> createNewRoutine(
+  void createNewRoutine(
     String userId,
     String routineName,
     Map<String, dynamic>? sets, {
     String? folderId,
   });
-  Future<List<Folder>> updateRoutine(
+  void updateRoutine(
     String userId,
     String routineId, {
     String? updatedRoutineName,
