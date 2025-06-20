@@ -17,45 +17,61 @@ class CreateRoutine extends StatefulWidget {
 
 class _CreateRoutineState extends State<CreateRoutine> {
   final Map<String, List<SetEntry>> exerciseSets = {};
-
   final user = authService.value.getCurrentUser();
-
   final TextEditingController routineNameController = TextEditingController();
-
   final routineRepo = RoutineRepositoryImpl(RoutineService());
+  String? folderId;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Defer access to ModalRoute to post-frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null && args.containsKey('folderId')) {
+        setState(() {
+          folderId = args['folderId'];
+        });
+      }
+    });
+  }
 
   void _saveRoutine() async {
     final routineName = routineNameController.text.trim();
 
-    // Wrap each list of SetEntry in a parent object (with 'name' and 'sets')
     Map<String, dynamic> formattedSets = exerciseSets.map((exerciseId, sets) {
       return MapEntry(exerciseId, {
-        'name': 'Exercise',
+        'name': 'dummy_name',
         'sets': sets.map((set) => set.toJson()).toList(),
       });
     });
 
     if (routineName.isNotEmpty) {
       try {
-        await routineRepo.createNewRoutine(
+        routineRepo.createNewRoutine(
           user!.uid,
           routineName,
           formattedSets,
+          folderId: folderId,
         );
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Routine saved successfully!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Routine saved successfully!')),
+        );
         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
       } catch (e) {
         print('Error saving routine: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save routine. Please try again.')),
+          const SnackBar(
+            content: Text('Failed to save routine. Please try again.'),
+          ),
         );
       }
     } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Routine name cannot be empty.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Routine name cannot be empty.')),
+      );
     }
   }
 
@@ -63,43 +79,42 @@ class _CreateRoutineState extends State<CreateRoutine> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
+        preferredSize: const Size.fromHeight(kToolbarHeight),
         child: AppBar(
-          automaticallyImplyLeading: false, // disable default back button
+          automaticallyImplyLeading: false,
           title: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
                 onTap: () {
-                  if (Navigator.canPop(context)) {
-                    Navigator.pop(context);
-                  } else {
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/',
-                      (route) => false,
-                    );
-                  }
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
                 },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 5.0),
+                child: const Padding(
+                  padding: EdgeInsets.only(left: 5.0),
                   child: Text(
                     'Cancel',
                     style: TextStyle(color: Color(0xFF48A6A7), fontSize: 16),
                   ),
                 ),
               ),
-              Text('Create Routine', style: TextStyle(fontSize: 20)),
+              const Text('Create Routine', style: TextStyle(fontSize: 20)),
               GestureDetector(
-                onTap: () => _saveRoutine(),
+                onTap: _saveRoutine,
                 child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  margin: EdgeInsets.only(right: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  margin: const EdgeInsets.only(right: 5),
                   decoration: BoxDecoration(
-                    color: Color(0xFF48A6A7),
+                    color: const Color(0xFF48A6A7),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Save',
                     style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
@@ -111,7 +126,6 @@ class _CreateRoutineState extends State<CreateRoutine> {
           elevation: 0,
         ),
       ),
-
       body: Container(
         color: Colors.white,
         padding: const EdgeInsets.all(20.0),
@@ -119,7 +133,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
           children: [
             TextFormField(
               controller: routineNameController,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Color(0xFF626262),
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
@@ -127,15 +141,14 @@ class _CreateRoutineState extends State<CreateRoutine> {
               decoration: InputDecoration(
                 hintText: 'Routine Title',
                 hintStyle: TextStyle(
-                  color: Color(0xFF626262).withValues(alpha: 0.5),
+                  color: const Color(0xFF626262).withOpacity(0.5),
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
                 ),
-
                 border: InputBorder.none,
               ),
             ),
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             Expanded(
               child: LogExerciseCard(
                 workoutExercises: routineExercises,
@@ -145,7 +158,6 @@ class _CreateRoutineState extends State<CreateRoutine> {
           ],
         ),
       ),
-
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
