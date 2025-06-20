@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/log_exercise_card.dart';
 import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
@@ -13,6 +17,21 @@ class CreateRoutine extends StatefulWidget {
 
 class _CreateRoutineState extends State<CreateRoutine> {
   final Map<String, List<SetEntry>> exerciseSets = {};
+
+  final user = authService.value.getCurrentUser();
+
+  final TextEditingController routineNameController = TextEditingController();
+
+  final routineRepo = RoutineRepositoryImpl(RoutineService());
+
+  void _saveRoutine() async {
+    final routineName = routineNameController.text.trim();
+    if (routineName.isNotEmpty) {
+      await routineRepo.createNewRoutine(user!.uid, routineName, exerciseSets);
+    } else {
+      print('Routine name cannot be empty.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +65,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
               ),
               Text('Create Routine', style: TextStyle(fontSize: 20)),
               GestureDetector(
-                onTap: () {}, // your save action
+                onTap: () => _saveRoutine(),
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   margin: EdgeInsets.only(right: 5),
@@ -73,6 +92,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
         child: Column(
           children: [
             TextFormField(
+              controller: routineNameController,
               style: TextStyle(
                 color: Color(0xFF626262),
                 fontSize: 25,
