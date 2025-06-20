@@ -25,9 +25,9 @@ class ExerciseModel extends Exercise {
     return {
       'name': name,
       'description': description,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'category': category,
-      'withoutEquipment': withoutEquipment,
+      'with_out_equipment': withoutEquipment,
     };
   }
 }
