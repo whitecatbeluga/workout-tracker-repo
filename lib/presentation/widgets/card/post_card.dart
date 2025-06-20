@@ -547,7 +547,7 @@ class _PostCardState extends State<PostCard> {
                           ),
                         ),
 
-                        !isFollowing
+                        (!isFollowing && widget.data.social.uid != user?.uid)
                             ? Container(
                                 padding: EdgeInsets.zero,
                                 child: TextButton(
