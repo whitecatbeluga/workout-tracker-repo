@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/presentation/widgets/badge/badge.dart';
 
@@ -6,6 +8,7 @@ class ExerciseCard extends StatefulWidget {
   final bool withEquipment;
   final String exerciseCategory;
   final String exerciseDescription;
+  final String? imageUrl;
 
   const ExerciseCard({
     super.key,
@@ -13,6 +16,7 @@ class ExerciseCard extends StatefulWidget {
     required this.withEquipment,
     required this.exerciseCategory,
     required this.exerciseDescription,
+    this.imageUrl,
   });
 
   @override
@@ -60,30 +64,51 @@ class _ExerciseCardState extends State<ExerciseCard>
   @override
   Widget build(BuildContext context) {
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(
+          10,
+        ), // change this value to your desired radius
+      ),
       color: const Color.fromARGB(255, 255, 255, 255),
       elevation: 2,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         child: Column(
           children: [
             // Always visible header section
             Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(
-                  widget.withEquipment
-                      ? Icons.fitness_center
-                      : Icons.accessibility_new,
-                  size: 80,
-                  color: Color(0xFF434343),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Text(
-                    widget.exerciseName,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                (widget.imageUrl == null || widget.imageUrl!.isEmpty)
+                    ? Transform.rotate(
+                        angle: -pi / 4,
+                        child: Icon(
+                          widget.withEquipment
+                              ? Icons.fitness_center
+                              : Icons.accessibility_new,
+                          size: 80,
+                          color: Color(0xFF434343),
+                        ),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        clipBehavior: Clip.hardEdge,
+                        child: Image.network(
+                          widget.imageUrl!,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                const SizedBox(width: 14),
+                Text(
+                  widget.exerciseName,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
@@ -95,16 +120,6 @@ class _ExerciseCardState extends State<ExerciseCard>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 8),
-                  // Badge
-                  BadgeWidget(
-                    label: widget.withEquipment
-                        ? 'With Equipment'
-                        : 'No Equipment',
-                    color: widget.withEquipment
-                        ? const Color(0xFF48A6A7)
-                        : const Color(0xFFED1010),
-                  ),
                   const SizedBox(height: 8),
                   // Category
                   Row(
@@ -128,6 +143,16 @@ class _ExerciseCardState extends State<ExerciseCard>
                     ],
                   ),
                   const SizedBox(height: 8),
+                  // Badge
+                  BadgeWidget(
+                    label: widget.withEquipment
+                        ? 'With Equipment'
+                        : 'No Equipment',
+                    color: widget.withEquipment
+                        ? const Color(0xFF48A6A7)
+                        : const Color(0xFFED1010),
+                  ),
+                  const SizedBox(height: 8),
                   // Description
                   Text(
                     widget.exerciseDescription,
@@ -145,7 +170,7 @@ class _ExerciseCardState extends State<ExerciseCard>
             GestureDetector(
               onTap: _toggleExpansion,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                padding: const EdgeInsets.only(top: 8.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
