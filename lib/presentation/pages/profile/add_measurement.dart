@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/measurement_repository_impl.dart';
@@ -17,6 +20,7 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
   final measurementrepo = MeasurementRepositoryImpl(MeasurementService());
   final TextEditingController _weightcontroller = TextEditingController();
   final TextEditingController _heightcontroller = TextEditingController();
+  File? _selectedImage;
   bool isLoading = false;
 
   @override
@@ -24,6 +28,132 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
     _weightcontroller.dispose();
     _heightcontroller.dispose();
     super.dispose();
+  }
+
+  void _removeImage() {
+    setState(() {
+      _selectedImage = null;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Pick from Gallery'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picked = await ImagePicker().pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _selectedImage = File(picked.path);
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Use Camera'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picked = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (picked != null) {
+                    setState(() {
+                      _selectedImage = File(picked.path);
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<String> uploadExerciseImage(File imageFile) async {
+    try {
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('measurement_images')
+          .child('$fileName.jpg');
+
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Image upload failed: $e');
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_heightcontroller.text.isEmpty || _weightcontroller.text.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter height and weight.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      isLoading = true;
+    });
+
+    bool success = false;
+
+    try {
+      String? imageUrl;
+      if (_selectedImage != null) {
+        imageUrl = await uploadExerciseImage(_selectedImage!);
+      } else {
+        imageUrl = null;
+      }
+      await measurementrepo.addMeasurement(
+        Measurement(
+          userId: user!.uid,
+          height: double.parse(_heightcontroller.text),
+          weight: double.parse(_weightcontroller.text),
+          date: DateTime.now(),
+          imageUrl: imageUrl,
+        ),
+      );
+      success = true;
+    } on Exception catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+
+    // Only update UI if still mounted
+    if (!mounted) return;
+
+    setState(() {
+      isLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override
@@ -97,7 +227,11 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
                     color: Color(0xFF6A6A6A),
                   ),
                 ),
-                InputImage(),
+                InputImage(
+                  onTap: _pickImage,
+                  imageFile: _selectedImage,
+                  onRemove: _removeImage,
+                ),
               ],
             ),
           ],
@@ -105,92 +239,80 @@ class _AddMeasurementPageState extends State<AddMeasurementPage> {
       ),
     );
   }
-
-  Future<void> _submit() async {
-    if (_heightcontroller.text.isEmpty || _weightcontroller.text.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please enter height and weight.'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-      return;
-    }
-
-    setState(() {
-      isLoading = true;
-    });
-
-    bool success = false;
-
-    try {
-      await measurementrepo.addMeasurement(
-        Measurement(
-          userId: user!.uid,
-          height: double.parse(_heightcontroller.text),
-          weight: double.parse(_weightcontroller.text),
-          date: DateTime.now(),
-        ),
-      );
-      success = true;
-    } on Exception catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
-
-    // Only update UI if still mounted
-    if (!mounted) return;
-
-    setState(() {
-      isLoading = false;
-    });
-
-    if (success) {
-      Navigator.of(context).pop();
-    }
-  }
 }
 
 class InputImage extends StatelessWidget {
-  const InputImage({super.key});
+  final VoidCallback onTap;
+  final VoidCallback? onRemove;
+  final File? imageFile;
+
+  const InputImage({
+    super.key,
+    required this.onTap,
+    required this.imageFile,
+    this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: onTap,
       child: Container(
         width: double.infinity,
-        height: 150,
+        height: 350,
+        margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
           border: Border.all(
-            color: const Color.fromARGB(255, 182, 182, 182),
+            color: const Color.fromARGB(78, 182, 182, 182),
             width: 1,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.photo_camera_outlined,
-              size: 32,
-              color: Color(0xFF006A71),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Add Picture',
-              style: TextStyle(color: Color(0xFF006A71), fontSize: 16),
-            ),
-          ],
-        ),
+        child: imageFile == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  Icon(
+                    Icons.photo_camera_outlined,
+                    size: 32,
+                    color: Color(0xFF006A71),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Add Picture (Optional)',
+                    style: TextStyle(color: Color(0xFF006A71), fontSize: 16),
+                  ),
+                ],
+              )
+            : Stack(
+                fit: StackFit.expand,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(imageFile!, fit: BoxFit.cover),
+                  ),
+                  if (onRemove != null)
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: onRemove,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black45,
+                            shape: BoxShape.circle,
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: const Icon(
+                            Icons.close,
+                            size: 18,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
       ),
     );
   }
