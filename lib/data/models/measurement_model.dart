@@ -7,6 +7,7 @@ class MeasurementModel extends Measurement {
     required super.date,
     required super.weight,
     required super.height,
+    super.imageUrl,
   });
 
   factory MeasurementModel.fromMap(Map<String, dynamic> data, String docId) {
@@ -16,6 +17,7 @@ class MeasurementModel extends Measurement {
       date: (data['created_at']).toDate(),
       weight: data['weight'].toDouble(),
       height: data['height'].toDouble(),
+      imageUrl: data['image_url'],
     );
   }
 
@@ -24,10 +26,11 @@ class MeasurementModel extends Measurement {
     'created_at': date,
     'weight': weight,
     'height': height,
+    'image_url': imageUrl,
   };
 
   @override
   String toString() {
-    return 'MeasurementModel{id: $id, userId: $userId, date: $date, weight: $weight, height: $height, }';
+    return 'MeasurementModel{id: $id, userId: $userId, date: $date, weight: $weight, height: $height, imageUrl: $imageUrl} }';
   }
 }
