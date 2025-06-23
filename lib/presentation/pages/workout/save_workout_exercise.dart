@@ -24,8 +24,6 @@ class _SaveWorkoutState extends State<SaveWorkout> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _visibleToEveryone = true;
 
-  final ImagePicker _picker = ImagePicker();
-
   @override
   void dispose() {
     _titleController.dispose();
