@@ -4,6 +4,7 @@ class Measurement {
   final DateTime date;
   final double weight;
   final double height;
+  String? imageUrl;
 
   Measurement({
     this.id,
@@ -11,5 +12,6 @@ class Measurement {
     required this.date,
     required this.weight,
     required this.height,
+    this.imageUrl,
   });
 }

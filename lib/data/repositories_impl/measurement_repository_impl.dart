@@ -18,6 +18,7 @@ class MeasurementRepositoryImpl implements MeasurementRepository {
         height: measurement.height,
         weight: measurement.weight,
         date: measurement.date,
+        imageUrl: measurement.imageUrl,
       );
       await _service.add(model.toMap());
     } on CustomErrorException catch (_) {
