@@ -570,7 +570,7 @@ class _PostCardState extends State<PostCard> {
                                   ),
                                 ),
                               )
-                            : SizedBox.shrink(), // renders nothing if following
+                            : SizedBox.shrink(),
                       ],
                     ),
                   ),
