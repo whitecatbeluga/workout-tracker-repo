@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/errors/auth_custom_exception.dart';
 import 'package:workout_tracker_repo/data/services/auth_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user.dart';
@@ -89,6 +90,30 @@ class AuthRepositoryImpl implements AuthRepository {
         code: 'unknown',
         message: 'Unexpected error occurred.',
       );
+    }
+  }
+
+  @override
+  Future<void> forgotPassword(String email) async {
+    final auth = FirebaseAuth.instance;
+    final firestore = FirebaseFirestore.instance;
+
+    try {
+      final querySnapshot = await firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isEmpty) {
+        throw Exception('Email does not exist');
+      }
+
+      await auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(e.message ?? 'An error occurred');
+    } catch (e) {
+      throw Exception(e.toString());
     }
   }
 }
