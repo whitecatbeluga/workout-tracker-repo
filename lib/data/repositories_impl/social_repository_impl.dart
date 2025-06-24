@@ -318,6 +318,69 @@ class SocialRepositoryImpl implements SocialRepository {
   }
 
   @override
+  Stream<List<SocialWithUser>> fetchMyWorkouts(String userId) {
+    try {
+      return _firestore
+          .collection('workouts')
+          .where('user_id', isEqualTo: userId)
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final social = SocialModel.fromMap(doc.data(), doc.id);
+
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(social.uid)
+                    .get();
+
+                final accountPicture =
+                    userDoc.data()?['account_picture'] ?? 'Unknown';
+                final userName = userDoc.data()?['user_name'] ?? 'Unknown';
+                final firstName = userDoc.data()?['first_name'] ?? 'Unknown';
+                final lastName = userDoc.data()?['last_name'] ?? 'Unknown';
+                final email = userDoc.data()?['email'] ?? 'Unknown';
+
+                final likesSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('likes')
+                    .get();
+
+                final likedByUids = likesSnapshot.docs
+                    .map((like) => like.data()['liked_by'] as String)
+                    .toList();
+
+                final commentsSnapshot = await _firestore
+                    .collection('workouts')
+                    .doc(doc.id)
+                    .collection('comments')
+                    .get();
+
+                return SocialWithUser(
+                  social: social,
+                  accountPicture: accountPicture,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                  likedByUids: likedByUids,
+                  commentCount: commentsSnapshot.size,
+                );
+              }),
+            );
+
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  @override
   Stream<List<SocialWithUser>> fetchCurrentUserData(String userId) {
     try {
       return _firestore

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/workout_service.dart';
 import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
@@ -8,8 +9,10 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/graphfilter.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
+import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/barchart.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
+import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../core/providers/user_info_provider.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -23,6 +26,8 @@ class _ProfilePageState extends State<ProfilePage> {
   String selectedFilter = 'Week';
   final user = authService.value.getCurrentUser();
   final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
+
+  final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
   final List<MenuItem> menuItems = const [
     MenuItem(
@@ -138,6 +143,59 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
               ),
               MenuList(menuItems: menuItems),
+              StreamBuilder(
+                stream: repository.fetchMyWorkouts(user!.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+
+                  final posts = snapshot.data ?? [];
+
+                  if (posts.isEmpty) {
+                    return const Center(child: Text('No public posts found.'));
+                  }
+
+                  return ListView.builder(
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Prevent nested scroll
+                    shrinkWrap:
+                        true, // Let ListView size itself based on content
+                    itemCount: posts.length,
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
+                      return PostCard(
+                        data: post,
+                        onTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            SocialRoutes.viewPost,
+                            arguments: post,
+                          );
+                        },
+                        viewProfileOnTap: () {
+                          Navigator.pushNamed(
+                            context,
+                            SocialRoutes.visitProfile,
+                            arguments: {
+                              'id': post.social.uid,
+                              'accountPicture': post.accountPicture,
+                              'firstName': post.firstName,
+                              'lastName': post.lastName,
+                              'userName': post.userName,
+                              'email': post.email,
+                            },
+                          );
+                        },
+                      );
+                    },
+                  );
+                },
+              ),
             ],
           ),
         ),
