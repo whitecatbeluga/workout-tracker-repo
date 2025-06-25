@@ -11,6 +11,26 @@ class LinechartWidget extends StatelessWidget {
     required this.showWeight,
     required this.measurements,
   });
+
+  // Simple method to calculate interval based on range
+  double _calculateInterval(double range, bool isWeight) {
+    if (range <= 2) {
+      return 0.5;
+    } else if (range <= 5) {
+      return 1.0;
+    } else if (range <= 10) {
+      return 2.0;
+    } else if (range <= 20) {
+      return showWeight ? 2.0 : 5.0;
+    } else if (range <= 50) {
+      return 5.0;
+    } else if (range <= 100) {
+      return 10.0;
+    } else {
+      return 20.0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final List<FlSpot> dataPoints = measurements.map((e) {
@@ -26,27 +46,23 @@ class LinechartWidget extends StatelessWidget {
     // Extract all y-values from dataPoints
     final yValues = dataPoints.map((e) => e.y).toList();
 
-    // Get dynamic min and max Y values with a buffer
-    final double minY = (yValues.reduce((a, b) => a < b ? a : b) - 1)
-        .floorToDouble();
-    final double maxY = (yValues.reduce((a, b) => a > b ? a : b) + 1)
-        .ceilToDouble();
+    // Get min and max values
+    final double dataMin = yValues.reduce((a, b) => a < b ? a : b);
+    final double dataMax = yValues.reduce((a, b) => a > b ? a : b);
+    final double range = dataMax - dataMin;
 
-    // Decide a dynamic interval (simplified logic)
-    // double range = maxY - minY;
-    // double interval = showWeight ? 1.0 : 5.0; // Use whole numbers for weight
+    // Calculate interval based on range
+    double interval = _calculateInterval(range, showWeight);
 
-    // if (range > 50) {
-    //   interval = 10.0;
-    // } else if (range > 20) {
-    //   interval = showWeight ? 4.0 : 5.0;
-    // } else if (range > 10) {
-    //   interval = showWeight ? 2.0 : 2.0;
-    // } else {
-    //   interval = showWeight ? 2.0 : 2.0; // Always use 1.0 for small ranges
-    // }
-    // print('\x1B[2J\x1B[1;1H');
-    // print('minY: $minY, maxY: $maxY, range: $range, interval: $interval');
+    // Set bounds with some padding
+    final double minY = (dataMin - interval).floorToDouble();
+    final double maxY = (dataMax + interval).ceilToDouble();
+    ;
+
+    print('\x1B[2J\x1B[1;1H');
+    print('Range: $range');
+    print('Interval: $interval');
+    print('minY: $minY, maxY: $maxY');
 
     return SizedBox(
       height: 250,
@@ -82,7 +98,10 @@ class LinechartWidget extends StatelessWidget {
                     space: 12,
                     child: Text(
                       formatted,
-                      style: const TextStyle(fontSize: 12),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color.fromARGB(255, 114, 114, 114),
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   );
@@ -91,16 +110,19 @@ class LinechartWidget extends StatelessWidget {
             ),
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
-                showTitles: false,
-                reservedSize: 29,
-                // interval: interval,
+                showTitles: true,
+                reservedSize: 40, // Increased to accommodate larger numbers
+                interval: interval,
                 getTitlesWidget: (value, meta) {
                   return SideTitleWidget(
                     meta: meta,
                     space: 8,
                     child: Text(
-                      value.toStringAsFixed(0),
-                      style: const TextStyle(fontSize: 12),
+                      value.toStringAsFixed(0) + (showWeight ? ' kg' : ' cm'),
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Color.fromARGB(255, 114, 114, 114),
+                      ),
                     ),
                   );
                 },
@@ -109,11 +131,15 @@ class LinechartWidget extends StatelessWidget {
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          gridData: FlGridData(show: true),
+          gridData: FlGridData(
+            show: true,
+            horizontalInterval:
+                interval, // Ensure grid lines match the title intervals
+          ),
           borderData: FlBorderData(show: true),
           lineBarsData: [
             LineChartBarData(
-              isCurved: true,
+              isCurved: false,
               color: Colors.teal,
               barWidth: 2,
               belowBarData: BarAreaData(show: false),
