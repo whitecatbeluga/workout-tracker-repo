@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import '../../domain/entities/program.dart';
 
@@ -49,7 +50,62 @@ class _CollapsibleState extends State<Collapsible> {
                   size: 30,
                   color: Color(0xFF323232),
                 ),
-                onTap: () {},
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Dialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: 20,
+                            children: [
+                              Text(
+                                'Update Folder',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              TextField(
+                                decoration: InputDecoration(
+                                  // hintText: 'Folder Name',
+                                  hintText: widget.title,
+                                  hintStyle: TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                  ),
+                                ),
+                              ),
+                              Column(
+                                spacing: 10,
+                                children: [
+                                  Button(
+                                    label: 'Save',
+                                    width: double.infinity,
+                                    onPressed: () {},
+                                  ),
+                                  Button(
+                                    label: 'Cancel',
+                                    textColor: Color(0xFF323232),
+                                    width: double.infinity,
+                                    variant: ButtonVariant.gray,
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),
