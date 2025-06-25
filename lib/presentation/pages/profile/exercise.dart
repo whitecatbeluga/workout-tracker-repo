@@ -108,7 +108,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
           Navigator.pop(context);
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        tileColor: isSelected ? Color(0xFF006A71).withOpacity(0.1) : null,
+        tileColor: isSelected ? Color(0xFF006A71).withAlpha(0x1A) : null,
       ),
     );
   }
@@ -177,9 +177,9 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
           padding: const EdgeInsets.all(12),
           margin: const EdgeInsets.only(bottom: 15),
           decoration: BoxDecoration(
-            color: Color(0xFF006A71).withOpacity(0.1),
+            color: Color(0xFF006A71).withAlpha(0x1A),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Color(0xFF006A71).withOpacity(0.3)),
+            border: Border.all(color: Color(0xFF006A71).withAlpha(0x1A)),
           ),
           child: Row(
             children: [
