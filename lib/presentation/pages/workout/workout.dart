@@ -91,7 +91,80 @@ class WorkoutPage extends StatelessWidget {
               padding: EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  Row(children: [_buildHeader("Routines")]),
+                  // Row(children: [_buildHeader("Routines")]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildHeader("Routines"),
+                      GestureDetector(
+                        child: Icon(Icons.create_new_folder),
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Dialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: EdgeInsets.all(20),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    spacing: 20,
+                                    children: [
+                                      Text(
+                                        'Create Folder',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      TextField(
+                                        decoration: InputDecoration(
+                                          hintText: 'Folder Name',
+                                          hintStyle: TextStyle(
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                        ),
+                                      ),
+                                      Column(
+                                        spacing: 10,
+                                        children: [
+                                          Button(
+                                            prefixIcon: Icons.add,
+                                            label: 'Create Folder',
+                                            width: double.infinity,
+                                            onPressed: () {},
+                                            textStyle: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Button(
+                                            label: 'Cancel',
+                                            width: double.infinity,
+                                            textColor: Color(0xFF323232),
+                                            variant: ButtonVariant.gray,
+                                            textStyle: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(context);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                   Row(
                     children: [
                       Expanded(
