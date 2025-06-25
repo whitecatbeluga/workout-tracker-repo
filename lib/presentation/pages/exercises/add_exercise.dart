@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/exercise_service.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 
 class AddExerciseArguments {
@@ -20,19 +22,32 @@ class AddExercise extends StatefulWidget {
 }
 
 class _AddExerciseState extends State<AddExercise> {
+  final user = authService.value.getCurrentUser();
   final TextEditingController _searchController = TextEditingController();
+  FocusNode focusNode = FocusNode();
   final exerciseRepo = ExerciseRepositoryImpl(ExerciseService());
   final Set<Exercise> selectedExercises = <Exercise>{};
 
   // Add these for manual stream management
   List<Exercise> exercises = [];
+  List<Exercise> originalExercises = [];
+  List<Exercise> defaultExercises = [];
+  List<Exercise> userExercises = [];
   bool isLoading = true;
   String? errorMessage;
   StreamSubscription<List<Exercise>>? _streamSubscription;
-
+  StreamSubscription<List<Exercise>>? _userExercisesStreamSubscription;
+  List<String> exerciseFilter = [
+    'Default Exercises',
+    'All Exercises',
+    'My Exercises',
+  ];
+  String selectedFilter = 'Default Exercises';
   // Cache the arguments
   AddExerciseArguments? _arguments;
   bool get isLogWorkout => _arguments?.isLogWorkout ?? false;
+  bool isEquipment = false;
+  bool isFilter = false;
 
   @override
   void initState() {
@@ -72,50 +87,107 @@ class _AddExerciseState extends State<AddExercise> {
     return null;
   }
 
+  // void _listenToExercises() {
+  //   _streamSubscription = exerciseRepo.getExercises().listen(
+  //     (exerciseList) {
+  //       if (mounted) {
+  //         setState(() {
+  //           exercises = exerciseList;
+  //           if (isLogWorkout) {
+  //             selectedExercises.addAll(
+  //               workoutExercises.value.where(
+  //                 (e) => exercises.any((ex) => ex.id == e.id),
+  //               ),
+  //             );
+  //           } else {
+  //             selectedExercises.addAll(
+  //               routineExercises.value.where(
+  //                 (e) => exercises.any((ex) => ex.id == e.id),
+  //               ),
+  //             );
+  //           }
+  //           isLoading = false;
+  //           errorMessage = null;
+  //         });
+  //       }
+  //     },
+  //     onError: (error) {
+  //       if (mounted) {
+  //         setState(() {
+  //           isLoading = false;
+  //           errorMessage = error.toString();
+  //         });
+  //       }
+  //     },
+  //   );
+  // }
+
   void _listenToExercises() {
-    _streamSubscription = exerciseRepo.getExercises().listen(
-      (exerciseList) {
-        if (mounted) {
-          setState(() {
-            exercises = exerciseList;
-            if (isLogWorkout) {
-              selectedExercises.addAll(
-                workoutExercises.value.where(
-                  (e) => exercises.any((ex) => ex.id == e.id),
-                ),
-              );
-            } else {
-              selectedExercises.addAll(
-                routineExercises.value.where(
-                  (e) => exercises.any((ex) => ex.id == e.id),
-                ),
-              );
-            }
-            isLoading = false;
-            errorMessage = null;
-          });
-        }
-      },
-      onError: (error) {
-        if (mounted) {
-          setState(() {
-            isLoading = false;
-            errorMessage = error.toString();
-          });
-        }
-      },
-    );
+    _streamSubscription = exerciseRepo.getExercises().listen((exerciseList) {
+      _handleExercises(exerciseList, false);
+    });
+
+    _userExercisesStreamSubscription = exerciseRepo
+        .getExercisesByUserId(user!.uid)
+        .listen((userList) {
+          _handleExercises(userList, true);
+        });
+  }
+
+  void _handleExercises(List<Exercise> newExercises, bool isCustom) {
+    if (mounted) {
+      if (isCustom) {
+        setState(() {
+          userExercises.addAll(
+            newExercises.where(
+              (ex) =>
+                  !userExercises.any((e) => e.id == ex.id), // Avoid duplicates
+            ),
+          );
+          selectedExercises.clear();
+          // final source = isLogWorkout ? workoutExercises : routineExercises;
+          // selectedExercises.addAll(
+          //   source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
+          // );
+          // isLoading = false;
+          // errorMessage = null;
+          isLoading = false;
+          errorMessage = null;
+        });
+      } else {
+        setState(() {
+          defaultExercises.addAll(
+            newExercises.where(
+              (ex) => !defaultExercises.any(
+                (e) => e.id == ex.id,
+              ), // Avoid duplicates
+            ),
+          );
+          selectedExercises.clear();
+          // final source = isLogWorkout ? workoutExercises : routineExercises;
+          // selectedExercises.addAll(
+          //   source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
+          // );
+          exercises.addAll(defaultExercises);
+          originalExercises.addAll(defaultExercises);
+          isLoading = false;
+          errorMessage = null;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
     _streamSubscription?.cancel();
+    _userExercisesStreamSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   // This method now only updates selectedExercises, not the exercise list
   void _toggleExerciseSelection(Exercise exercise) {
+    focusNode.unfocus();
     setState(() {
       final isSelected = selectedExercises.any((e) => e.id == exercise.id);
       if (isSelected) {
@@ -123,6 +195,146 @@ class _AddExerciseState extends State<AddExercise> {
       } else {
         selectedExercises.add(exercise);
       }
+    });
+  }
+
+  void _showFilterDrawer(BuildContext context) {
+    focusNode.unfocus();
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return _buildFilterDrawer(context);
+      },
+    );
+  }
+
+  void _checkExercises() {
+    switch (selectedFilter) {
+      case 'Default Exercises':
+        exercises = defaultExercises;
+        break;
+      case 'My Exercises':
+        exercises = userExercises;
+        break;
+      case 'All Exercises':
+        exercises = [...defaultExercises, ...userExercises];
+        break;
+    }
+    originalExercises = exercises;
+  }
+
+  void _showEquipmentDrawer(BuildContext context) {
+    focusNode.unfocus();
+    bool tempEquipment = isEquipment; // Local temp value
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Optional: for full height
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Select Filter',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'With Equipment',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Switch(
+                        activeColor: const Color(0xFF006A71),
+                        value: tempEquipment,
+                        onChanged: (value) {
+                          setModalState(() {
+                            tempEquipment = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 30),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: Button(
+                            label: 'Apply',
+                            backgroundColor: const Color(0xFF006A71),
+                            onPressed: () {
+                              setState(() {
+                                isFilter = true;
+                                isEquipment = tempEquipment;
+                                _checkExercises();
+                                exercises = isEquipment
+                                    ? exercises
+                                          .where(
+                                            (e) => e.withoutEquipment == true,
+                                          )
+                                          .toList()
+                                    : exercises
+                                          .where(
+                                            (e) => e.withoutEquipment == false,
+                                          )
+                                          .toList();
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Button(
+                            label: 'Clear',
+                            textColor: const Color(0xFF006A71),
+                            backgroundColor: Colors.white,
+                            onPressed: () {
+                              setState(() {
+                                isEquipment = false;
+                                isFilter = false;
+                                _searchController.text = '';
+                                _checkExercises();
+                              });
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _filterSearch(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        _checkExercises();
+      });
+      return;
+    }
+
+    final filteredExercises = originalExercises.where((exercise) {
+      return exercise.name.toLowerCase().contains(query.toLowerCase());
+    }).toList();
+
+    setState(() {
+      exercises = filteredExercises;
     });
   }
 
@@ -180,8 +392,9 @@ class _AddExerciseState extends State<AddExercise> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: TextField(
+                focusNode: focusNode,
                 controller: _searchController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Search',
                   prefixIcon: Icon(Icons.search, color: Colors.grey),
                   border: InputBorder.none,
@@ -189,7 +402,18 @@ class _AddExerciseState extends State<AddExercise> {
                     horizontal: 16,
                     vertical: 12,
                   ),
+                  suffixIcon: IconButton(
+                    icon: Icon(Icons.clear),
+                    onPressed: () {
+                      _searchController.clear();
+                      _filterSearch('');
+                      focusNode.unfocus();
+                    },
+                  ),
                 ),
+                onChanged: (text) {
+                  _filterSearch(text);
+                },
               ),
             ),
           ),
@@ -200,46 +424,41 @@ class _AddExerciseState extends State<AddExercise> {
             child: Row(
               children: [
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F0F0),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Add Exercise',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                  child: Button(
+                    height: 45,
+                    prefixIcon: Icons.tune,
+                    label: selectedFilter,
+                    onPressed: () => _showFilterDrawer(context),
+                    textStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F0F0),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Add Exercise',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                  child: Button(
+                    height: 45,
+                    label: isFilter
+                        ? isEquipment
+                              ? "With Equipment"
+                              : "No Equipment"
+                        : 'Select Filter',
+                    onPressed: () {
+                      _showEquipmentDrawer(context);
+                    },
+                    variant: ButtonVariant.secondary,
+                    textStyle: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white,
                     ),
+                    prefixIcon: isFilter
+                        ? isEquipment
+                              ? Icons.check
+                              : Icons.close
+                        : Icons.filter_list,
                   ),
                 ),
               ],
@@ -253,7 +472,7 @@ class _AddExerciseState extends State<AddExercise> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'All Exercises',
+                'Exercises',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
               ),
             ),
@@ -389,11 +608,26 @@ class _AddExerciseState extends State<AddExercise> {
               color: Colors.grey[200],
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              Icons.fitness_center,
-              color: Colors.grey[600],
-              size: 24,
-            ),
+            // child: Icon(
+            //   Icons.fitness_center,
+            //   color: Colors.grey[600],
+            //   size: 24,
+            // ),
+            child: exercise.imageUrl != null && exercise.imageUrl!.isNotEmpty
+                ? Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      image: DecorationImage(
+                        image: NetworkImage(exercise.imageUrl!),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  )
+                : const Icon(
+                    Icons.fitness_center,
+                    color: Colors.grey,
+                    size: 24,
+                  ),
           ),
           title: Text(
             exercise.name,
@@ -431,6 +665,42 @@ class _AddExerciseState extends State<AddExercise> {
           ),
           onTap: () => _toggleExerciseSelection(exercise),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFilterDrawer(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Select Exercises Filter',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              itemCount: exerciseFilter.length,
+              itemBuilder: (context, index) {
+                final exercise = exerciseFilter[index];
+                return ListTile(
+                  title: Text(exercise),
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = exercise;
+                      isFilter = false;
+                      _checkExercises();
+                    });
+                    Navigator.of(context).pop();
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
