@@ -3,7 +3,9 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/measurement_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/measurement_service.dart';
 import 'package:workout_tracker_repo/domain/entities/measurement.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/measurement_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/card/measurement_image_card.dart';
 import 'package:workout_tracker_repo/presentation/widgets/charts/linechart.dart';
 import 'package:intl/intl.dart';
 import 'package:workout_tracker_repo/routes/profile/profile.dart';
@@ -184,6 +186,79 @@ class _MeasurementPageState extends State<MeasurementPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  Container(
+                    margin: EdgeInsets.all(8),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Progress Images',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => MeasurementListPage(
+                                      measurements: measurements,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                'See All',
+                                style: TextStyle(
+                                  color: Color(0xFF006A71),
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: measurements.isEmpty
+                              ? const Center(
+                                  child: Text('No measurements found'),
+                                )
+                              : GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            MeasurementListPage(
+                                              measurements: measurements,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                                  child: Row(
+                                    spacing: 10,
+                                    children: [
+                                      ...measurements.map(
+                                        (measurement) => MeasurementImageCard(
+                                          imageUrl: measurement.imageUrl ?? '',
+                                          date: measurement.date,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
                   Container(
                     margin: const EdgeInsets.only(
                       left: 8,
