@@ -7,6 +7,7 @@ import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
+import '../../domain/entities/set_entry.dart';
 
 class LogWorkout extends StatefulWidget {
   const LogWorkout({super.key});
