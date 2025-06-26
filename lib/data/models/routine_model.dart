@@ -2,7 +2,7 @@ import '../../domain/entities/routine.dart';
 
 class SetDetailModel extends SetDetail {
   SetDetailModel({
-    required super.set,
+    required super.setNumber,
     required super.previous,
     required super.kg,
     required super.reps,
@@ -10,7 +10,7 @@ class SetDetailModel extends SetDetail {
 
   factory SetDetailModel.fromMap(Map<String, dynamic> map) {
     return SetDetailModel(
-      set: map['set'],
+      setNumber: map['setNumber'],
       previous: map['previous'],
       kg: map['kg'],
       reps: map['reps'],
@@ -18,7 +18,12 @@ class SetDetailModel extends SetDetail {
   }
 
   Map<String, dynamic> toMap() {
-    return {'set': set, 'previous': previous, 'kg': kg, 'reps': reps};
+    return {
+      'setNumber': setNumber,
+      'previous': previous,
+      'kg': kg,
+      'reps': reps,
+    };
   }
 }
 

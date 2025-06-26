@@ -1,12 +1,11 @@
-// Updated Entity Structure
 class SetDetail {
-  final int set;
+  final int setNumber;
   final String previous;
-  final String kg;
-  final String reps;
+  final double kg;
+  final int reps;
 
   SetDetail({
-    required this.set,
+    required this.setNumber,
     required this.previous,
     required this.kg,
     required this.reps,
@@ -22,14 +21,13 @@ class WorkoutSet {
 
 class Exercise {
   final String id;
-  final String exerciseId; // Added to match React Native structure
+  final String exerciseId;
   final String name;
   final String description;
   final String category;
   final bool withOutEquipment;
   final String imageUrl;
-  final List<SetDetail>
-  sets; // Changed to List<SetDetail> to match React Native
+  final List<SetDetail> sets;
 
   Exercise({
     required this.id,

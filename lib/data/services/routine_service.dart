@@ -159,7 +159,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await exerciseRef.collection('sets').add({
-                'set': setData['set'],
+                'setNumber': setData['setNumber'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],
@@ -223,7 +223,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await newExerciseRef.collection('sets').add({
-                'set': setData['set'],
+                'setNumber': setData['setNumber'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],

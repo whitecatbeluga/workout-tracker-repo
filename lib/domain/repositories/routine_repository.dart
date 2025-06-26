@@ -2,7 +2,7 @@ import '../../domain/entities/routine.dart';
 
 abstract class RoutineRepository {
   // Folder operations
-  Future<List<Foldegr>> getFolders(String userId);
+  Future<List<Folder>> getFolders(String userId);
   Future<Folder> createFolder(String userId, String folderName);
   Future<void> updateFolderName(String userId, String folderId, String newName);
   Future<void> deleteFolder(String userId, String folderId);
