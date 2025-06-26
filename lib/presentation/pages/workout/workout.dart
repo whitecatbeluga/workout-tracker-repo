@@ -5,10 +5,9 @@ import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/collapsible/collapsible.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
-
-import '../../widgets/collapsible/collapsible.dart';
 
 class WorkoutPage extends StatefulWidget {
   const WorkoutPage({super.key});
@@ -19,16 +18,44 @@ class WorkoutPage extends StatefulWidget {
 
 class _WorkoutPageState extends State<WorkoutPage> {
   final user = authService.value.getCurrentUser();
-
   late Future<List<Folder>> _futureFolders;
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
   );
+  final TextEditingController _folderNameController = TextEditingController();
+
+  void _createFolder() async {
+    final name = _folderNameController.text.trim();
+
+    if (name.isNotEmpty) {
+      try {
+        await _routineRepository.createFolder(user!.uid, name);
+
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Folder created successfully!')));
+
+        setState(() {
+          _folderNameController.clear();
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create folder. Please try again.')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Folder name cannot be empty.')));
+    }
+  }
 
   @override
-  void initState() {
-    super.initState();
-    _futureFolders = _routineRepository.getFolders(user!.uid);
+  void dispose() {
+    _folderNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -99,6 +126,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
                                         ),
                                       ),
                                       TextField(
+                                        controller: _folderNameController,
                                         decoration: InputDecoration(
                                           hintText: 'Folder Name',
                                           hintStyle: TextStyle(
@@ -113,7 +141,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
                                             prefixIcon: Icons.add,
                                             label: 'Create Folder',
                                             width: double.infinity,
-                                            onPressed: () {},
+                                            onPressed: () => _createFolder(),
                                             textStyle: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
@@ -180,8 +208,8 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 ],
               ),
             ),
-            FutureBuilder<List<Folder>>(
-              future: _futureFolders,
+            StreamBuilder<List<Folder>>(
+              stream: _routineRepository.streamFolders(user!.uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -191,30 +219,23 @@ class _WorkoutPageState extends State<WorkoutPage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 }
 
-                final folders = snapshot.data ?? [];
+                final List<Folder> folders = snapshot.data ?? [];
 
                 if (folders.isEmpty) {
                   return const Center(child: Text("No folders found."));
                 }
 
                 return Expanded(
-                  // wrap to avoid layout issues
                   child: ListView.builder(
                     itemCount: folders.length,
                     itemBuilder: (context, index) {
                       final folder = folders[index];
-                      return ListTile(
-                        title: Text(folder.folderName ?? 'Unnamed Folder'),
-                        subtitle: Text(
-                          'Routines: ${folder.routineIds?.length}',
-                        ),
-                      );
+                      return Collapsible(folderContent: folder);
                     },
                   ),
                 );
               },
             ),
-            // Collapsible(title: "Workout Details", routineFolder:),
           ],
         ),
       ),

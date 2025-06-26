@@ -37,11 +37,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
 
     if (routineName.isNotEmpty) {
       try {
-        await routineRepo.createNewRoutine(
-          user!.uid,
-          routineName,
-          formattedSets,
-        );
+        routineRepo.createNewRoutine(user!.uid, routineName, formattedSets);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Routine saved successfully!')));
