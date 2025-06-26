@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/log_exercise_card.dart';
 import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
@@ -13,6 +17,47 @@ class CreateRoutine extends StatefulWidget {
 
 class _CreateRoutineState extends State<CreateRoutine> {
   final Map<String, List<SetEntry>> exerciseSets = {};
+
+  final user = authService.value.getCurrentUser();
+
+  final TextEditingController routineNameController = TextEditingController();
+
+  final routineRepo = RoutineRepositoryImpl(RoutineService());
+
+  void _saveRoutine() async {
+    final routineName = routineNameController.text.trim();
+
+    // Wrap each list of SetEntry in a parent object (with 'name' and 'sets')
+    Map<String, dynamic> formattedSets = exerciseSets.map((exerciseId, sets) {
+      return MapEntry(exerciseId, {
+        'name': 'Exercise',
+        'sets': sets.map((set) => set.toJson()).toList(),
+      });
+    });
+
+    if (routineName.isNotEmpty) {
+      try {
+        await routineRepo.createNewRoutine(
+          user!.uid,
+          routineName,
+          formattedSets,
+        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Routine saved successfully!')));
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      } catch (e) {
+        print('Error saving routine: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save routine. Please try again.')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Routine name cannot be empty.')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +91,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
               ),
               Text('Create Routine', style: TextStyle(fontSize: 20)),
               GestureDetector(
-                onTap: () {}, // your save action
+                onTap: () => _saveRoutine(),
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   margin: EdgeInsets.only(right: 5),
@@ -73,6 +118,7 @@ class _CreateRoutineState extends State<CreateRoutine> {
         child: Column(
           children: [
             TextFormField(
+              controller: routineNameController,
               style: TextStyle(
                 color: Color(0xFF626262),
                 fontSize: 25,

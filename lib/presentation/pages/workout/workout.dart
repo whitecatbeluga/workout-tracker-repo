@@ -1,59 +1,38 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/domain/entities/routine.dart';
+import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
-import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
-import '../../domain/entities/program.dart';
 import '../../widgets/collapsible/collapsible.dart';
 
-class WorkoutPage extends StatelessWidget {
+class WorkoutPage extends StatefulWidget {
   const WorkoutPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = authService.value.getCurrentUser();
+  State<WorkoutPage> createState() => _WorkoutPageState();
+}
 
-    ProgramState programState = ProgramState(
-      programs: [
-        Program(
-          id: '1',
-          programName: 'Program 1',
-          routines: [
-            Routine(
-              id: '1',
-              routineName: 'Routine 1',
-              exercises: [
-                Exercise(
-                  id: '1',
-                  name: 'Exercise 1',
-                  description: 'Description 1',
-                  category: 'Category 1',
-                  withOutEquipment: true,
-                  imageUrl: 'https://example.com/exercise1.jpg',
-                  sets: [
-                    WorkoutSet(
-                      exerciseId: '1',
-                      name: 'Set 1',
-                      sets: [
-                        SetDetail(
-                          set: 1,
-                          previous: '0',
-                          kg: '0',
-                          reps: '0',
-                          checked: false,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
-      ],
-    );
+class _WorkoutPageState extends State<WorkoutPage> {
+  final user = authService.value.getCurrentUser();
+
+  late Future<List<Folder>> _futureFolders;
+  final RoutineRepository _routineRepository = RoutineRepositoryImpl(
+    RoutineService(),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _futureFolders = _routineRepository.getFolders(user!.uid);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -201,7 +180,41 @@ class WorkoutPage extends StatelessWidget {
                 ],
               ),
             ),
-            Collapsible(title: "Workout Details", program: programState),
+            FutureBuilder<List<Folder>>(
+              future: _futureFolders,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (snapshot.hasError) {
+                  return Center(child: Text("Error: ${snapshot.error}"));
+                }
+
+                final folders = snapshot.data ?? [];
+
+                if (folders.isEmpty) {
+                  return const Center(child: Text("No folders found."));
+                }
+
+                return Expanded(
+                  // wrap to avoid layout issues
+                  child: ListView.builder(
+                    itemCount: folders.length,
+                    itemBuilder: (context, index) {
+                      final folder = folders[index];
+                      return ListTile(
+                        title: Text(folder.folderName ?? 'Unnamed Folder'),
+                        subtitle: Text(
+                          'Routines: ${folder.routineIds?.length}',
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+            // Collapsible(title: "Workout Details", routineFolder:),
           ],
         ),
       ),

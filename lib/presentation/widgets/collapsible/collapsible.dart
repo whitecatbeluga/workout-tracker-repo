@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
-import '../../domain/entities/program.dart';
+import '../../../domain/entities/routine.dart';
 
 class Collapsible extends StatefulWidget {
-  const Collapsible({super.key, required this.title, required this.program});
+  const Collapsible({
+    super.key,
+    required this.title,
+    required this.routineFolder,
+  });
 
   final String title;
-  final ProgramState program;
+  final List<Folder> routineFolder;
 
   @override
   State<Collapsible> createState() => _CollapsibleState();
@@ -135,7 +139,7 @@ class _CollapsibleState extends State<Collapsible> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        widget.program.programs.first.programName ?? "",
+                        widget.routineFolder.first.folderName ?? "",
                         style: TextStyle(
                           color: Color(0xFF323232),
                           fontSize: 16,
@@ -152,9 +156,9 @@ class _CollapsibleState extends State<Collapsible> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: List.generate(
-                      widget.program.programs.length,
+                      widget.routineFolder.length,
                       (index) => Text(
-                        widget.program.programs[index].programName ?? "",
+                        widget.routineFolder[index].folderName ?? "",
                         style: TextStyle(color: Color(0xFF626262)),
                       ),
                     ),

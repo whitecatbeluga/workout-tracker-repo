@@ -1,48 +1,43 @@
+class SetDetail {
+  final int setNumber;
+  final String previous;
+  final double kg;
+  final int reps;
+
+  SetDetail({
+    required this.setNumber,
+    required this.previous,
+    required this.kg,
+    required this.reps,
+  });
+}
+
+class WorkoutSet {
+  final String exerciseId;
+  final List<SetDetail> sets;
+
+  WorkoutSet({required this.exerciseId, required this.sets});
+}
+
 class Exercise {
   final String id;
+  final String exerciseId;
   final String name;
   final String description;
   final String category;
   final bool withOutEquipment;
   final String imageUrl;
-  final List<WorkoutSet> sets;
+  final List<SetDetail> sets;
 
   Exercise({
     required this.id,
+    required this.exerciseId,
     required this.name,
     required this.description,
     required this.category,
     required this.withOutEquipment,
     required this.imageUrl,
     required this.sets,
-  });
-}
-
-class WorkoutSet {
-  final String exerciseId;
-  final String name;
-  final List<SetDetail> sets;
-
-  WorkoutSet({
-    required this.exerciseId,
-    required this.name,
-    required this.sets,
-  });
-}
-
-class SetDetail {
-  final int set;
-  final String previous;
-  final String kg;
-  final String reps;
-  final bool checked;
-
-  SetDetail({
-    required this.set,
-    required this.previous,
-    required this.kg,
-    required this.reps,
-    required this.checked,
   });
 }
 
@@ -60,25 +55,18 @@ class Routine {
   });
 }
 
-class Program {
+class Folder {
   final String id;
   final List<String>? routineIds;
-  final String? programName;
+  final String? folderName;
   final String? createdAt;
-  final List<Routine> routines;
+  List<Routine>? routines;
 
-  Program({
+  Folder({
     required this.id,
     this.routineIds,
-    this.programName,
+    this.folderName,
     this.createdAt,
-    required this.routines,
+    this.routines,
   });
-}
-
-class ProgramState {
-  final List<Program> programs;
-  final String? error;
-
-  ProgramState({required this.programs, this.error});
 }
