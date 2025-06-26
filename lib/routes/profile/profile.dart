@@ -8,4 +8,5 @@ class ProfileRoutes {
   static const editProfile = '$prefix/edit-profile';
   static const measurements = '$prefix/measurements';
   static const addMeasurement = '$prefix/add-measurement';
+  static const editAccount = '$prefix/edit-account';
 }

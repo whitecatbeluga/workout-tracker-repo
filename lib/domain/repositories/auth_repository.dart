@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:workout_tracker_repo/data/models/user_model.dart';
 import 'package:workout_tracker_repo/domain/entities/user.dart';
 
@@ -7,4 +9,6 @@ abstract class AuthRepository {
   Future<void> signOut();
   Future<AppUser?> getCurrentUser();
   Future<void> forgotPassword(String email);
+  Future<void> updateUserAvatar(String userId, File imageFile);
+  Future<void> removeUserAvatar(String userId);
 }
