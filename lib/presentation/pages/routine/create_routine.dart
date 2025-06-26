@@ -26,10 +26,36 @@ class _CreateRoutineState extends State<CreateRoutine> {
 
   void _saveRoutine() async {
     final routineName = routineNameController.text.trim();
+
+    // Wrap each list of SetEntry in a parent object (with 'name' and 'sets')
+    Map<String, dynamic> formattedSets = exerciseSets.map((exerciseId, sets) {
+      return MapEntry(exerciseId, {
+        'name': 'Exercise',
+        'sets': sets.map((set) => set.toJson()).toList(),
+      });
+    });
+
     if (routineName.isNotEmpty) {
-      await routineRepo.createNewRoutine(user!.uid, routineName, exerciseSets);
+      try {
+        await routineRepo.createNewRoutine(
+          user!.uid,
+          routineName,
+          formattedSets,
+        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Routine saved successfully!')));
+        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      } catch (e) {
+        print('Error saving routine: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save routine. Please try again.')),
+        );
+      }
     } else {
-      print('Routine name cannot be empty.');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Routine name cannot be empty.')));
     }
   }
 
