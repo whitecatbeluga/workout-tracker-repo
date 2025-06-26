@@ -17,8 +17,9 @@ class InputField extends StatefulWidget {
     this.enableLiveValidation = false,
     this.autoValidateMode,
     this.onChanged,
+    this.disabled = false,
   });
-
+  final bool disabled;
   final String label;
   final IconData? prefixIcon;
   final IconData? suffixIcon;
@@ -232,6 +233,7 @@ class _InputFieldState extends State<InputField> {
         : false;
 
     return TextFormField(
+      readOnly: widget.disabled,
       obscureText: widget.obscureText,
       controller: widget.controller,
       keyboardType: widget.keyboardType,

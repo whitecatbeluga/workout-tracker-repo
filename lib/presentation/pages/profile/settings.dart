@@ -65,7 +65,7 @@ class _SettingsState extends State<Settings> {
                 onTap: () {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    ProfileRoutes.editProfile,
+                    ProfileRoutes.editAccount,
                     (route) => false,
                   );
                 },
@@ -114,7 +114,8 @@ class _SettingsState extends State<Settings> {
                                 ValueListenableBuilder<UserProfile?>(
                                   valueListenable: currentUserProfile,
                                   builder: (context, profile, _) {
-                                    if (profile == null) return CircularProgressIndicator();
+                                    if (profile == null)
+                                      return CircularProgressIndicator();
                                     return Text(
                                       '${profile.firstName} ${profile.lastName}',
                                       style: TextStyle(

@@ -7,6 +7,7 @@ import 'package:workout_tracker_repo/presentation/pages/profile/add_measurement.
 import 'package:workout_tracker_repo/presentation/pages/profile/exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/measurement.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
@@ -112,6 +113,13 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const AddMeasurementPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.editAccount:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const EditAccountPage(),
           ifDenied: (_) => const LoginPage(),
         );
       case RoutineRoutes.createRoutinePage:
