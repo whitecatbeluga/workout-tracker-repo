@@ -7,10 +7,11 @@ class RoutineService {
       _firestore.collection('users').doc(userId).collection('folders');
 
   // Folder operations
-  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> streamFolders(
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getFolders(
     String userId,
-  ) {
-    return _foldersRef(userId).snapshots().map((snapshot) => snapshot.docs);
+  ) async {
+    final snapshot = await _foldersRef(userId).get();
+    return snapshot.docs;
   }
 
   Future<DocumentReference> createNewFolder(
@@ -19,7 +20,7 @@ class RoutineService {
   ) async {
     return _foldersRef(userId).add({
       'folder_name': folderName,
-      'created_at': Timestamp.now(),
+      'createdAt': Timestamp.now(),
       'routine_ids': [],
     });
   }
@@ -104,7 +105,7 @@ class RoutineService {
           'id': doc.id,
           ...routineData,
           'exercises': exercises,
-          'created_at': routineData['createdAt'] is Timestamp
+          'createdAt': routineData['createdAt'] is Timestamp
               ? (routineData['createdAt'] as Timestamp)
                     .toDate()
                     .toIso8601String()
@@ -139,7 +140,6 @@ class RoutineService {
     // Create routine
     final routineRef = await _firestore.collection('routines').add({
       'routine_name': routineName,
-      'created_at': Timestamp.now(),
     });
 
     // Add exercises and sets if provided
@@ -159,7 +159,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await exerciseRef.collection('sets').add({
-                'set_number': setData['set_number'],
+                'setNumber': setData['setNumber'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],
@@ -223,7 +223,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await newExerciseRef.collection('sets').add({
-                'set_number': setData['set_number'],
+                'setNumber': setData['setNumber'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],
