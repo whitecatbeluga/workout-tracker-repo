@@ -7,11 +7,10 @@ class RoutineService {
       _firestore.collection('users').doc(userId).collection('folders');
 
   // Folder operations
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getFolders(
+  Stream<List<QueryDocumentSnapshot<Map<String, dynamic>>>> streamFolders(
     String userId,
-  ) async {
-    final snapshot = await _foldersRef(userId).get();
-    return snapshot.docs;
+  ) {
+    return _foldersRef(userId).snapshots().map((snapshot) => snapshot.docs);
   }
 
   Future<DocumentReference> createNewFolder(

@@ -9,56 +9,61 @@ class RoutineRepositoryImpl implements RoutineRepository {
   RoutineRepositoryImpl(this._service);
 
   @override
-  Future<List<Folder>> getFolders(String userId) async {
-    final docs = await _service.getFolders(userId);
+  Stream<List<Folder>> streamFolders(String userId) async* {
+    final folderStream = _service.streamFolders(userId);
 
-    List<Folder> folders = [];
-    for (var doc in docs) {
-      final folderData = FolderModel.fromMap(doc.data(), doc.id);
+    await for (final docs in folderStream) {
+      List<Folder> folders = [];
 
-      // Get routines for this folder
-      if (folderData.routineIds != null && folderData.routineIds!.isNotEmpty) {
-        final routinesData = await _service.getRoutinesByIds(
-          folderData.routineIds!,
-        );
-        final routines = routinesData.map((routineData) {
-          final exercises = (routineData['exercises'] as List).map((
-            exerciseData,
-          ) {
-            final sets = (exerciseData['sets'] as List)
-                .map(
-                  (setData) =>
-                      SetDetailModel.fromMap(setData as Map<String, dynamic>),
-                )
-                .toList();
+      for (var doc in docs) {
+        final folderData = FolderModel.fromMap(doc.data(), doc.id);
 
-            return ExerciseModel(
-              id: exerciseData['id'],
-              exerciseId: exerciseData['exercise_id'],
-              name: exerciseData['name'] ?? '',
-              description: exerciseData['description'] ?? '',
-              category: exerciseData['category'] ?? '',
-              withOutEquipment: exerciseData['with_out_equipment'] ?? false,
-              imageUrl: exerciseData['image_url'] ?? '',
-              sets: sets,
+        // Fetch routines
+        if (folderData.routineIds != null &&
+            folderData.routineIds!.isNotEmpty) {
+          final routinesData = await _service.getRoutinesByIds(
+            folderData.routineIds!,
+          );
+
+          final routines = routinesData.map((routineData) {
+            final exercises = (routineData['exercises'] as List).map((
+              exerciseData,
+            ) {
+              final sets = (exerciseData['sets'] as List)
+                  .map(
+                    (setData) =>
+                        SetDetailModel.fromMap(setData as Map<String, dynamic>),
+                  )
+                  .toList();
+
+              return ExerciseModel(
+                id: exerciseData['id'],
+                exerciseId: exerciseData['exercise_id'],
+                name: exerciseData['name'] ?? '',
+                description: exerciseData['description'] ?? '',
+                category: exerciseData['category'] ?? '',
+                withOutEquipment: exerciseData['with_out_equipment'] ?? false,
+                imageUrl: exerciseData['image_url'] ?? '',
+                sets: sets,
+              );
+            }).toList();
+
+            return RoutineModel(
+              id: routineData['id'],
+              routineName: routineData['routine_name'],
+              createdAt: routineData['createdAt'],
+              exercises: exercises,
             );
           }).toList();
 
-          return RoutineModel(
-            id: routineData['id'],
-            routineName: routineData['routine_name'],
-            createdAt: routineData['createdAt'],
-            exercises: exercises,
-          );
-        }).toList();
+          folderData.routines = routines;
+        }
 
-        folderData.routines = routines;
+        folders.add(folderData);
       }
 
-      folders.add(folderData);
+      yield folders;
     }
-
-    return folders;
   }
 
   @override
@@ -165,7 +170,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
   }
 
   @override
-  Future<List<Folder>> createNewRoutine(
+  void createNewRoutine(
     String userId,
     String routineName,
     Map<String, dynamic>? sets, {
@@ -177,11 +182,10 @@ class RoutineRepositoryImpl implements RoutineRepository {
       sets,
       folderId: folderId,
     );
-    return getFolders(userId);
   }
 
   @override
-  Future<List<Folder>> updateRoutine(
+  void updateRoutine(
     String userId,
     String routineId, {
     String? updatedRoutineName,
@@ -192,7 +196,6 @@ class RoutineRepositoryImpl implements RoutineRepository {
       updatedRoutineName: updatedRoutineName,
       updatedSets: updatedSets,
     );
-    return getFolders(userId);
   }
 
   @override

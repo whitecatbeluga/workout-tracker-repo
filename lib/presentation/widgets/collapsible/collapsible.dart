@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import '../../../domain/entities/routine.dart';
 
 class Collapsible extends StatefulWidget {
-  const Collapsible({
-    super.key,
-    required this.title,
-    required this.routineFolder,
-  });
+  const Collapsible({super.key, required this.folderContent});
 
-  final String title;
-  final List<Folder> routineFolder;
+  final Folder folderContent;
 
   @override
   State<Collapsible> createState() => _CollapsibleState();
@@ -19,9 +18,53 @@ class Collapsible extends StatefulWidget {
 
 class _CollapsibleState extends State<Collapsible> {
   bool _isExpanded = true;
+  final user = authService.value.getCurrentUser();
+  final TextEditingController _folderNameController = TextEditingController();
+  final RoutineRepository _routineRepository = RoutineRepositoryImpl(
+    RoutineService(),
+  );
 
   void _toggleExpand() {
     setState(() => _isExpanded = !_isExpanded);
+  }
+
+  void _updateFolder() async {
+    final newFolderName = _folderNameController.text.trim();
+
+    if (newFolderName.isNotEmpty) {
+      try {
+        await _routineRepository.updateFolderName(
+          user!.uid,
+          widget.folderContent.id,
+          newFolderName,
+        );
+
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Folder updated successfully!')));
+
+        setState(() {
+          _folderNameController.clear();
+        });
+      } catch (e) {
+        print('Error creating folder: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update folder. Please try again.')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Folder name cannot be empty.')));
+    }
+  }
+
+  @override
+  void dispose() {
+    _folderNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -43,7 +86,10 @@ class _CollapsibleState extends State<Collapsible> {
                         size: 30,
                         color: Color(0xFF323232),
                       ),
-                      Text(widget.title, style: TextStyle(fontSize: 16)),
+                      Text(
+                        widget.folderContent.folderName ?? "",
+                        style: TextStyle(fontSize: 16),
+                      ),
                     ],
                   ),
                 ),
@@ -76,9 +122,11 @@ class _CollapsibleState extends State<Collapsible> {
                                 ),
                               ),
                               TextField(
+                                controller: _folderNameController,
                                 decoration: InputDecoration(
                                   // hintText: 'Folder Name',
-                                  hintText: widget.title,
+                                  hintText:
+                                      widget.folderContent.folderName ?? "",
                                   hintStyle: TextStyle(
                                     fontWeight: FontWeight.normal,
                                   ),
@@ -90,7 +138,7 @@ class _CollapsibleState extends State<Collapsible> {
                                   Button(
                                     label: 'Save',
                                     width: double.infinity,
-                                    onPressed: () {},
+                                    onPressed: () => _updateFolder(),
                                   ),
                                   Button(
                                     label: 'Cancel',
@@ -115,62 +163,85 @@ class _CollapsibleState extends State<Collapsible> {
           ),
           AnimatedCrossFade(
             firstChild: Container(),
-            secondChild: Container(
-              margin: const EdgeInsets.only(top: 10.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.all(Radius.circular(8.0)),
-                border: Border.all(color: Color(0xFFCBD5E1), width: 1.2),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    offset: Offset(0, 2),
-                    blurRadius: 4,
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.all(14.0),
-              alignment: Alignment.centerLeft,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 10,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        widget.routineFolder.first.folderName ?? "",
-                        style: TextStyle(
-                          color: Color(0xFF323232),
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+            secondChild: SizedBox(
+              height: 400,
+              child: ListView.builder(
+                itemCount: widget.folderContent.routines?.length ?? 0,
+                itemBuilder: (context, index) {
+                  final routine = widget.folderContent.routines![index];
+                  final exercises = routine.exercises ?? [];
+
+                  return Container(
+                    margin: const EdgeInsets.only(top: 10.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: const BorderRadius.all(
+                        Radius.circular(8.0),
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFFCBD5E1),
+                        width: 1.2,
+                      ),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black12,
+                          offset: Offset(0, 2),
+                          blurRadius: 4,
                         ),
-                      ),
-                      Icon(
-                        Icons.more_horiz,
-                        size: 30,
-                        color: Color(0xFF323232),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: List.generate(
-                      widget.routineFolder.length,
-                      (index) => Text(
-                        widget.routineFolder[index].folderName ?? "",
-                        style: TextStyle(color: Color(0xFF626262)),
-                      ),
+                      ],
                     ),
-                  ),
-                  Button(
-                    label: "Start Routine",
-                    onPressed: () {},
-                    prefixIcon: Icons.play_arrow_rounded,
-                    fullWidth: true,
-                    size: ButtonSize.large,
-                  ),
-                ],
+                    padding: const EdgeInsets.all(14.0),
+                    alignment: Alignment.centerLeft,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              routine.routineName ?? 'Unnamed Routine',
+                              style: const TextStyle(
+                                color: Color(0xFF323232),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Icon(
+                              Icons.more_horiz,
+                              size: 30,
+                              color: Color(0xFF323232),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        // Exercises
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: exercises.map((exercise) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Text(
+                                exercise.name,
+                                style: const TextStyle(
+                                  color: Color(0xFF626262),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 16),
+                        // Start Button
+                        Button(
+                          label: "Start Routine",
+                          onPressed: () {},
+                          prefixIcon: Icons.play_arrow_rounded,
+                          fullWidth: true,
+                          size: ButtonSize.large,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             crossFadeState: _isExpanded
