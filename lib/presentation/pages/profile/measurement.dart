@@ -143,21 +143,25 @@ class _MeasurementPageState extends State<MeasurementPage> {
           // Update measurements and apply current filter
           measurements = snapshot.data!;
           if (measurements.length == 1) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.hourglass_empty_outlined,
-                    size: 48,
-                    color: Colors.grey,
-                  ),
-                  SizedBox(height: 16),
-                  Text(
-                    'You have only one measurement recorded, \nplease add more measurements to see improvements',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+            return Center(
+              child: Container(
+                width: double.infinity,
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.hourglass_empty_outlined,
+                      size: 48,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'You have only one measurement recorded, \nplease add more measurements to see improvements',
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -165,16 +169,19 @@ class _MeasurementPageState extends State<MeasurementPage> {
 
           // Handle empty list
           if (measurements.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.scale, size: 48, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('No measurements recorded yet'),
-                  SizedBox(height: 8),
-                  Text('Tap "Log Measurements" to get started'),
-                ],
+            return Container(
+              color: Colors.white,
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.scale, size: 48, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text('No measurements recorded yet'),
+                    SizedBox(height: 8),
+                    Text('Tap "Log Measurements" to get started'),
+                  ],
+                ),
               ),
             );
           }
@@ -401,12 +408,20 @@ class _MeasurementPageState extends State<MeasurementPage> {
           child: Button(
             label: 'Log Measurements',
             onPressed: () {
-              if (latestLog != null &&
-                  latestLog?.month == DateTime.now().month) {
+              print('\x1B[2J\x1B[1;1H');
+              final sortedMeasurements = measurements
+                ..sort((a, b) => b.date.compareTo(a.date));
+              if (sortedMeasurements.isEmpty) {
+                Navigator.pushNamed(context, ProfileRoutes.addMeasurement);
+                return;
+              }
+
+              if (sortedMeasurements.first.date.month == DateTime.now().month) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
-                      'For better results, log measurements once a month',
+                      'You have already logged measurement for this month. For better results, log once a month.',
+                      textAlign: TextAlign.center,
                     ),
                     behavior: SnackBarBehavior.floating,
                   ),
