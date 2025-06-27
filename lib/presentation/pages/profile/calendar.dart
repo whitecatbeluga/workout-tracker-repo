@@ -51,7 +51,7 @@ class _CalendarPageState extends State<CalendarPage> {
   ) {
     // ✅ Merge workoutDates with same date (ignore time part)
     final mergedMap = <DateTime, CalendarWorkoutDates>{};
-
+    if (workoutDates.isEmpty) return {};
     for (var entry in workoutDates) {
       final dateOnly = DateTime(
         entry.date.year,
@@ -174,7 +174,28 @@ class _CalendarPageState extends State<CalendarPage> {
 
               final workoutDates = snapshot.data ?? [];
               final processedData = _processWorkoutDates(workoutDates);
-
+              if (workoutDates.isEmpty) {
+                return Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.calendar_month,
+                          size: 90,
+                          color: Colors.grey,
+                        ),
+                        SizedBox(height: 16),
+                        Text(
+                          'No workouts found yet',
+                          style: TextStyle(color: Colors.grey, fontSize: 20),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
               final processedWorkoutDates =
                   processedData['workoutDates'] as List<CalendarWorkoutDates>;
               final grouped =

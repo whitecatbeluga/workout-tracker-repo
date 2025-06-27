@@ -63,6 +63,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircleAvatar(
+                          backgroundColor: Color(0xFF9ACBD0),
                           radius: 80,
                           backgroundImage: _getAvatarImage(profile),
                           child: _getAvatarChild(profile),
@@ -223,7 +224,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
         profile?.username!.isNotEmpty == true
             ? profile!.username![0].toUpperCase()
             : '?',
-        style: const TextStyle(fontSize: 40),
+        style: const TextStyle(fontSize: 40, color: Color(0xFF006A71)),
       );
     }
     return null;
@@ -437,6 +438,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       child: Stack(
                         children: [
                           CircleAvatar(
+                            backgroundColor: Color(0xFF9ACBD0),
                             radius: 45,
                             backgroundImage:
                                 (account.accountPicture != null &&
@@ -447,11 +449,14 @@ class _EditAccountPageState extends State<EditAccountPage> {
                                 (account.accountPicture == null ||
                                     account.accountPicture!.isEmpty)
                                 ? Text(
-                                    (account.accountPicture?.isEmpty ?? false)
-                                        ? (account.email?[0] ?? '')
-                                              .toUpperCase()
+                                    account.accountPicture == "" ||
+                                            account.accountPicture == null
+                                        ? account.username![0].toUpperCase()
                                         : '?',
-                                    style: const TextStyle(fontSize: 40),
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      color: Color(0xFF006A71),
+                                    ),
                                   )
                                 : null,
                           ),
@@ -463,7 +468,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                               decoration: BoxDecoration(
                                 color: _selectedImage != null
                                     ? Colors.orange
-                                    : Colors.blue,
+                                    : Color(0xFF006A71),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: Colors.white,
