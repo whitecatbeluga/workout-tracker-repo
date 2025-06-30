@@ -48,7 +48,7 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFEFEFEF), // Light purple background
+                color: const Color(0xFFEFEFEF),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
@@ -85,7 +85,8 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                       final set = entry.value;
 
                       return Dismissible(
-                        key: Key('${exercise.name}_set_$setIndex'),
+                        key: UniqueKey(),
+                        // ensures each Dismissible is truly unique
                         direction: DismissDirection.endToStart,
                         background: Container(
                           color: Colors.red,
@@ -94,8 +95,8 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
                         onDismissed: (direction) {
+                          sets.removeAt(setIndex); // remove first
                           setState(() {
-                            sets.removeAt(setIndex);
                             for (int i = 0; i < sets.length; i++) {
                               sets[i].setNumber = i + 1;
                             }
@@ -110,35 +111,40 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                 child: Text('${set.setNumber}'),
                               ),
                               SizedBox(width: 80, child: Text(set.previous)),
-                              SizedBox(
-                                width: 60,
-                                child: TextFormField(
-                                  initialValue: set.kg == 0
-                                      ? ''
-                                      : set.kg.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: _inputDecoration(),
-                                  onChanged: (val) {
-                                    setState(() {
-                                      set.kg = double.tryParse(val) ?? 0;
-                                    });
-                                  },
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: 60,
+                                  child: TextFormField(
+                                    initialValue: set.kg == 0
+                                        ? ''
+                                        : set.kg.toString(),
+                                    keyboardType: TextInputType.number,
+                                    decoration: _inputDecoration(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        set.kg = double.tryParse(val) ?? 0;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
-                              SizedBox(width: 10),
-                              SizedBox(
-                                width: 60,
-                                child: TextFormField(
-                                  initialValue: set.reps == 0
-                                      ? ''
-                                      : set.reps.toString(),
-                                  keyboardType: TextInputType.number,
-                                  decoration: _inputDecoration(),
-                                  onChanged: (val) {
-                                    setState(() {
-                                      set.reps = int.tryParse(val) ?? 0;
-                                    });
-                                  },
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: SizedBox(
+                                  width: 60,
+                                  child: TextFormField(
+                                    initialValue: set.reps == 0
+                                        ? ''
+                                        : set.reps.toString(),
+                                    keyboardType: TextInputType.number,
+                                    decoration: _inputDecoration(),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        set.reps = int.tryParse(val) ?? 0;
+                                      });
+                                    },
+                                  ),
                                 ),
                               ),
                               Checkbox(
