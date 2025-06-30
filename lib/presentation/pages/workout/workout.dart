@@ -5,10 +5,9 @@ import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/collapsible/collapsible.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
-
-import '../../widgets/collapsible/collapsible.dart';
 
 class WorkoutPage extends StatefulWidget {
   const WorkoutPage({super.key});
@@ -19,16 +18,115 @@ class WorkoutPage extends StatefulWidget {
 
 class _WorkoutPageState extends State<WorkoutPage> {
   final user = authService.value.getCurrentUser();
-
   late Future<List<Folder>> _futureFolders;
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
   );
+  final TextEditingController _folderNameController = TextEditingController();
+
+  void _showFolderPickerModal(BuildContext context, List<Folder> folders) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          widthFactor: 1.0, // 🔥 This makes it take full width
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets, // handles keyboard
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Choose a Folder',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 20),
+                  ...folders.map((folder) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the bottom sheet
+                          Navigator.pushNamed(
+                            context,
+                            RoutineRoutes.createRoutinePage,
+                            arguments: {'folderId': folder.id},
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.folder,
+                          color: Color(0xFF323232),
+                        ),
+                        label: Text(
+                          folder.folderName ?? 'Unnamed Folder',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF323232),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: const Color(0xFF323232),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _createFolder() async {
+    final name = _folderNameController.text.trim();
+
+    if (name.isNotEmpty) {
+      try {
+        await _routineRepository.createFolder(user!.uid, name);
+
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Folder created successfully!')));
+
+        setState(() {
+          _folderNameController.clear();
+        });
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create folder. Please try again.')),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Folder name cannot be empty.')));
+    }
+  }
 
   @override
-  void initState() {
-    super.initState();
-    _futureFolders = _routineRepository.getFolders(user!.uid);
+  void dispose() {
+    _folderNameController.dispose();
+    super.dispose();
   }
 
   @override
@@ -99,6 +197,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
                                         ),
                                       ),
                                       TextField(
+                                        controller: _folderNameController,
                                         decoration: InputDecoration(
                                           hintText: 'Folder Name',
                                           hintStyle: TextStyle(
@@ -113,7 +212,7 @@ class _WorkoutPageState extends State<WorkoutPage> {
                                             prefixIcon: Icons.add,
                                             label: 'Create Folder',
                                             width: double.infinity,
-                                            onPressed: () {},
+                                            onPressed: () => _createFolder(),
                                             textStyle: TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w600,
@@ -149,13 +248,22 @@ class _WorkoutPageState extends State<WorkoutPage> {
                       Expanded(
                         child: Button(
                           label: "New Routine",
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              RoutineRoutes.createRoutinePage,
-                              (route) => false,
-                            );
+                          onPressed: () async {
+                            final folders = await _routineRepository
+                                .streamFolders(user!.uid)
+                                .first;
+
+                            if (folders.isNotEmpty) {
+                              _showFolderPickerModal(context, folders);
+                            } else {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                RoutineRoutes.createRoutinePage,
+                                (route) => false,
+                              );
+                            }
                           },
+
                           variant: ButtonVariant.secondary,
                           size: ButtonSize.large,
                           prefixIcon: Icons.grid_view,
@@ -180,8 +288,8 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 ],
               ),
             ),
-            FutureBuilder<List<Folder>>(
-              future: _futureFolders,
+            StreamBuilder<List<Folder>>(
+              stream: _routineRepository.streamFolders(user!.uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -191,30 +299,23 @@ class _WorkoutPageState extends State<WorkoutPage> {
                   return Center(child: Text("Error: ${snapshot.error}"));
                 }
 
-                final folders = snapshot.data ?? [];
+                final List<Folder> folders = snapshot.data ?? [];
 
                 if (folders.isEmpty) {
                   return const Center(child: Text("No folders found."));
                 }
 
                 return Expanded(
-                  // wrap to avoid layout issues
                   child: ListView.builder(
                     itemCount: folders.length,
                     itemBuilder: (context, index) {
                       final folder = folders[index];
-                      return ListTile(
-                        title: Text(folder.folderName ?? 'Unnamed Folder'),
-                        subtitle: Text(
-                          'Routines: ${folder.routineIds?.length}',
-                        ),
-                      );
+                      return Collapsible(folderContent: folder);
                     },
                   ),
                 );
               },
             ),
-            // Collapsible(title: "Workout Details", routineFolder:),
           ],
         ),
       ),
