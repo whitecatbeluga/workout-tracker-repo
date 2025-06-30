@@ -10,7 +10,7 @@ class SetDetailModel extends SetDetail {
 
   factory SetDetailModel.fromMap(Map<String, dynamic> map) {
     return SetDetailModel(
-      setNumber: map['setNumber'],
+      setNumber: map['set_number'],
       previous: map['previous'],
       kg: map['kg'],
       reps: map['reps'],
@@ -19,7 +19,7 @@ class SetDetailModel extends SetDetail {
 
   Map<String, dynamic> toMap() {
     return {
-      'setNumber': setNumber,
+      'set_number': setNumber,
       'previous': previous,
       'kg': kg,
       'reps': reps,
@@ -104,7 +104,7 @@ class FolderModel extends Folder {
       id: docId,
       routineIds: List<String>.from(map['routine_ids'] ?? []),
       folderName: map['folder_name'],
-      createdAt: map['createdAt']?.toDate().toIso8601String(),
+      createdAt: map['created_at']?.toDate().toIso8601String(),
       routines: routines,
     );
   }
@@ -113,7 +113,7 @@ class FolderModel extends Folder {
     return {
       'routine_ids': routineIds ?? [],
       'folder_name': folderName,
-      'createdAt': createdAt,
+      'created_at': createdAt,
     };
   }
 }

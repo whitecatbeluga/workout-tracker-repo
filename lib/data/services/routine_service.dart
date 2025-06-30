@@ -19,7 +19,7 @@ class RoutineService {
   ) async {
     return _foldersRef(userId).add({
       'folder_name': folderName,
-      'createdAt': Timestamp.now(),
+      'created_at': Timestamp.now(),
       'routine_ids': [],
     });
   }
@@ -104,7 +104,7 @@ class RoutineService {
           'id': doc.id,
           ...routineData,
           'exercises': exercises,
-          'createdAt': routineData['createdAt'] is Timestamp
+          'created_at': routineData['createdAt'] is Timestamp
               ? (routineData['createdAt'] as Timestamp)
                     .toDate()
                     .toIso8601String()
@@ -139,6 +139,7 @@ class RoutineService {
     // Create routine
     final routineRef = await _firestore.collection('routines').add({
       'routine_name': routineName,
+      'created_at': Timestamp.now(),
     });
 
     // Add exercises and sets if provided
@@ -158,7 +159,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await exerciseRef.collection('sets').add({
-                'setNumber': setData['setNumber'],
+                'set_number': setData['set_number'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],
@@ -222,7 +223,7 @@ class RoutineService {
             final setData = set as Map<String, dynamic>;
             if (setData['reps'] != null && setData['kg'] != null) {
               await newExerciseRef.collection('sets').add({
-                'setNumber': setData['setNumber'],
+                'set_number': setData['set_number'],
                 'previous': setData['previous'] ?? '',
                 'kg': setData['kg'],
                 'reps': setData['reps'],

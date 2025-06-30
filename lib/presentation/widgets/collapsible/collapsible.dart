@@ -163,87 +163,127 @@ class _CollapsibleState extends State<Collapsible> {
           ),
           AnimatedCrossFade(
             firstChild: Container(),
-            secondChild: SizedBox(
-              height: 400,
-              child: ListView.builder(
-                itemCount: widget.folderContent.routines?.length ?? 0,
-                itemBuilder: (context, index) {
-                  final routine = widget.folderContent.routines![index];
-                  final exercises = routine.exercises ?? [];
-
-                  return Container(
-                    margin: const EdgeInsets.only(top: 10.0),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(8.0),
-                      ),
-                      border: Border.all(
-                        color: const Color(0xFFCBD5E1),
-                        width: 1.2,
-                      ),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.black12,
-                          offset: Offset(0, 2),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(14.0),
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              routine.routineName ?? 'Unnamed Routine',
-                              style: const TextStyle(
-                                color: Color(0xFF323232),
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Icon(
-                              Icons.more_horiz,
-                              size: 30,
-                              color: Color(0xFF323232),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        // Exercises
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: exercises.map((exercise) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 4.0),
-                              child: Text(
-                                exercise.name,
-                                style: const TextStyle(
-                                  color: Color(0xFF626262),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 16),
-                        // Start Button
-                        Button(
-                          label: "Start Routine",
+            secondChild: (widget.folderContent.routines?.isEmpty ?? true)
+                ? Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
                           onPressed: () {},
-                          prefixIcon: Icons.play_arrow_rounded,
-                          fullWidth: true,
-                          size: ButtonSize.large,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF323232),
+                            side: const BorderSide(color: Color(0xFFCBD5E1)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 14,
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.add,
+                            size: 20,
+                            color: Color(0xFF006A71),
+                          ),
+                          label: const Text(
+                            "Add Routine",
+                            style: TextStyle(color: Color(0xFF006A71)),
+                          ),
                         ),
-                      ],
+                      ),
+                    ],
+                  )
+                : Container(
+                    // ✅ Replaced Flexible with Container
+                    constraints: const BoxConstraints(
+                      maxHeight: 400, // set your desired height here
                     ),
-                  );
-                },
-              ),
-            ),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: widget.folderContent.routines?.length ?? 0,
+                      itemBuilder: (context, index) {
+                        final routine = widget.folderContent.routines?[index];
+                        final exercises = routine?.exercises ?? [];
+
+                        return Container(
+                          margin: const EdgeInsets.only(top: 10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(8.0),
+                            ),
+                            border: Border.all(
+                              color: const Color(0xFFCBD5E1),
+                              width: 1.2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black12,
+                                offset: Offset(0, 2),
+                                blurRadius: 4,
+                              ),
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(14.0),
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Header Row
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    routine?.routineName ?? 'Unnamed Routine',
+                                    style: const TextStyle(
+                                      color: Color(0xFF323232),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.more_horiz,
+                                    size: 30,
+                                    color: Color(0xFF323232),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              // Exercises
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: exercises.map((exercise) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(bottom: 4.0),
+                                    child: Text(
+                                      exercise.name,
+                                      style: const TextStyle(
+                                        color: Color(0xFF626262),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                              const SizedBox(height: 16),
+                              // Start Button
+                              Button(
+                                label: "Start Routine",
+                                onPressed: () {},
+                                prefixIcon: Icons.play_arrow_rounded,
+                                fullWidth: true,
+                                size: ButtonSize.large,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
             crossFadeState: _isExpanded
                 ? CrossFadeState.showSecond
                 : CrossFadeState.showFirst,

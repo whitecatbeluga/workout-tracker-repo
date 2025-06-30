@@ -15,7 +15,7 @@ class SetEntry {
 
   Map<String, dynamic> toJson() {
     return {
-      'setNumber': setNumber,
+      'set_number': setNumber,
       'previous': previous,
       'kg': kg,
       'reps': reps,
