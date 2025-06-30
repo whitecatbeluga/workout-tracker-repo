@@ -87,41 +87,6 @@ class _AddExerciseState extends State<AddExercise> {
     return null;
   }
 
-  // void _listenToExercises() {
-  //   _streamSubscription = exerciseRepo.getExercises().listen(
-  //     (exerciseList) {
-  //       if (mounted) {
-  //         setState(() {
-  //           exercises = exerciseList;
-  //           if (isLogWorkout) {
-  //             selectedExercises.addAll(
-  //               workoutExercises.value.where(
-  //                 (e) => exercises.any((ex) => ex.id == e.id),
-  //               ),
-  //             );
-  //           } else {
-  //             selectedExercises.addAll(
-  //               routineExercises.value.where(
-  //                 (e) => exercises.any((ex) => ex.id == e.id),
-  //               ),
-  //             );
-  //           }
-  //           isLoading = false;
-  //           errorMessage = null;
-  //         });
-  //       }
-  //     },
-  //     onError: (error) {
-  //       if (mounted) {
-  //         setState(() {
-  //           isLoading = false;
-  //           errorMessage = error.toString();
-  //         });
-  //       }
-  //     },
-  //   );
-  // }
-
   void _listenToExercises() {
     _streamSubscription = exerciseRepo.getExercises().listen((exerciseList) {
       _handleExercises(exerciseList, false);
@@ -145,12 +110,10 @@ class _AddExerciseState extends State<AddExercise> {
             ),
           );
           selectedExercises.clear();
-          // final source = isLogWorkout ? workoutExercises : routineExercises;
-          // selectedExercises.addAll(
-          //   source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
-          // );
-          // isLoading = false;
-          // errorMessage = null;
+          final source = isLogWorkout ? workoutExercises : routineExercises;
+          selectedExercises.addAll(
+            source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
+          );
           isLoading = false;
           errorMessage = null;
         });
@@ -164,10 +127,10 @@ class _AddExerciseState extends State<AddExercise> {
             ),
           );
           selectedExercises.clear();
-          // final source = isLogWorkout ? workoutExercises : routineExercises;
-          // selectedExercises.addAll(
-          //   source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
-          // );
+          final source = isLogWorkout ? workoutExercises : routineExercises;
+          selectedExercises.addAll(
+            source.value.where((e) => exercises.any((ex) => ex.id == e.id)),
+          );
           exercises.addAll(defaultExercises);
           originalExercises.addAll(defaultExercises);
           isLoading = false;

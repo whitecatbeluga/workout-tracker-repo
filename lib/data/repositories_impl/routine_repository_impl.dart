@@ -1,3 +1,5 @@
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
+
 import '../../domain/entities/routine.dart';
 import '../../domain/repositories/routine_repository.dart';
 import '../models/routine_model.dart';
@@ -174,13 +176,13 @@ class RoutineRepositoryImpl implements RoutineRepository {
   void createNewRoutine(
     String userId,
     String routineName,
-    Map<String, dynamic>? sets, {
+    WorkoutSets? workoutSets, {
     String? folderId,
   }) async {
     await _service.createNewRoutine(
       userId,
       routineName,
-      sets,
+      workoutSets,
       folderId: folderId,
     );
   }

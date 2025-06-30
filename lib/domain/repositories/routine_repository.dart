@@ -1,3 +1,5 @@
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
+
 import '../../domain/entities/routine.dart';
 
 abstract class RoutineRepository {
@@ -18,7 +20,7 @@ abstract class RoutineRepository {
   void createNewRoutine(
     String userId,
     String routineName,
-    Map<String, dynamic>? sets, {
+    WorkoutSets? workoutSets, {
     String? folderId,
   });
   void updateRoutine(
