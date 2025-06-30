@@ -29,6 +29,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
             final exercises = (routineData['exercises'] as List).map((
               exerciseData,
             ) {
+              // print(exerciseData);
               final sets = (exerciseData['sets'] as List)
                   .map(
                     (setData) =>
@@ -51,7 +52,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
             return RoutineModel(
               id: routineData['id'],
               routineName: routineData['routine_name'],
-              createdAt: routineData['createdAt'],
+              createdAt: routineData['created_at'],
               exercises: exercises,
             );
           }).toList();
@@ -130,7 +131,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
     return RoutineModel(
       id: routineData['id'],
       routineName: routineData['routine_name'],
-      createdAt: routineData['createdAt'],
+      createdAt: routineData['created_at'],
       exercises: exercises,
     );
   }
@@ -163,7 +164,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
       return RoutineModel(
         id: routineData['id'],
         routineName: routineData['routine_name'],
-        createdAt: routineData['createdAt'],
+        createdAt: routineData['created_at'],
         exercises: exercises,
       );
     }).toList();

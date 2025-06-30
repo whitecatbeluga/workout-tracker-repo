@@ -24,6 +24,77 @@ class _WorkoutPageState extends State<WorkoutPage> {
   );
   final TextEditingController _folderNameController = TextEditingController();
 
+  void _showFolderPickerModal(BuildContext context, List<Folder> folders) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          widthFactor: 1.0, // 🔥 This makes it take full width
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets, // handles keyboard
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Choose a Folder',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 20),
+                  ...folders.map((folder) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the bottom sheet
+                          Navigator.pushNamed(
+                            context,
+                            RoutineRoutes.createRoutinePage,
+                            arguments: {'folderId': folder.id},
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.folder,
+                          color: Color(0xFF323232),
+                        ),
+                        label: Text(
+                          folder.folderName ?? 'Unnamed Folder',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF323232),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: const Color(0xFF323232),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _createFolder() async {
     final name = _folderNameController.text.trim();
 
@@ -177,13 +248,22 @@ class _WorkoutPageState extends State<WorkoutPage> {
                       Expanded(
                         child: Button(
                           label: "New Routine",
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              RoutineRoutes.createRoutinePage,
-                              (route) => false,
-                            );
+                          onPressed: () async {
+                            final folders = await _routineRepository
+                                .streamFolders(user!.uid)
+                                .first;
+
+                            if (folders.isNotEmpty) {
+                              _showFolderPickerModal(context, folders);
+                            } else {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                RoutineRoutes.createRoutinePage,
+                                (route) => false,
+                              );
+                            }
                           },
+
                           variant: ButtonVariant.secondary,
                           size: ButtonSize.large,
                           prefixIcon: Icons.grid_view,
