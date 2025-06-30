@@ -233,6 +233,9 @@ class _InputFieldState extends State<InputField> {
         : false;
 
     return TextFormField(
+      style: TextStyle(
+        color: widget.disabled ? Color(0xFF6F7A88) : Colors.black,
+      ),
       readOnly: widget.disabled,
       obscureText: widget.obscureText,
       controller: widget.controller,
