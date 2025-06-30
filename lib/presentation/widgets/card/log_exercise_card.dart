@@ -75,7 +75,7 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                       SizedBox(width: 80, child: Text('Previous')),
                       SizedBox(width: 70, child: Text('KG')),
                       SizedBox(width: 60, child: Text('Reps')),
-                      SizedBox(width: 40, child: Icon(Icons.check)),
+                      SizedBox(width: 65, child: Icon(Icons.check)),
                     ],
                   ),
                   const Divider(),
