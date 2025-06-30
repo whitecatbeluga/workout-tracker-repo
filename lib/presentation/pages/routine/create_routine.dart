@@ -7,6 +7,7 @@ import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/log_exercise_card.dart';
 import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
+import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 
 class CreateRoutine extends StatefulWidget {
   const CreateRoutine({super.key});
@@ -41,19 +42,27 @@ class _CreateRoutineState extends State<CreateRoutine> {
   void _saveRoutine() async {
     final routineName = routineNameController.text.trim();
 
-    Map<String, dynamic> formattedSets = exerciseSets.map((exerciseId, sets) {
-      return MapEntry(exerciseId, {
-        'name': 'dummy_name',
-        'sets': sets.map((set) => set.toJson()).toList(),
-      });
-    });
+    // DEBUG: Print for dev sanity
+    print(
+      'Routine Exercises: ${routineExercises.value.map((e) => e.name).toList()}',
+    );
+
+    // ✅ Create Map<String, ExerciseWorkoutSet> from routineExercises
+    final Map<String, ExerciseWorkoutSet> mappedSets = {
+      for (final exercise in routineExercises.value)
+        exercise.id: ExerciseWorkoutSet(
+          sets: savedExerciseSets[exercise.id] ?? [],
+        ),
+    };
+
+    final workoutSets = WorkoutSets(sets: mappedSets);
 
     if (routineName.isNotEmpty) {
       try {
         routineRepo.createNewRoutine(
           user!.uid,
           routineName,
-          formattedSets,
+          workoutSets,
           folderId: folderId,
         );
         ScaffoldMessenger.of(context).showSnackBar(
