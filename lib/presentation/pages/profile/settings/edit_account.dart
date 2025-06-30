@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -21,7 +23,13 @@ class EditAccountPage extends StatefulWidget {
 class _EditAccountPageState extends State<EditAccountPage> {
   final user = authService.value.getCurrentUser();
   final authrepo = AuthRepositoryImpl(AuthService());
+  final _formKey = GlobalKey<FormState>();
+  StreamSubscription<UserAccount>? _accountSubscription;
+  final ValueNotifier<bool> _isLoadingDetails = ValueNotifier(false);
+  final ValueNotifier<bool> _isLoadingPassword = ValueNotifier(false);
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _oldPasswordController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
@@ -29,16 +37,27 @@ class _EditAccountPageState extends State<EditAccountPage> {
 
   @override
   void dispose() {
+    _accountSubscription?.cancel();
+    _usernameController.dispose();
     _emailController.dispose();
+    _oldPasswordController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _selectedImage?.delete();
+
     super.dispose();
   }
 
   @override
   void initState() {
     super.initState();
+    _accountSubscription = getUserAccount(user!.uid).listen((account) {
+      if (mounted) {
+        setState(() {
+          _usernameController.text = account.username ?? '';
+          _emailController.text = account.email ?? '';
+        });
+      }
+    });
   }
 
   void _showAvatarDialog(UserAccount? profile) {
@@ -63,6 +82,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         CircleAvatar(
+                          backgroundColor: Color(0xFF9ACBD0),
                           radius: 80,
                           backgroundImage: _getAvatarImage(profile),
                           child: _getAvatarChild(profile),
@@ -223,7 +243,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
         profile?.username!.isNotEmpty == true
             ? profile!.username![0].toUpperCase()
             : '?',
-        style: const TextStyle(fontSize: 40),
+        style: const TextStyle(fontSize: 40, color: Color(0xFF006A71)),
       );
     }
     return null;
@@ -358,12 +378,106 @@ class _EditAccountPageState extends State<EditAccountPage> {
         .snapshots()
         .map(
           (doc) => UserAccount(
-            password: doc.data()?['password'],
+            // password: doc.data()?['password'],
             email: doc.data()?['email'],
             accountPicture: doc.data()?['account_picture'],
             username: doc.data()?['user_name'],
           ),
         );
+  }
+
+  Future<void> updateUserEmailAndUsername({
+    String? newEmail,
+    String? newUsername,
+    VoidCallback? onFinished,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final firestore = FirebaseFirestore.instance;
+
+    if (user == null || user.email == null) {
+      onFinished?.call();
+      return;
+    }
+
+    try {
+      if (newUsername != null && newUsername.isNotEmpty) {
+        await firestore.collection('users').doc(user.uid).update({
+          'user_name': newUsername,
+          if (newEmail != null) 'email': newEmail,
+        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Username updated successfully!'),
+              backgroundColor: Color(0xFF48A6A7),
+            ),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      print("FirebaseAuth Error: ${e.code} - ${e.message}");
+    } catch (e) {
+      print("General error: $e");
+    } finally {
+      onFinished?.call();
+    }
+  }
+
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return;
+    }
+
+    try {
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      await user.reauthenticateWithCredential(credential);
+
+      if (newPassword.isNotEmpty) {
+        await user.updatePassword(newPassword);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password updated successfully!'),
+              backgroundColor: Color(0xFF48A6A7),
+            ),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      print("FirebaseAuth Error: ${e.code} - ${e.message}");
+      if (e.code == 'invalid-credential') {
+        print("Incorrect password used for reauthentication.");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Incorrect password',
+                    style: TextStyle(color: Colors.white, fontSize: 16),
+                  ),
+                ],
+              ),
+              backgroundColor: Color(0xFFED1010),
+            ),
+          );
+        }
+      } else if (e.code == 'requires-recent-login') {
+        print("Reauthentication required again.");
+      }
+    } catch (e) {
+      print("General error: $e");
+    }
   }
 
   @override
@@ -432,11 +546,13 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       );
                     }
                     UserAccount account = res.data!;
+
                     return GestureDetector(
                       onTap: () => _showAvatarDialog(account),
                       child: Stack(
                         children: [
                           CircleAvatar(
+                            backgroundColor: Color(0xFF9ACBD0),
                             radius: 45,
                             backgroundImage:
                                 (account.accountPicture != null &&
@@ -447,11 +563,14 @@ class _EditAccountPageState extends State<EditAccountPage> {
                                 (account.accountPicture == null ||
                                     account.accountPicture!.isEmpty)
                                 ? Text(
-                                    (account.accountPicture?.isEmpty ?? false)
-                                        ? (account.email?[0] ?? '')
-                                              .toUpperCase()
+                                    account.accountPicture == "" ||
+                                            account.accountPicture == null
+                                        ? account.username![0].toUpperCase()
                                         : '?',
-                                    style: const TextStyle(fontSize: 40),
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      color: Color(0xFF006A71),
+                                    ),
                                   )
                                 : null,
                           ),
@@ -463,7 +582,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                               decoration: BoxDecoration(
                                 color: _selectedImage != null
                                     ? Colors.orange
-                                    : Colors.blue,
+                                    : Color(0xFF006A71),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: Colors.white,
@@ -486,13 +605,22 @@ class _EditAccountPageState extends State<EditAccountPage> {
                 ),
               ),
               const Text(
-                'Account',
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 18),
+                'Update Username',
+                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 17),
               ),
               Column(
                 spacing: 20,
                 children: [
                   InputField(
+                    controller: _usernameController,
+                    label: 'Username',
+                    prefixIcon: Icons.person,
+                    validator: FormValidators.validateUsername,
+                    autoValidateMode: AutovalidateMode.onUserInteraction,
+                    enableLiveValidation: true,
+                  ),
+                  InputField(
+                    disabled: true,
                     controller: _emailController,
                     label: 'Email Address',
                     prefixIcon: Icons.email,
@@ -500,31 +628,103 @@ class _EditAccountPageState extends State<EditAccountPage> {
                     validator: FormValidators.validateEmail,
                     autoValidateMode: AutovalidateMode.onUserInteraction,
                     enableLiveValidation: true,
-                    onChanged: (value) =>
-                        setState(() => _emailController.text = value),
                   ),
-                  PasswordField(
-                    controller: _passwordController,
-                    label: 'Password',
-                    validator: FormValidators.validatePassword,
-                    autoValidateMode: AutovalidateMode.onUserInteraction,
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _isLoadingDetails,
+                    builder: (context, isLoading, child) {
+                      return isLoading
+                          ? CircularProgressIndicator()
+                          : Button(
+                              label: 'Save Details',
+                              onPressed: () async {
+                                if (_usernameController.text.isNotEmpty &&
+                                    _emailController.text.isNotEmpty) {
+                                  _isLoadingDetails.value = true;
+                                  try {
+                                    await updateUserEmailAndUsername(
+                                      newEmail: _emailController.text,
+                                      newUsername: _usernameController.text,
+                                    );
+                                  } finally {
+                                    _isLoadingDetails.value = false;
+                                  }
+                                }
+                              },
+                              fullWidth: true,
+                              height: 45,
+                            );
+                    },
                   ),
-                  PasswordField(
-                    controller: _confirmPasswordController,
-                    label: 'Confirm Password',
-                    validator: (value) =>
-                        FormValidators.validateConfirmPassword(
-                          value,
-                          _passwordController.text,
+                  Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Update Password',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 17,
                         ),
-                    autoValidateMode: AutovalidateMode.onUserInteraction,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
-                  Button(
-                    label: 'Save',
-                    onPressed: () {},
-                    fullWidth: true,
-                    height: 45,
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      spacing: 20,
+                      children: [
+                        PasswordField(
+                          controller: _oldPasswordController,
+                          label: 'Current Password',
+                          validator: FormValidators.validatePassword,
+                          autoValidateMode: AutovalidateMode.onUserInteraction,
+                        ),
+                        PasswordField(
+                          controller: _passwordController,
+                          label: 'New Password',
+                          validator: FormValidators.validatePassword,
+                          autoValidateMode: AutovalidateMode.onUserInteraction,
+                        ),
+                        PasswordField(
+                          controller: _confirmPasswordController,
+                          label: 'Confirm New Password',
+                          validator: (value) =>
+                              FormValidators.validateConfirmPassword(
+                                value,
+                                _passwordController.text,
+                              ),
+                          autoValidateMode: AutovalidateMode.onUserInteraction,
+                        ),
+                        ValueListenableBuilder<bool>(
+                          valueListenable: _isLoadingPassword,
+                          builder: (context, isLoading, child) {
+                            return isLoading
+                                ? CircularProgressIndicator()
+                                : Button(
+                                    label: 'Save Password',
+                                    onPressed: () async {
+                                      if (_formKey.currentState!.validate()) {
+                                        _isLoadingPassword.value = true;
+
+                                        try {
+                                          await updatePassword(
+                                            currentPassword:
+                                                _oldPasswordController.text,
+                                            newPassword:
+                                                _passwordController.text,
+                                          );
+                                        } finally {
+                                          _isLoadingPassword.value = false;
+                                        }
+                                      }
+                                    },
+                                    fullWidth: true,
+                                    height: 45,
+                                  );
+                          },
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -537,15 +737,10 @@ class _EditAccountPageState extends State<EditAccountPage> {
 }
 
 class UserAccount {
-  final String? password;
+  // final String? password;
   final String? username;
   final String? email;
   final String? accountPicture;
 
-  UserAccount({this.password, this.email, this.accountPicture, this.username});
-
-  @override
-  String toString() {
-    return 'UserAccount(email: $email, password: $password, accountPicture: $accountPicture)';
-  }
+  UserAccount({this.email, this.accountPicture, this.username});
 }
