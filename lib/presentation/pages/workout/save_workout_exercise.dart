@@ -92,13 +92,31 @@ class _SaveWorkoutState extends State<SaveWorkout> {
       int totalSets = 0;
       int totalVolume = 0;
 
+      List<Map<String, dynamic>> exercisesData = [];
+
       for (var exercise in workoutExercises.value) {
         final sets = savedExerciseSets[exercise.name] ?? [];
+
         totalSets += sets.length;
         totalVolume += sets.fold(
           0,
           (sum, set) => sum + (set.kg * set.reps).round(),
         );
+
+        final exerciseEntry = {
+          'exercise_id': exercise.id,
+          'exercise_name': exercise.name,
+          'sets': sets.map((set) {
+            return {
+              'set_number': set.setNumber,
+              'kg': set.kg,
+              'reps': set.reps,
+              'is_completed': set.isCompleted,
+            };
+          }).toList(),
+        };
+
+        exercisesData.add(exerciseEntry);
       }
 
       await FirebaseFirestore.instance.collection('workouts').add({
@@ -109,8 +127,9 @@ class _SaveWorkoutState extends State<SaveWorkout> {
         'total_volume': totalVolume,
         'workout_title': _titleController.text.trim(),
         'workout_description': _descriptionController.text.trim(),
-        'workout_duration': '23', // Could be improved later
+        'workout_duration': '23', // Placeholder for now
         'visible_to_everyone': _visibleToEveryone,
+        'exercises': exercisesData,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
