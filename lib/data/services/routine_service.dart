@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 
 class RoutineService {
   final _firestore = FirebaseFirestore.instance;
@@ -119,13 +120,13 @@ class RoutineService {
   Future<DocumentReference> createNewRoutine(
     String userId,
     String routineName,
-    Map<String, dynamic>? sets, {
+    WorkoutSets? workoutSets, {
     String? folderId,
   }) async {
     String finalFolderId = folderId ?? '';
 
+    // Handle default folder if none is provided
     if (finalFolderId.isEmpty) {
-      // Get or create default folder
       final foldersSnapshot = await _foldersRef(userId).get();
 
       if (foldersSnapshot.docs.isNotEmpty) {
@@ -136,41 +137,39 @@ class RoutineService {
       }
     }
 
-    // Create routine
+    // Create the routine document
     final routineRef = await _firestore.collection('routines').add({
       'routine_name': routineName,
       'created_at': Timestamp.now(),
     });
 
     // Add exercises and sets if provided
-    if (sets != null) {
-      for (var entry in sets.entries) {
+    if (workoutSets != null) {
+      for (var entry in workoutSets.sets.entries) {
         final exerciseId = entry.key;
-        final exerciseData = entry.value as Map<String, dynamic>;
+        final exerciseData = entry.value;
 
-        if (exerciseData['name'] == null) continue;
-
+        // Create the exercise subdocument
         final exerciseRef = routineRef.collection('exercises').doc();
-        await exerciseRef.set({'exercise_id': exerciseId});
+        await exerciseRef.set({
+          'exercise_id': exerciseId,
+          'name': exerciseData.name,
+        });
 
-        final exerciseSets = exerciseData['sets'] as List?;
-        if (exerciseSets != null) {
-          for (var set in exerciseSets) {
-            final setData = set as Map<String, dynamic>;
-            if (setData['reps'] != null && setData['kg'] != null) {
-              await exerciseRef.collection('sets').add({
-                'set_number': setData['set_number'],
-                'previous': setData['previous'] ?? '',
-                'kg': setData['kg'],
-                'reps': setData['reps'],
-              });
-            }
-          }
+        // Add each set under the exercise
+        for (var set in exerciseData.sets) {
+          await exerciseRef.collection('sets').add({
+            'set_number': set.setNumber,
+            'previous': set.previous,
+            'kg': set.kg,
+            'reps': set.reps,
+            'isCompleted': set.isCompleted,
+          });
         }
       }
     }
 
-    // Add routine to folder
+    // Associate the routine with the folder
     await _foldersRef(userId).doc(finalFolderId).update({
       'routine_ids': FieldValue.arrayUnion([routineRef.id]),
     });

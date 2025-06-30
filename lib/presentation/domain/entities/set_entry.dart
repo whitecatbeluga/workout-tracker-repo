@@ -1,3 +1,16 @@
+class WorkoutSets {
+  WorkoutSets({required this.sets});
+
+  final Map<String, ExerciseWorkoutSet> sets;
+}
+
+class ExerciseWorkoutSet {
+  ExerciseWorkoutSet({this.name = '', required this.sets});
+
+  String name;
+  final List<SetEntry> sets;
+}
+
 class SetEntry {
   final int setNumber;
   final String previous;
