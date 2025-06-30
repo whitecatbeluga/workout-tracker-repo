@@ -19,6 +19,24 @@ class LogExerciseCard extends StatefulWidget {
 }
 
 class _LogExerciseCardState extends State<LogExerciseCard> {
+  final Map<String, List<TextEditingController>> _kgControllers = {};
+  final Map<String, List<TextEditingController>> _repControllers = {};
+
+  @override
+  void dispose() {
+    for (final controllers in _kgControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+    }
+    for (final controllers in _repControllers.values) {
+      for (final controller in controllers) {
+        controller.dispose();
+      }
+    }
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeNotifier = widget.workoutExercises ?? widget.routineExercises;
@@ -44,13 +62,47 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
 
             final sets = widget.exerciseSets[exercise.name]!;
 
+            _kgControllers.putIfAbsent(
+              exercise.name,
+              () => List.generate(
+                sets.length,
+                (i) => TextEditingController(
+                  text: sets[i].kg == 0 ? '' : sets[i].kg.toString(),
+                ),
+              ),
+            );
+
+            _repControllers.putIfAbsent(
+              exercise.name,
+              () => List.generate(
+                sets.length,
+                (i) => TextEditingController(
+                  text: sets[i].reps == 0 ? '' : sets[i].reps.toString(),
+                ),
+              ),
+            );
+
+            while (_kgControllers[exercise.name]!.length < sets.length) {
+              final i = _kgControllers[exercise.name]!.length;
+              _kgControllers[exercise.name]!.add(
+                TextEditingController(
+                  text: sets[i].kg == 0 ? '' : sets[i].kg.toString(),
+                ),
+              );
+              _repControllers[exercise.name]!.add(
+                TextEditingController(
+                  text: sets[i].reps == 0 ? '' : sets[i].reps.toString(),
+                ),
+              );
+            }
+
             return Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: const Color(0xFFEFEFEF),
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
+                boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
                     blurRadius: 8,
@@ -84,9 +136,13 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                       final setIndex = entry.key;
                       final set = entry.value;
 
+                      final kgController =
+                          _kgControllers[exercise.name]![setIndex];
+                      final repController =
+                          _repControllers[exercise.name]![setIndex];
+
                       return Dismissible(
                         key: UniqueKey(),
-                        // ensures each Dismissible is truly unique
                         direction: DismissDirection.endToStart,
                         background: Container(
                           color: Colors.red,
@@ -95,8 +151,10 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
                         onDismissed: (direction) {
-                          sets.removeAt(setIndex); // remove first
                           setState(() {
+                            sets.removeAt(setIndex);
+                            _kgControllers[exercise.name]!.removeAt(setIndex);
+                            _repControllers[exercise.name]!.removeAt(setIndex);
                             for (int i = 0; i < sets.length; i++) {
                               sets[i].setNumber = i + 1;
                             }
@@ -116,15 +174,14 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                 child: SizedBox(
                                   width: 60,
                                   child: TextFormField(
-                                    initialValue: set.kg == 0
-                                        ? ''
-                                        : set.kg.toString(),
-                                    keyboardType: TextInputType.number,
+                                    controller: kgController,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(
+                                          decimal: true,
+                                        ),
                                     decoration: _inputDecoration(),
                                     onChanged: (val) {
-                                      setState(() {
-                                        set.kg = double.tryParse(val) ?? 0;
-                                      });
+                                      set.kg = double.tryParse(val) ?? 0;
                                     },
                                   ),
                                 ),
@@ -134,15 +191,11 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                 child: SizedBox(
                                   width: 60,
                                   child: TextFormField(
-                                    initialValue: set.reps == 0
-                                        ? ''
-                                        : set.reps.toString(),
+                                    controller: repController,
                                     keyboardType: TextInputType.number,
                                     decoration: _inputDecoration(),
                                     onChanged: (val) {
-                                      setState(() {
-                                        set.reps = int.tryParse(val) ?? 0;
-                                      });
+                                      set.reps = int.tryParse(val) ?? 0;
                                     },
                                   ),
                                 ),
@@ -166,11 +219,16 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                     child: TextButton.icon(
                       onPressed: () {
                         setState(() {
-                          sets.add(
-                            SetEntry(
-                              setNumber: sets.length + 1,
-                              previous: "0kg x 0",
-                            ),
+                          final newSet = SetEntry(
+                            setNumber: sets.length + 1,
+                            previous: "0kg x 0",
+                          );
+                          sets.add(newSet);
+                          _kgControllers[exercise.name]!.add(
+                            TextEditingController(text: ''),
+                          );
+                          _repControllers[exercise.name]!.add(
+                            TextEditingController(text: ''),
                           );
                         });
                       },
