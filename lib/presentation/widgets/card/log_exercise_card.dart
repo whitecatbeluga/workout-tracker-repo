@@ -44,42 +44,80 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
 
             final sets = widget.exerciseSets[exercise.name]!;
 
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: Padding(
-                padding: EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      exercise.name,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+            return Container(
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFEFEF), // Light purple background
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    exercise.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                    DataTable(
-                      columnSpacing: 12,
-                      columns: const [
-                        DataColumn(label: Text('Set')),
-                        DataColumn(label: Text('Previous')),
-                        DataColumn(label: Text('KG')),
-                        DataColumn(label: Text('Reps')),
-                        DataColumn(label: Icon(Icons.check)),
-                      ],
-                      rows: sets.map((set) {
-                        return DataRow(
-                          cells: [
-                            DataCell(Text('${set.setNumber}')),
-                            DataCell(Text(set.previous)),
-                            DataCell(
+                  ),
+                  const SizedBox(height: 12),
+                  const Row(
+                    children: [
+                      SizedBox(width: 40, child: Text('Set')),
+                      SizedBox(width: 80, child: Text('Previous')),
+                      SizedBox(width: 70, child: Text('KG')),
+                      SizedBox(width: 60, child: Text('Reps')),
+                      SizedBox(width: 40, child: Icon(Icons.check)),
+                    ],
+                  ),
+                  const Divider(),
+                  Column(
+                    children: sets.asMap().entries.map((entry) {
+                      final setIndex = entry.key;
+                      final set = entry.value;
+
+                      return Dismissible(
+                        key: Key('${exercise.name}_set_$setIndex'),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (direction) {
+                          setState(() {
+                            sets.removeAt(setIndex);
+                            for (int i = 0; i < sets.length; i++) {
+                              sets[i].setNumber = i + 1;
+                            }
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6.0),
+                          child: Row(
+                            children: [
                               SizedBox(
-                                width: 50,
+                                width: 40,
+                                child: Text('${set.setNumber}'),
+                              ),
+                              SizedBox(width: 80, child: Text(set.previous)),
+                              SizedBox(
+                                width: 60,
                                 child: TextFormField(
                                   initialValue: set.kg == 0
                                       ? ''
                                       : set.kg.toString(),
                                   keyboardType: TextInputType.number,
+                                  decoration: _inputDecoration(),
                                   onChanged: (val) {
                                     setState(() {
                                       set.kg = double.tryParse(val) ?? 0;
@@ -87,15 +125,15 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                   },
                                 ),
                               ),
-                            ),
-                            DataCell(
+                              SizedBox(width: 10),
                               SizedBox(
-                                width: 50,
+                                width: 60,
                                 child: TextFormField(
                                   initialValue: set.reps == 0
                                       ? ''
                                       : set.reps.toString(),
                                   keyboardType: TextInputType.number,
+                                  decoration: _inputDecoration(),
                                   onChanged: (val) {
                                     setState(() {
                                       set.reps = int.tryParse(val) ?? 0;
@@ -103,8 +141,6 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                   },
                                 ),
                               ),
-                            ),
-                            DataCell(
                               Checkbox(
                                 value: set.isCompleted,
                                 onChanged: (val) {
@@ -113,35 +149,55 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
                                   });
                                 },
                               ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          sets.add(
+                            SetEntry(
+                              setNumber: sets.length + 1,
+                              previous: "0kg x 0",
                             ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            sets.add(
-                              SetEntry(
-                                setNumber: sets.length + 1,
-                                previous: "0kg x 0",
-                              ),
-                            );
-                          });
-                        },
-                        icon: Icon(Icons.add),
-                        label: Text("Add Set"),
+                          );
+                        });
+                      },
+                      icon: const Icon(
+                        Icons.add,
+                        size: 18,
+                        color: Colors.deepPurple,
+                      ),
+                      label: const Text(
+                        "Add Set",
+                        style: TextStyle(color: Colors.deepPurple),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
         );
       },
+    );
+  }
+
+  InputDecoration _inputDecoration() {
+    return InputDecoration(
+      isDense: true,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide.none,
+      ),
     );
   }
 

@@ -1,5 +1,5 @@
 class SetEntry {
-  final int setNumber;
+  late final int setNumber;
   final String previous;
   double kg;
   int reps;
