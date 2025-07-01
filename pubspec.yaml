@@ -33,3 +33,10 @@ flutter:
   assets:
     - .env
     - assets/images/
+    - assets/images/empty-folder.png
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/InterFont.ttf
+
