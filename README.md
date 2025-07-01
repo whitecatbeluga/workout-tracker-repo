@@ -23,6 +23,36 @@ https://docs.flutter.dev/get-started/install
 
 After installing run this command if you want to use VScode
 
+You must run the emulator installed from Android Studio if you don't have it yet you must download
+it
+or you can use your mobile phone.
+
+Open CMD and navigate to the path where your Android SDK installed
+
+```
+cd "C:\Users\<YourUsername>\AppData\Local\Android\Sdk\emulator"
+```
+
+List available emulators
+
+```
+emulator -list-avds
+```
+
+Start the emulator
+
+```
+emulator -avd <avd_name>
+```
+
+Open new terminal and run flutter doctor to install the necessary tools
+
+```
+flutter doctor
+```
+
+After installing run the flutter app
+
 ```
 flutter run
 ```
