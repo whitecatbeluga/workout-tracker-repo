@@ -71,7 +71,7 @@ class MeasurementImageCard extends StatelessWidget {
             child: Center(
               child: Text(
                 "${date.day.toString()} ${_getMonthName(date.month)} ${date.year.toString()}",
-                style: TextStyle(color: Colors.white, fontSize: 14),
+                style: TextStyle(color: Colors.white, fontSize: 13),
               ),
             ),
           ),

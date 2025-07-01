@@ -16,10 +16,12 @@ class ExcercisesPage extends StatefulWidget {
 class _ExcercisesPageState extends State<ExcercisesPage> {
   final exerciserepo = ExerciseRepositoryImpl(ExerciseService());
   final user = authService.value.getCurrentUser();
-  ExerciseFilter selectedFilter = ExerciseFilter.allExercises;
+  // ExerciseFilter selectedFilter = ExerciseFilter.allExercises;
+  final ValueNotifier<ExerciseFilter> selectedFilter =
+      ValueNotifier<ExerciseFilter>(ExerciseFilter.allExercises);
 
   String get filterTitle {
-    switch (selectedFilter) {
+    switch (selectedFilter.value) {
       case ExerciseFilter.myExercises:
         return 'My Exercises';
       case ExerciseFilter.predefinedExercises:
@@ -62,7 +64,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
               _buildFilterOption(
                 ExerciseFilter.predefinedExercises,
                 'Predefined Exercises',
-                'Show only predefined exercises',
+                'Show only default exercises',
                 Icons.library_books,
               ),
               const SizedBox(height: 20),
@@ -79,7 +81,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
     String description,
     IconData icon,
   ) {
-    final isSelected = selectedFilter == filter;
+    final isSelected = selectedFilter.value == filter;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: ListTile(
@@ -102,9 +104,9 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
             ? const Icon(Icons.check, color: Color(0xFF006A71))
             : null,
         onTap: () {
-          setState(() {
-            selectedFilter = filter;
-          });
+          // setState(() {
+          selectedFilter.value = filter;
+          // });
           Navigator.pop(context);
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -117,7 +119,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
     List<dynamic> predefinedExercises,
     List<dynamic> userExercises,
   ) {
-    switch (selectedFilter) {
+    switch (selectedFilter.value) {
       case ExerciseFilter.myExercises:
         return userExercises;
       case ExerciseFilter.predefinedExercises:
@@ -138,7 +140,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
 
     if (exercisesToDisplay.isEmpty) {
       String emptyMessage;
-      switch (selectedFilter) {
+      switch (selectedFilter.value) {
         case ExerciseFilter.myExercises:
           emptyMessage = 'No personal exercises found';
           break;
@@ -184,9 +186,9 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
           child: Row(
             children: [
               Icon(
-                selectedFilter == ExerciseFilter.myExercises
+                selectedFilter.value == ExerciseFilter.myExercises
                     ? Icons.person
-                    : selectedFilter == ExerciseFilter.predefinedExercises
+                    : selectedFilter.value == ExerciseFilter.predefinedExercises
                     ? Icons.library_books
                     : Icons.fitness_center,
                 color: Color(0xFF006A71),
@@ -235,7 +237,10 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(filterTitle),
+        title: ValueListenableBuilder<ExerciseFilter>(
+          valueListenable: selectedFilter,
+          builder: (context, filterValue, child) => Text(filterTitle),
+        ),
         backgroundColor: Colors.white,
         leading: IconButton(
           onPressed: Navigator.canPop(context)
@@ -342,9 +347,14 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
                     final predefinedExercises = allExercisesSnapshot.data ?? [];
                     final userExercises = userExercisesSnapshot.data ?? [];
 
-                    return _buildExercisesList(
-                      predefinedExercises,
-                      userExercises,
+                    return ValueListenableBuilder<ExerciseFilter>(
+                      valueListenable: selectedFilter,
+                      builder: (context, filterValue, child) {
+                        return _buildExercisesList(
+                          predefinedExercises,
+                          userExercises,
+                        );
+                      },
                     );
                   },
                 );
