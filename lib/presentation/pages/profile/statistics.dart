@@ -24,8 +24,16 @@ class _StatisticsPageState extends State<StatisticsPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: Navigator.canPop(context)
+              ? () => Navigator.pop(context)
+              : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
+                },
+          icon: const Icon(Icons.arrow_back),
         ),
         title: const Text('Statistics', style: TextStyle(color: Colors.black)),
         centerTitle: true,
