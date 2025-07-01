@@ -3,25 +3,31 @@ class SetDetail {
   final String previous;
   final double kg;
   final int reps;
+  final bool isCompleted;
 
   SetDetail({
     required this.setNumber,
     required this.previous,
     required this.kg,
     required this.reps,
+    this.isCompleted = false,
   });
 }
 
 class WorkoutSet {
   final String exerciseId;
+  final String name;
   final List<SetDetail> sets;
 
-  WorkoutSet({required this.exerciseId, required this.sets});
+  WorkoutSet({
+    required this.exerciseId,
+    required this.name,
+    required this.sets,
+  });
 }
 
 class Exercise {
   final String id;
-  final String exerciseId;
   final String name;
   final String description;
   final String category;
@@ -31,7 +37,6 @@ class Exercise {
 
   Exercise({
     required this.id,
-    required this.exerciseId,
     required this.name,
     required this.description,
     required this.category,

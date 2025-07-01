@@ -20,7 +20,6 @@ class RoutineRepositoryImpl implements RoutineRepository {
       for (var doc in docs) {
         final folderData = FolderModel.fromMap(doc.data(), doc.id);
 
-        // Fetch routines
         if (folderData.routineIds != null &&
             folderData.routineIds!.isNotEmpty) {
           final routinesData = await _service.getRoutinesByIds(
@@ -28,20 +27,17 @@ class RoutineRepositoryImpl implements RoutineRepository {
           );
 
           final routines = routinesData.map((routineData) {
-            final exercises = (routineData['exercises'] as List).map((
-              exerciseData,
-            ) {
-              // print(exerciseData);
-              final sets = (exerciseData['sets'] as List)
-                  .map(
-                    (setData) =>
-                        SetDetailModel.fromMap(setData as Map<String, dynamic>),
-                  )
-                  .toList();
+            final exercisesRaw = routineData['exercises'] as List? ?? [];
+
+            final exercises = exercisesRaw.map((exerciseData) {
+              final setsRaw = exerciseData['sets'] as List? ?? [];
+
+              final sets = setsRaw.map((setData) {
+                return SetDetailModel.fromMap(setData as Map<String, dynamic>);
+              }).toList();
 
               return ExerciseModel(
-                id: exerciseData['id'],
-                exerciseId: exerciseData['exercise_id'],
+                id: exerciseData['exercise_id'] ?? exerciseData['id'] ?? '',
                 name: exerciseData['name'] ?? '',
                 description: exerciseData['description'] ?? '',
                 category: exerciseData['category'] ?? '',
@@ -120,7 +116,6 @@ class RoutineRepositoryImpl implements RoutineRepository {
 
       return ExerciseModel(
         id: exerciseData['id'],
-        exerciseId: exerciseData['exercise_id'],
         name: exerciseData['name'] ?? '',
         description: exerciseData['description'] ?? '',
         category: exerciseData['category'] ?? '',
@@ -153,7 +148,6 @@ class RoutineRepositoryImpl implements RoutineRepository {
 
         return ExerciseModel(
           id: exerciseData['id'],
-          exerciseId: exerciseData['exercise_id'],
           name: exerciseData['name'] ?? '',
           description: exerciseData['description'] ?? '',
           category: exerciseData['category'] ?? '',
@@ -224,7 +218,6 @@ class RoutineRepositoryImpl implements RoutineRepository {
 
       return ExerciseModel(
         id: exerciseData['id'],
-        exerciseId: exerciseData['exercise_id'],
         name: exerciseData['name'] ?? '',
         description: exerciseData['description'] ?? '',
         category: exerciseData['category'] ?? '',

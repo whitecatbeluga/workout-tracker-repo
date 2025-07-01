@@ -50,16 +50,25 @@ class RoutineService {
     for (var exerciseDoc in snapshot.docs) {
       final exerciseData = exerciseDoc.data();
 
-      // Get exercise details from exercises collection
+      // ✅ Get sets directly from embedded 'sets' field
+      final rawSets = exerciseData['sets'] as List<dynamic>? ?? [];
+
+      final sets = rawSets.map((set) {
+        return {
+          'set_number': set['set_number'],
+          'previous': set['previous'],
+          'kg': set['kg'],
+          'reps': set['reps'],
+          'isCompleted': set['isCompleted'] ?? false,
+        };
+      }).toList();
+
+      // ✅ Get full exercise info from 'exercises' collection
       final exerciseRef = _firestore
           .collection('exercises')
           .doc(exerciseData['exercise_id']);
       final exerciseSnapshot = await exerciseRef.get();
       final fullData = exerciseSnapshot.data();
-
-      // Get sets for this exercise
-      final setsRef = exerciseDoc.reference.collection('sets');
-      final setsSnapshot = await setsRef.get();
 
       exercises.add({
         'id': exerciseData['exercise_id'],
@@ -69,7 +78,7 @@ class RoutineService {
         'category': fullData?['category'],
         'with_out_equipment': fullData?['with_out_equipment'],
         'image_url': fullData?['image_url'],
-        'sets': setsSnapshot.docs.map((setDoc) => setDoc.data()).toList(),
+        'sets': sets, // ✅ embedded sets returned
       });
     }
 
@@ -149,23 +158,23 @@ class RoutineService {
         final exerciseId = entry.key;
         final exerciseData = entry.value;
 
-        // Create the exercise subdocument
+        // Create the exercise subdocument with embedded sets
         final exerciseRef = routineRef.collection('exercises').doc();
         await exerciseRef.set({
           'exercise_id': exerciseId,
-          'name': exerciseData.name,
+          'name': exerciseData.name, // Optional: if you store name
+          'sets': exerciseData.sets
+              .map(
+                (set) => {
+                  'set_number': set.setNumber,
+                  'previous': set.previous,
+                  'kg': set.kg,
+                  'reps': set.reps,
+                  'isCompleted': set.isCompleted,
+                },
+              )
+              .toList(),
         });
-
-        // Add each set under the exercise
-        for (var set in exerciseData.sets) {
-          await exerciseRef.collection('sets').add({
-            'set_number': set.setNumber,
-            'previous': set.previous,
-            'kg': set.kg,
-            'reps': set.reps,
-            'isCompleted': set.isCompleted,
-          });
-        }
       }
     }
 

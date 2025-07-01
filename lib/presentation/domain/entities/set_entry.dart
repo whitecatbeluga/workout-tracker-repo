@@ -5,9 +5,9 @@ class WorkoutSets {
 }
 
 class ExerciseWorkoutSet {
-  ExerciseWorkoutSet({this.name = '', required this.sets});
+  ExerciseWorkoutSet({required this.name, required this.sets});
 
-  String name;
+  final String name;
   final List<SetEntry> sets;
 }
 
