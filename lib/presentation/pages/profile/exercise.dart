@@ -237,6 +237,18 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
       appBar: AppBar(
         title: Text(filterTitle),
         backgroundColor: Colors.white,
+        leading: IconButton(
+          onPressed: Navigator.canPop(context)
+              ? () => Navigator.pop(context)
+              : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    '/',
+                    (route) => false,
+                  );
+                },
+          icon: const Icon(Icons.arrow_back),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.filter_list),

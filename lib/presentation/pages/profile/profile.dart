@@ -42,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
     ),
     MenuItem(
       title: "Measurements",
-      icon: Icons.health_and_safety,
+      icon: Icons.scale,
       route: ProfileRoutes.measurements,
     ),
     MenuItem(title: "Routines", icon: Icons.fitness_center, route: "/routines"),
@@ -98,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   spacing: 10,
                   children: [
                     Expanded(child: ProfileCard(label: "Routines")),
-                    Expanded(child: ProfileCard(label: "Exercises")),
+                    Expanded(child: ProfileCard(label: "Workouts")),
                   ],
                 ),
               ),

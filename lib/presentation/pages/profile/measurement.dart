@@ -89,7 +89,7 @@ class _MeasurementPageState extends State<MeasurementPage> {
               : () {
                   Navigator.pushNamedAndRemoveUntil(
                     context,
-                    ProfileRoutes.settings,
+                    '/',
                     (route) => false,
                   );
                 },
@@ -459,22 +459,33 @@ class _FilterDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<String> options = ['Last 3 months', 'Year', 'All time'];
+    final List<Map<String, dynamic>> options = [
+      {'label': 'Last 3 months', 'icon': Icons.calendar_today},
+      {'label': 'Year', 'icon': Icons.event},
+      {'label': 'All time', 'icon': Icons.timeline},
+    ];
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        spacing: 10,
         children: [
-          const Text(
-            'Select Filter',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            children: [
+              const Text(
+                'Select Filter',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           ...options.map((option) {
-            return ListTile(
-              title: Text(option),
-              onTap: () => onSelect(option), // Simplified - just call onSelect
+            return Button(
+              fullWidth: true,
+              label: option['label'],
+              prefixIcon: option['icon'],
+              onPressed: () => onSelect(option['label']),
             );
           }),
         ],

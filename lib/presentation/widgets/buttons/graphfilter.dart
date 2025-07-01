@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 
 class GraphFilter extends StatelessWidget {
   final String selectedValue;
@@ -14,6 +15,85 @@ class GraphFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    void openFilterDrawer() {
+      showModalBottomSheet(
+        context: context,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (BuildContext context) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              spacing: 10,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Filter Graph Progress',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+                Column(
+                  spacing: 15,
+                  children: [
+                    Button(
+                      label: 'This Week',
+                      onPressed: () {
+                        onChanged('Week');
+                        Navigator.pop(context);
+                      },
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                      fullWidth: true,
+                      prefixIcon: Icons.calendar_today,
+                      textColor: selectedValue == 'Week'
+                          ? Colors.white
+                          : Color(0xFF48A6A7),
+                      backgroundColor: selectedValue == 'Week'
+                          ? Color(0xFF006A71)
+                          : Colors.white,
+                      borderColor: selectedValue == 'Week'
+                          ? Colors.white
+                          : Color(0xFF006A71),
+                      borderWidth: 1,
+                      size: ButtonSize.large,
+                    ),
+                    Button(
+                      label: 'By Months',
+                      onPressed: () {
+                        onChanged('Month');
+                        Navigator.pop(context);
+                      },
+                      fullWidth: true,
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                      prefixIcon: Icons.calendar_month,
+                      textColor: selectedValue == 'Month'
+                          ? Colors.white
+                          : Color(0xFF48A6A7),
+                      backgroundColor: selectedValue == 'Month'
+                          ? Color(0xFF006A71)
+                          : Colors.white,
+                      borderColor: selectedValue == 'Month'
+                          ? Colors.white
+                          : Color(0xFF006A71),
+                      borderWidth: 1,
+                      size: ButtonSize.large,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -31,80 +111,12 @@ class GraphFilter extends StatelessWidget {
           decoration: BoxDecoration(
             color: const Color.fromARGB(0, 255, 255, 255),
           ),
-
-          child: DropdownMenu<String>(
-            initialSelection: selectedValue,
-            onSelected: (String? newValue) {
-              if (newValue != null) {
-                onChanged(newValue);
-              }
-            },
-            dropdownMenuEntries: items.map((value) {
-              return DropdownMenuEntry<String>(
-                style: ButtonStyle(),
-                value: value,
-                label: value,
-                labelWidget: Container(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 15,
-                    horizontal: 16,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        value,
-                        style: const TextStyle(
-                          color: Color(0xFF006A71),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (value == selectedValue)
-                        const Icon(
-                          Icons.check,
-                          color: Color(0xFF006A71),
-                          size: 16,
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-            menuStyle: MenuStyle(
-              backgroundColor: WidgetStateProperty.all(Colors.white),
-              elevation: WidgetStateProperty.all(8),
-              padding: WidgetStateProperty.all(EdgeInsets.zero),
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              surfaceTintColor: WidgetStateProperty.all(Colors.transparent),
-            ),
-            textStyle: const TextStyle(
-              color: Color(0xFF006A71),
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-            trailingIcon: const Icon(
-              Icons.keyboard_arrow_down,
-              color: Color(0xFF006A71),
-              size: 20,
-            ),
-            selectedTrailingIcon: const Icon(
-              Icons.keyboard_arrow_up,
-              color: Color(0xFF006A71),
-              size: 20,
-            ),
-            inputDecorationTheme: const InputDecorationTheme(
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              filled: false,
-            ),
+          child: Button(
+            label: selectedValue,
+            onPressed: openFilterDrawer,
+            backgroundColor: Colors.white,
+            suffixIcon: Icons.arrow_downward,
+            textColor: Color(0xFF006A71),
           ),
         ),
       ],
