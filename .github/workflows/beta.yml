@@ -1,28 +1,32 @@
-name: Auto Merge Feature Branch into Beta
+name: Auto Rebase Feature Branch into Beta
 
 on:
   pull_request:
     types: [ closed ]
     branches:
-      - beta  # only trigger when a PR into beta is closed
+      - beta
 
 jobs:
-  merge-feature:
+  rebase-feature:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - name: Checkout beta branch
+        uses: actions / checkout@v3
         with:
-          ref: beta  # checkout beta branch
+          ref: beta
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
-          git config user.name "GitHub Actions"
+          git config user.name "Github Actions"
           git config user.email "actions@github.com"
 
-      - name: Merge merged feature branch into beta
+      - name: Fetch all branches
         run: |
-          git fetch origin
-          git merge origin/${{ github.event.pull_request.head.ref }} --no-edit || echo "Nothing to merge"
-          git push origin beta
+          git fetch origin +refs/head/*:refs/remotes/origin/*
+      - name: Rebase merged feature branch onto beta
+        run: |
+          git rebase origin/${{github.event.pull_request.head.ref}} || echo "Rebase failed"
+          git push origin beta --force-with-lease
