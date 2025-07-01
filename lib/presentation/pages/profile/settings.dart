@@ -20,7 +20,7 @@ class _SettingsState extends State<Settings> {
     MenuItem(
       title: "Account Details",
       icon: Icons.account_circle_rounded,
-      route: "/account-details",
+      route: ProfileRoutes.accountDetails,
     ),
     MenuItem(title: "Contact Us", icon: Icons.call, route: "/contact-us"),
     MenuItem(

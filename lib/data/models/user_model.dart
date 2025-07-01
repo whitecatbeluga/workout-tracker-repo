@@ -89,4 +89,9 @@ class UserModel extends AppUser {
       accountPicture: '',
     );
   }
+
+  @override
+  String toString() {
+    return 'UserModel(uid: $uid, \nemail: $email, \nuserName: $userName, \nfirstName: $firstName, \nlastName: $lastName, \ngender: $gender, \naddress: $address, \nactivityLevel: $activityLevel, \nbirthDate: $birthDate, \nbmi: $bmi, \nheight: $height, \nweight: $weight, \nworkoutType: $workoutType, \naccountPicture: $accountPicture)';
+  }
 }
