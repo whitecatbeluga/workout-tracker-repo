@@ -11,4 +11,6 @@ abstract class AuthRepository {
   Future<void> forgotPassword(String email);
   Future<void> updateUserAvatar(String userId, File imageFile);
   Future<void> removeUserAvatar(String userId);
+  Stream<UserModel> getUserDetails(String userId);
+  Future<void> updateUserDetails(String userId, Map<String, dynamic> data);
 }

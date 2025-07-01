@@ -13,7 +13,11 @@ class MenuList extends StatelessWidget {
         return ListTile(
           leading: Icon(item.icon),
           title: Text(item.title),
-          onTap: () => Navigator.pushNamed(context, item.route),
+          onTap: () => Navigator.pushNamedAndRemoveUntil(
+            context,
+            item.route,
+            (route) => false,
+          ),
           trailing: const Icon(Icons.chevron_right),
         );
       }).toList(),
