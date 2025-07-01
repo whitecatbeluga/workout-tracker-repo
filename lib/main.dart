@@ -22,6 +22,7 @@ class WorkoutTracker extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: "Workout Tracker",
       initialRoute: '/',
+      theme: ThemeData(fontFamily: 'Inter', useMaterial3: true),
       onGenerateRoute: RouteGenerator.generateRoute,
     );
   }

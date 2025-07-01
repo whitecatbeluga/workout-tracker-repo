@@ -304,7 +304,24 @@ class _WorkoutPageState extends State<WorkoutPage> {
                 final List<Folder> folders = snapshot.data ?? [];
 
                 if (folders.isEmpty) {
-                  return const Center(child: Text("No folders found."));
+                  return Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          "No Folders Found",
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Color(0xFF323232),
+                          ),
+                        ),
+                        Image.asset(
+                          "assets/images/empty-folder.png",
+                          width: 300,
+                          height: 300,
+                        ),
+                      ],
+                    ),
+                  );
                 }
 
                 return Expanded(
