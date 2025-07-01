@@ -173,4 +173,26 @@ class AuthRepositoryImpl implements AuthRepository {
       await storageRef.delete(); //delete existing avatar
     }
   }
+
+  @override
+  Stream<UserModel> getUserDetails(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map((doc) => UserModel.fromMap(doc.data() ?? {}));
+  }
+
+  @override
+  Future<void> updateUserDetails(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .update(
+          data.map((key, value) => MapEntry(FieldPath.fromString(key), value)),
+        );
+  }
 }

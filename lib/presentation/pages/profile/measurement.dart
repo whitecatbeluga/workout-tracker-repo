@@ -83,6 +83,18 @@ class _MeasurementPageState extends State<MeasurementPage> {
       appBar: AppBar(
         title: Text('Measurements'),
         backgroundColor: Colors.white,
+        leading: IconButton(
+          onPressed: Navigator.canPop(context)
+              ? () => Navigator.pop(context)
+              : () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    ProfileRoutes.settings,
+                    (route) => false,
+                  );
+                },
+          icon: const Icon(Icons.arrow_back),
+        ),
       ),
       body: StreamBuilder<List<Measurement>>(
         stream: measurementStream,
