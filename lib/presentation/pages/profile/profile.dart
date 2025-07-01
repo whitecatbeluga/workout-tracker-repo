@@ -18,6 +18,7 @@ import 'package:workout_tracker_repo/routes/profile/profile.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../core/providers/user_info_provider.dart';
 
+//asdasd
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
