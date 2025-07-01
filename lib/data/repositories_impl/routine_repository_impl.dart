@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 
 import '../../domain/entities/routine.dart';
@@ -128,7 +129,9 @@ class RoutineRepositoryImpl implements RoutineRepository {
     return RoutineModel(
       id: routineData['id'],
       routineName: routineData['routine_name'],
-      createdAt: routineData['created_at'],
+      createdAt: (routineData['created_at'] as Timestamp?)
+          ?.toDate()
+          .toIso8601String(),
       exercises: exercises,
     );
   }

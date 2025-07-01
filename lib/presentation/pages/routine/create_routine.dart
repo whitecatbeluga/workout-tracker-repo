@@ -61,6 +61,10 @@ class _CreateRoutineState extends State<CreateRoutine> {
           workoutSets,
           folderId: folderId,
         );
+
+        routineExercises.value.clear();
+        exerciseSets.clear();
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Routine saved successfully!')),
         );
