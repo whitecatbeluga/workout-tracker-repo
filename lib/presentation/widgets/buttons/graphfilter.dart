@@ -112,6 +112,7 @@ class GraphFilter extends StatelessWidget {
             color: const Color.fromARGB(0, 255, 255, 255),
           ),
           child: Button(
+            fontSize: 15,
             label: selectedValue,
             onPressed: openFilterDrawer,
             backgroundColor: Colors.white,

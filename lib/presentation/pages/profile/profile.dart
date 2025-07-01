@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/data/services/workout_service.dart';
+import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:flutter/material.dart';
@@ -24,8 +27,10 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   String selectedFilter = 'Week';
+  final ValueNotifier<String> selectedF = ValueNotifier('Week');
   final user = authService.value.getCurrentUser();
   final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
+  final routineRepo = RoutineRepositoryImpl(RoutineService());
 
   final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
@@ -92,55 +97,92 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: ProfileHeader(user: user),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  spacing: 10,
-                  children: [
-                    Expanded(child: ProfileCard(label: "Routines")),
-                    Expanded(child: ProfileCard(label: "Workouts")),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: GraphFilter(
-                        selectedValue: selectedFilter,
-                        onChanged: (newValue) {
-                          setState(() {
-                            selectedFilter = newValue;
-                          });
-                        },
-                      ),
-                    ),
-                    StreamBuilder(
-                      stream: workoutRepo.getWorkoutsByUserId(user!.uid),
-                      builder: (context, snapshot) {
-                        if (!snapshot.hasData) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: const [
-                                CircularProgressIndicator(),
-                                SizedBox(height: 10),
-                                Text('Fetching your workouts...'),
+              StreamBuilder(
+                stream: routineRepo.streamFolders(user!.uid),
+                builder: (context, routinesnapshot) {
+                  if (routinesnapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return SkeletonLoader();
+                  }
+                  if (routinesnapshot.hasError) {
+                    return Center(
+                      child: Text('Error: ${routinesnapshot.error}'),
+                    );
+                  }
+                  int count = 0;
+                  if (routinesnapshot.hasData) {
+                    List<Folder> folders = routinesnapshot.data!;
+                    for (var folder in folders) {
+                      count += folder.routineIds!.length;
+                    }
+                  }
+                  return StreamBuilder(
+                    stream: workoutRepo.getWorkoutsByUserId(user!.uid),
+                    builder: (context, workoutsnapshot) {
+                      if (workoutsnapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return SkeletonLoader();
+                      }
+                      if (workoutsnapshot.hasError) {
+                        return Center(
+                          child: Text('Error: ${workoutsnapshot.error}'),
+                        );
+                      }
+                      final workouts = workoutsnapshot.data ?? [];
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: Row(
+                              spacing: 10,
+                              children: [
+                                Expanded(
+                                  child: ProfileCard(
+                                    label: "Routine",
+                                    count: count.toString(),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: ProfileCard(
+                                    label: "Workout",
+                                    count: workoutsnapshot.data!.length
+                                        .toString(),
+                                  ),
+                                ),
                               ],
                             ),
-                          );
-                        }
-                        final workouts = snapshot.data ?? [];
-                        return BarChartWidget(
-                          filter: selectedFilter,
-                          workouts: workouts,
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            child: Column(
+                              children: [
+                                GraphFilter(
+                                  selectedValue: selectedFilter,
+                                  onChanged: (newValue) {
+                                    selectedF.value = newValue;
+                                  },
+                                ),
+                                ValueListenableBuilder(
+                                  valueListenable: selectedF,
+                                  builder: (context, value, child) {
+                                    return BarChartWidget(
+                                      filter: selectedF.value,
+                                      workouts: workouts,
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
               MenuList(menuItems: menuItems),
               StreamBuilder(
@@ -200,6 +242,74 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class SkeletonLoader extends StatelessWidget {
+  const SkeletonLoader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Top Cards Row Placeholder
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 70,
+                  margin: const EdgeInsets.only(right: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  height: 70,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Filter and Graph Placeholder
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            children: [
+              // Filter Dropdown Placeholder
+              Container(
+                height: 40,
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+
+              // Chart Placeholder
+              Container(
+                height: 180,
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -330,10 +440,10 @@ class _ProfileHeaderState extends State<ProfileHeader> {
 }
 
 class ProfileCard extends StatefulWidget {
-  const ProfileCard({super.key, this.label});
+  const ProfileCard({super.key, this.label, this.count});
 
   final String? label;
-
+  final String? count;
   @override
   State<ProfileCard> createState() => _ProfileCardState();
 }
@@ -355,7 +465,7 @@ class _ProfileCardState extends State<ProfileCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Total ${widget.label}",
+              "Total ${widget.label}s",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             Row(
@@ -364,10 +474,13 @@ class _ProfileCardState extends State<ProfileCard> {
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  "14",
+                  widget.count.toString(),
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
                 ),
-                Text('${widget.label}', style: TextStyle(fontSize: 16)),
+                Text(
+                  '${widget.label}${int.parse(widget.count!) > 1 ? 's' : ''}',
+                  style: TextStyle(fontSize: 16),
+                ),
               ],
             ),
           ],
