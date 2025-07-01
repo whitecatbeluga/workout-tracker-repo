@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';

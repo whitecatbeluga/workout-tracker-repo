@@ -38,11 +38,11 @@ class _LogExerciseCardState extends State<LogExerciseCard> {
             final exercise = exercises[index];
 
             widget.exerciseSets.putIfAbsent(
-              exercise.name,
+              exercise.id,
               () => [SetEntry(setNumber: 1, previous: "0kg x 0")],
             );
 
-            final sets = widget.exerciseSets[exercise.name]!;
+            final sets = widget.exerciseSets[exercise.id]!;
 
             return Container(
               margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
