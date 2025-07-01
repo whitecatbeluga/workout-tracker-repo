@@ -1,32 +1,75 @@
-name: Auto Rebase Feature Branch into Beta
+name: Auto Rebase Feature Branch
 
 on:
   pull_request:
-    types: [ closed ]
+    types: [ opened, reopened, synchronize ]
     branches:
       - beta
 
 jobs:
-  rebase-feature:
-    if: github.event.pull_request.merged == true
+  auto-rebase:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
-      - name: Checkout beta branch
-        uses: actions / checkout@v3
+      - name: Checkout PR
+        uses: actions/checkout@v4
         with:
-          ref: beta
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Set up Git
         run: |
-          git config user.name "Github Actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch all branches
+      - name: Fetch latest changes
         run: |
-          git fetch origin +refs/head/*:refs/remotes/origin/*
-      - name: Rebase merged feature branch onto beta
+          git fetch origin
+
+      - name: Check if rebase is needed
+        id: check-rebase
         run: |
-          git rebase origin/${{github.event.pull_request.head.ref}} || echo "Rebase failed"
-          git push origin beta --force-with-lease
+          git checkout ${{ github.head_ref }}
+          
+          # Check if feature branch is behind beta
+          MERGE_BASE=$(git merge-base HEAD origin/beta)
+          LATEST_BETA=$(git rev-parse origin/beta)
+          
+          if [ "$MERGE_BASE" != "$LATEST_BETA" ]; then
+            echo "Feature branch needs rebasing"
+            echo "rebase_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Feature branch is up to date"
+            echo "rebase_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rebase feature branch onto beta
+        if: steps.check-rebase.outputs.rebase_needed == 'true'
+        run: |
+          git rebase origin/beta || {
+            echo "❌ Rebase failed due to conflicts"
+            echo "Please resolve conflicts manually by running:"
+            echo "git checkout ${{ github.head_ref }}"
+            echo "git rebase origin/beta"
+            echo "# resolve conflicts, then:"
+            echo "git rebase --continue"
+            echo "git push --force-with-lease"
+            exit 1
+          }
+
+      - name: Push rebased branch
+        if: steps.check-rebase.outputs.rebase_needed == 'true'
+        run: |
+          git push origin ${{ github.head_ref }} --force-with-lease
+
+      - name: Success message
+        run: |
+          if [ "${{ steps.check-rebase.outputs.rebase_needed }}" == "true" ]; then
+            echo "✅ Feature branch successfully rebased onto beta"
+          else
+            echo "✅ Feature branch is already up to date with beta"
+          fi
