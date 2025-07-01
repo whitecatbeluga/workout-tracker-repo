@@ -1,36 +1,39 @@
-name: Auto Rebase Feature Branch into Beta
+name: Auto Rebase Feature Branch
 
 on:
   pull_request:
-    types: [ closed ]
+    types: [ synchronize, opened, reopened ]
     branches:
-      - beta  # Triggers only when PRs into beta are closed
+      - beta
 
 jobs:
-  rebase-feature:
-    if: github.event.pull_request.merged == true
+  auto-rebase:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
-      - name: Checkout beta branch
-        uses: actions/checkout@v3
+      - name: Checkout PR
+        uses: actions/checkout@v4
         with:
-          ref: beta
-          fetch-depth: 0  # Required for full history & rebase
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Set up Git
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Fetch all remote branches
+      - name: Rebase feature branch onto beta
         run: |
-          git fetch origin +refs/heads/*:refs/remotes/origin/*
+          git fetch origin
+          git checkout ${{ github.head_ref }}
+          git rebase origin/beta
 
-      - name: Rebase beta onto merged feature branch
+      - name: Push rebased branch
         run: |
-          git rebase origin/${{ github.event.pull_request.head.ref }} beta || echo "Rebase failed"
-
-      - name: Push updated beta
-        run: |
-          git push origin beta --force-with-lease
+          git push origin ${{ github.head_ref }} --force-with-lease
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
