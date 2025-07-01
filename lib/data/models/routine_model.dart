@@ -91,7 +91,9 @@ class RoutineModel extends Routine {
     return RoutineModel(
       id: id,
       routineName: map['routine_name'],
-      createdAt: (map['created_at'] as Timestamp?)?.toDate().toIso8601String(),
+      createdAt: map['created_at'] is Timestamp
+          ? (map['created_at'] as Timestamp).toDate().toIso8601String()
+          : map['created_at']?.toString(),
       exercises: [], // Filled later
     );
   }
@@ -119,7 +121,10 @@ class FolderModel extends Folder {
       id: docId,
       routineIds: List<String>.from(map['routine_ids'] ?? []),
       folderName: map['folder_name'],
-      createdAt: (map['created_at'] as Timestamp?)?.toDate().toIso8601String(),
+      createdAt: map['created_at'] is Timestamp
+          ? (map['created_at'] as Timestamp).toDate().toIso8601String()
+          : map['created_at']?.toString(),
+
       routines: routines,
     );
   }
