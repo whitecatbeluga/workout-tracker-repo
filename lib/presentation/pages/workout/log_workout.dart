@@ -18,15 +18,21 @@ class LogWorkout extends StatefulWidget {
 }
 
 class _LogWorkoutState extends State<LogWorkout> {
-  // final Map<String, List<SetEntry>> exerciseSets = {};
-
-  // final Map<String, List<SetEntry>> exerciseSets = savedExerciseSets;
   final Map<String, List<SetEntry>> exerciseSets = {};
   bool isTimerSelected = true;
   Duration timerDuration = const Duration(minutes: 1);
   Duration stopwatchDuration = Duration.zero;
   bool isRunning = false;
   late StateSetter dialogSetState;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (savedExerciseSets.isNotEmpty) {
+      exerciseSets.addAll(savedExerciseSets); // populate the sets from saved
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

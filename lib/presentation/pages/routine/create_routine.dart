@@ -42,16 +42,12 @@ class _CreateRoutineState extends State<CreateRoutine> {
   void _saveRoutine() async {
     final routineName = routineNameController.text.trim();
 
-    // DEBUG: Print for dev sanity
-    print(
-      'Routine Exercises: ${routineExercises.value.map((e) => e.name).toList()}',
-    );
-
-    // ✅ Create Map<String, ExerciseWorkoutSet> from routineExercises
+    // Map each exercise to its ID, name, and list of SetEntry
     final Map<String, ExerciseWorkoutSet> mappedSets = {
       for (final exercise in routineExercises.value)
         exercise.id: ExerciseWorkoutSet(
-          sets: savedExerciseSets[exercise.id] ?? [],
+          name: exercise.name,
+          sets: exerciseSets[exercise.id] ?? [],
         ),
     };
 

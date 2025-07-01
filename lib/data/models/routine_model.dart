@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../domain/entities/routine.dart';
 
 class SetDetailModel extends SetDetail {
@@ -6,14 +8,16 @@ class SetDetailModel extends SetDetail {
     required super.previous,
     required super.kg,
     required super.reps,
+    super.isCompleted = false,
   });
 
   factory SetDetailModel.fromMap(Map<String, dynamic> map) {
     return SetDetailModel(
       setNumber: map['set_number'],
       previous: map['previous'],
-      kg: map['kg'],
+      kg: (map['kg'] as num).toDouble(),
       reps: map['reps'],
+      isCompleted: map['isCompleted'] ?? false,
     );
   }
 
@@ -23,6 +27,7 @@ class SetDetailModel extends SetDetail {
       'previous': previous,
       'kg': kg,
       'reps': reps,
+      'isCompleted': isCompleted,
     };
   }
 }
@@ -30,7 +35,6 @@ class SetDetailModel extends SetDetail {
 class ExerciseModel extends Exercise {
   ExerciseModel({
     required super.id,
-    required super.exerciseId,
     required super.name,
     required super.description,
     required super.category,
@@ -42,24 +46,35 @@ class ExerciseModel extends Exercise {
   factory ExerciseModel.fromMap(Map<String, dynamic> map, String id) {
     return ExerciseModel(
       id: id,
-      exerciseId: map['exercise_id'],
       name: map['name'],
-      description: map['description'],
-      category: map['category'],
-      withOutEquipment: map['with_out_equipment'],
-      imageUrl: map['image_url'],
-      sets: [], // Will be populated separately
+      description: map['description'] ?? '',
+      category: map['category'] ?? '',
+      withOutEquipment: map['with_out_equipment'] ?? false,
+      imageUrl: map['image_url'] ?? '',
+      sets: List<Map<String, dynamic>>.from(
+        map['sets'] ?? [],
+      ).map((set) => SetDetailModel.fromMap(set)).toList(),
     );
   }
 
   Map<String, dynamic> toMap() {
     return {
-      'exercise_id': exerciseId,
       'name': name,
       'description': description,
       'category': category,
       'with_out_equipment': withOutEquipment,
       'image_url': imageUrl,
+      'sets': sets
+          .map(
+            (s) => SetDetailModel(
+              setNumber: s.setNumber,
+              previous: s.previous,
+              kg: s.kg,
+              reps: s.reps,
+              isCompleted: s.isCompleted,
+            ).toMap(),
+          )
+          .toList(),
     };
   }
 }
@@ -76,8 +91,8 @@ class RoutineModel extends Routine {
     return RoutineModel(
       id: id,
       routineName: map['routine_name'],
-      createdAt: map['created_at'],
-      exercises: [], // Will be populated separately
+      createdAt: (map['created_at'] as Timestamp?)?.toDate().toIso8601String(),
+      exercises: [], // Filled later
     );
   }
 
@@ -104,7 +119,7 @@ class FolderModel extends Folder {
       id: docId,
       routineIds: List<String>.from(map['routine_ids'] ?? []),
       folderName: map['folder_name'],
-      createdAt: map['created_at']?.toDate().toIso8601String(),
+      createdAt: (map['created_at'] as Timestamp?)?.toDate().toIso8601String(),
       routines: routines,
     );
   }
