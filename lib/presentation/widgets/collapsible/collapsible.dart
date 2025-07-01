@@ -65,6 +65,218 @@ class _CollapsibleState extends State<Collapsible> {
     }
   }
 
+  void _deleteFolder() async {
+    if (widget.folderContent.routines?.isEmpty ?? true) {
+      try {
+        await _routineRepository.deleteFolder(
+          user!.uid,
+          widget.folderContent.id,
+        );
+
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Folder deleted successfully!')));
+      } catch (e) {
+        print('Error creating folder: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete folder. Please try again.')),
+        );
+      }
+    }
+
+    if (widget.folderContent.routines?.isNotEmpty ?? true) {
+      try {
+        await _routineRepository.deleteFolderAndRoutines(
+          user!.uid,
+          widget.folderContent.id,
+          widget.folderContent.routineIds!,
+        );
+
+        Navigator.of(context).pop();
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Folder updated successfully!')));
+      } catch (e) {
+        print('Error creating folder: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update folder. Please try again.')),
+        );
+      }
+    }
+  }
+
+  void _openFolderMenu() {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          widthFactor: 1.0,
+          heightFactor: 0.5,
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                spacing: 20,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.folderContent.folderName ?? "",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  Button(
+                    label: "Update Folder Name",
+                    prefixIcon: Icons.edit_note,
+                    variant: ButtonVariant.primary,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                    size: ButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openUpdateFolderNameDialog();
+                    },
+                  ),
+                  Button(
+                    label: (widget.folderContent.routines?.isEmpty ?? true)
+                        ? "Delete Folder"
+                        : "Delete Folder and Routines",
+                    prefixIcon: Icons.delete_forever,
+                    backgroundColor: Colors.white,
+                    textColor: Colors.red.shade800,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                    size: ButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openDeleteFolderDialog();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openUpdateFolderNameDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  'Update Folder',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextField(
+                  controller: _folderNameController,
+                  decoration: InputDecoration(
+                    // hintText: 'Folder Name',
+                    hintText: widget.folderContent.folderName ?? "",
+                    hintStyle: TextStyle(fontWeight: FontWeight.normal),
+                  ),
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: 'Save',
+                      width: double.infinity,
+                      onPressed: () => _updateFolder(),
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      width: double.infinity,
+                      variant: ButtonVariant.gray,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _openDeleteFolderDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  (widget.folderContent.routines?.isEmpty ?? true)
+                      ? "Are you sure you want to delete this folder?"
+                      : "Are you sure you want to delete this folder and its routines",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: (widget.folderContent.routines?.isEmpty ?? true)
+                          ? "Delete Folder"
+                          : "Delete Folder and Routines",
+                      prefixIcon: Icons.delete_forever,
+                      backgroundColor: Colors.white,
+                      textColor: Colors.red.shade800,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      onPressed: () => _deleteFolder(),
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      fullWidth: true,
+                      variant: ButtonVariant.gray,
+                      fontWeight: FontWeight.w500,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _folderNameController.dispose();
@@ -100,67 +312,12 @@ class _CollapsibleState extends State<Collapsible> {
               ),
               GestureDetector(
                 child: Icon(
-                  Icons.edit_note,
+                  Icons.edit_note_rounded,
                   size: 30,
                   color: Color(0xFF323232),
                 ),
                 onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return Dialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 20,
-                            children: [
-                              Text(
-                                'Update Folder',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              TextField(
-                                controller: _folderNameController,
-                                decoration: InputDecoration(
-                                  // hintText: 'Folder Name',
-                                  hintText:
-                                      widget.folderContent.folderName ?? "",
-                                  hintStyle: TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                              Column(
-                                spacing: 10,
-                                children: [
-                                  Button(
-                                    label: 'Save',
-                                    width: double.infinity,
-                                    onPressed: () => _updateFolder(),
-                                  ),
-                                  Button(
-                                    label: 'Cancel',
-                                    textColor: Color(0xFF323232),
-                                    width: double.infinity,
-                                    variant: ButtonVariant.gray,
-                                    onPressed: () {
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  );
+                  _openFolderMenu();
                 },
               ),
             ],
@@ -168,38 +325,54 @@ class _CollapsibleState extends State<Collapsible> {
           AnimatedCrossFade(
             firstChild: Container(),
             secondChild: (widget.folderContent.routines?.isEmpty ?? true)
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () {},
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: const Color(0xFF323232),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          icon: const Icon(
-                            Icons.add,
-                            size: 20,
-                            color: Color(0xFF006A71),
-                          ),
-                          label: const Text(
-                            "Add Routine",
-                            style: TextStyle(color: Color(0xFF006A71)),
+                ? Container(
+                    margin: const EdgeInsets.only(top: 10.0),
+                    child: Row(
+                      children: [
+                        // Expanded(
+                        //   child: OutlinedButton.icon(
+                        //     onPressed: () {},
+                        //     style: OutlinedButton.styleFrom(
+                        //       foregroundColor: const Color(0xFF323232),
+                        //       side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(10),
+                        //       ),
+                        //       padding: const EdgeInsets.symmetric(
+                        //         horizontal: 20,
+                        //         vertical: 14,
+                        //       ),
+                        //       textStyle: const TextStyle(
+                        //         fontSize: 16,
+                        //         fontWeight: FontWeight.w500,
+                        //       ),
+                        //     ),
+                        //     icon: const Icon(
+                        //       Icons.add,
+                        //       size: 20,
+                        //       color: Color(0xFF006A71),
+                        //     ),
+                        //     label: const Text(
+                        //       "Add Routine",
+                        //       style: TextStyle(color: Color(0xFF006A71)),
+                        //     ),
+                        //   ),
+                        // ),
+                        Expanded(
+                          child: Button(
+                            label: "Add Routine",
+                            onPressed: () {},
+                            prefixIcon: Icons.add,
+                            fullWidth: true,
+                            size: ButtonSize.large,
+                            borderColor: Color(0xFF006A71),
+                            borderWidth: .5,
+                            backgroundColor: Colors.white,
+                            textColor: Color(0xFF006A71),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   )
                 : Column(
                     children: widget.folderContent.routines!.map((routine) {
