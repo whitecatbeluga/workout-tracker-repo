@@ -307,17 +307,21 @@ class _WorkoutPageState extends State<WorkoutPage> {
                   return Center(
                     child: Column(
                       children: [
-                        Text(
-                          "No Folders Found",
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Color(0xFF323232),
-                          ),
-                        ),
                         Image.asset(
                           "assets/images/empty-folder.png",
                           width: 300,
                           height: 300,
+                        ),
+                        SizedBox(
+                          width: 350,
+                          child: Text(
+                            "It looks like you don't have any routines yet. Create a new one to get started!",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF323232),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
                       ],
                     ),

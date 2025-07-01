@@ -7,6 +7,7 @@ import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import '../../../domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
@@ -32,6 +33,7 @@ class _CollapsibleState extends State<Collapsible> {
     setState(() => _isExpanded = !_isExpanded);
   }
 
+  // methods
   void _updateFolder() async {
     final newFolderName = _folderNameController.text.trim();
 
@@ -66,48 +68,60 @@ class _CollapsibleState extends State<Collapsible> {
   }
 
   void _deleteFolder() async {
-    if (widget.folderContent.routines?.isEmpty ?? true) {
-      try {
+    final isEmpty = widget.folderContent.routines?.isEmpty ?? true;
+
+    try {
+      if (isEmpty) {
         await _routineRepository.deleteFolder(
           user!.uid,
           widget.folderContent.id,
         );
-
-        Navigator.of(context).pop();
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Folder deleted successfully!')));
-      } catch (e) {
-        print('Error creating folder: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete folder. Please try again.')),
-        );
-      }
-    }
-
-    if (widget.folderContent.routines?.isNotEmpty ?? true) {
-      try {
+      } else {
         await _routineRepository.deleteFolderAndRoutines(
           user!.uid,
           widget.folderContent.id,
           widget.folderContent.routineIds!,
         );
-
-        Navigator.of(context).pop();
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Folder updated successfully!')));
-      } catch (e) {
-        print('Error creating folder: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update folder. Please try again.')),
-        );
       }
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Folder deleted successfully!')),
+      );
+    } catch (e) {
+      print('Error deleting folder: $e');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to delete folder. Please try again.'),
+        ),
+      );
     }
   }
 
+  void _deleteRoutine(String routineId) async {
+    try {
+      await _routineRepository.deleteRoutine(
+        user!.uid,
+        widget.folderContent.id,
+        routineId,
+      );
+
+      Navigator.of(context).pop();
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Folder deleted successfully!')));
+    } catch (e) {
+      print('Error creating folder: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to delete folder. Please try again.')),
+      );
+    }
+  }
+
+  // bottom sheets
   void _openFolderMenu() {
     showModalBottomSheet(
       backgroundColor: Colors.white,
@@ -168,6 +182,79 @@ class _CollapsibleState extends State<Collapsible> {
     );
   }
 
+  void _openRoutineMenu(Routine routine) {
+    showModalBottomSheet(
+      backgroundColor: Colors.white,
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          widthFactor: 1.0,
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                spacing: 20,
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    routine.routineName ?? "",
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  Button(
+                    label: "View Routine",
+                    prefixIcon: Icons.view_carousel,
+                    variant: ButtonVariant.primary,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                    size: ButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        RoutineRoutes.viewRoutine,
+                        arguments: routine.id,
+                      );
+                    },
+                  ),
+                  Button(
+                    label: "Update Routine",
+                    prefixIcon: Icons.edit_note,
+                    variant: ButtonVariant.primary,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                    size: ButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                  Button(
+                    label: "Delete Routine",
+                    prefixIcon: Icons.delete_forever,
+                    backgroundColor: Colors.white,
+                    textColor: Colors.red.shade800,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                    size: ButtonSize.large,
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _openDeleteRoutineDialog(routine.id);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // dialogs
   void _openUpdateFolderNameDialog() {
     showDialog(
       context: context,
@@ -277,6 +364,58 @@ class _CollapsibleState extends State<Collapsible> {
     );
   }
 
+  void _openDeleteRoutineDialog(String routineId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  "Are you sure you want to delete this routine?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: "Delete Routine",
+                      prefixIcon: Icons.delete_forever,
+                      backgroundColor: Colors.white,
+                      textColor: Colors.red.shade800,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      onPressed: () => _deleteRoutine(routineId),
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      fullWidth: true,
+                      variant: ButtonVariant.gray,
+                      fontWeight: FontWeight.w500,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _folderNameController.dispose();
@@ -329,39 +468,18 @@ class _CollapsibleState extends State<Collapsible> {
                     margin: const EdgeInsets.only(top: 10.0),
                     child: Row(
                       children: [
-                        // Expanded(
-                        //   child: OutlinedButton.icon(
-                        //     onPressed: () {},
-                        //     style: OutlinedButton.styleFrom(
-                        //       foregroundColor: const Color(0xFF323232),
-                        //       side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        //       shape: RoundedRectangleBorder(
-                        //         borderRadius: BorderRadius.circular(10),
-                        //       ),
-                        //       padding: const EdgeInsets.symmetric(
-                        //         horizontal: 20,
-                        //         vertical: 14,
-                        //       ),
-                        //       textStyle: const TextStyle(
-                        //         fontSize: 16,
-                        //         fontWeight: FontWeight.w500,
-                        //       ),
-                        //     ),
-                        //     icon: const Icon(
-                        //       Icons.add,
-                        //       size: 20,
-                        //       color: Color(0xFF006A71),
-                        //     ),
-                        //     label: const Text(
-                        //       "Add Routine",
-                        //       style: TextStyle(color: Color(0xFF006A71)),
-                        //     ),
-                        //   ),
-                        // ),
                         Expanded(
                           child: Button(
                             label: "Add Routine",
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.pushNamed(
+                                context,
+                                RoutineRoutes.createRoutinePage,
+                                arguments: {
+                                  'folderId': widget.folderContent.id,
+                                },
+                              );
+                            },
                             prefixIcon: Icons.add,
                             fullWidth: true,
                             size: ButtonSize.large,
@@ -414,10 +532,13 @@ class _CollapsibleState extends State<Collapsible> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                const Icon(
-                                  Icons.more_horiz,
-                                  size: 30,
-                                  color: Color(0xFF323232),
+                                GestureDetector(
+                                  onTap: () => _openRoutineMenu(routine),
+                                  child: Icon(
+                                    Icons.more_horiz,
+                                    size: 30,
+                                    color: Color(0xFF323232),
+                                  ),
                                 ),
                               ],
                             ),
