@@ -1,0 +1,28 @@
+name: Auto Merge Feature Branch into Beta
+
+on:
+  pull_request:
+    types: [ closed ]
+    branches:
+      - beta  # only trigger when a PR into beta is closed
+
+jobs:
+  merge-feature:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: beta  # checkout beta branch
+
+      - name: Set up Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+
+      - name: Merge merged feature branch into beta
+        run: |
+          git fetch origin
+          git merge origin/${{ github.event.pull_request.head.ref }} --no-edit || echo "Nothing to merge"
+          git push origin beta
