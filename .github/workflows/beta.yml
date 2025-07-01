@@ -2,7 +2,7 @@ name: Auto Rebase Feature Branch
 
 on:
   pull_request:
-    types: [ synchronize, opened, reopened ]
+    types: [ opened, reopened, synchronize ]
     branches:
       - beta
 
@@ -26,14 +26,50 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Rebase feature branch onto beta
+      - name: Fetch latest changes
         run: |
           git fetch origin
+
+      - name: Check if rebase is needed
+        id: check-rebase
+        run: |
           git checkout ${{ github.head_ref }}
-          git rebase origin/beta
+          
+          # Check if feature branch is behind beta
+          MERGE_BASE=$(git merge-base HEAD origin/beta)
+          LATEST_BETA=$(git rev-parse origin/beta)
+          
+          if [ "$MERGE_BASE" != "$LATEST_BETA" ]; then
+            echo "Feature branch needs rebasing"
+            echo "rebase_needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "Feature branch is up to date"
+            echo "rebase_needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Rebase feature branch onto beta
+        if: steps.check-rebase.outputs.rebase_needed == 'true'
+        run: |
+          git rebase origin/beta || {
+            echo "❌ Rebase failed due to conflicts"
+            echo "Please resolve conflicts manually by running:"
+            echo "git checkout ${{ github.head_ref }}"
+            echo "git rebase origin/beta"
+            echo "# resolve conflicts, then:"
+            echo "git rebase --continue"
+            echo "git push --force-with-lease"
+            exit 1
+          }
 
       - name: Push rebased branch
+        if: steps.check-rebase.outputs.rebase_needed == 'true'
         run: |
           git push origin ${{ github.head_ref }} --force-with-lease
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Success message
+        run: |
+          if [ "${{ steps.check-rebase.outputs.rebase_needed }}" == "true" ]; then
+            echo "✅ Feature branch successfully rebased onto beta"
+          else
+            echo "✅ Feature branch is already up to date with beta"
+          fi
