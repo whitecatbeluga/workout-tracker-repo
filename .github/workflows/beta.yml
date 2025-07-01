@@ -13,20 +13,21 @@ jobs:
 
     steps:
       - name: Checkout beta branch
-        uses: actions / checkout@v3
+        uses: actions/checkout@v3
         with:
           ref: beta
-          fetch-depth: 0
+          fetch-depth: 0  # Important for rebase
 
       - name: Set up Git
         run: |
-          git config user.name "Github Actions"
+          git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
 
       - name: Fetch all branches
         run: |
-          git fetch origin +refs/head/*:refs/remotes/origin/*
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
+
       - name: Rebase merged feature branch onto beta
         run: |
-          git rebase origin/${{github.event.pull_request.head.ref}} || echo "Rebase failed"
+          git rebase origin/${{ github.event.pull_request.head.ref }} || echo "Rebase failed"
           git push origin beta --force-with-lease
