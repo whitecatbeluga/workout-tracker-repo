@@ -72,18 +72,18 @@ class BarChartWidgetState extends State<BarChartWidget> {
                   String title = widget.filter == 'Week'
                       ? weekConst[value.toInt()]
                       : monthConst[value.toInt()];
-                  TextStyle style = const TextStyle(fontSize: 12);
+                  TextStyle style = const TextStyle(fontSize: 11);
                   if (widget.filter == 'Week' &&
                       DateTime.now().weekday == value.toInt() + 1) {
                     style = const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF006A71),
                     );
                   } else if (widget.filter == 'Month' &&
                       DateTime.now().month == value.toInt() + 1) {
                     style = const TextStyle(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF006A71),
                     );
@@ -101,7 +101,7 @@ class BarChartWidgetState extends State<BarChartWidget> {
                     meta: meta,
                     child: Text(
                       value.toInt().toString(),
-                      style: TextStyle(fontSize: 12),
+                      style: TextStyle(fontSize: 10),
                       textAlign: TextAlign.center,
                     ),
                   );

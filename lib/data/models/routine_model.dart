@@ -136,4 +136,9 @@ class FolderModel extends Folder {
       'created_at': createdAt,
     };
   }
+
+  @override
+  String toString() {
+    return 'FolderModel{id: $id, routineIds: $routineIds, folderName: $folderName, createdAt: $createdAt, routines: $routines}';
+  }
 }
