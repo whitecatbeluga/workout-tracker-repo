@@ -21,7 +21,7 @@ Here's the link how to install
 https://docs.flutter.dev/get-started/install
 ```
 
-After installing run this command
+After installing run this command if you want to use VScode
 
 ```
 flutter run
@@ -32,6 +32,15 @@ If your in WSL
 ```
 flutter run -d web-server
 ```
+
+If you want to use Android Studio
+
+Steps:
+
+- Download Android Studio
+- Install Flutter plugin
+- Install Emulator
+- Select the downloaded emulator then press play/start button
 
 ## 📁 FOLDER STRUCTURE `LAYERED / CLEAN ARCHITECTURE`
 
