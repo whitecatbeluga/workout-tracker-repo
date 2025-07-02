@@ -24,7 +24,7 @@ import 'package:workout_tracker_repo/routes/social/social.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import 'package:workout_tracker_repo/utils/authentication.dart';
-import 'package:workout_tracker_repo/utils/guardedRoute.dart';
+import 'package:workout_tracker_repo/utils/guarded_route.dart';
 
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
