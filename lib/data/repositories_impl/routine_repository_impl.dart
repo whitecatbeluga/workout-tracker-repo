@@ -185,8 +185,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
   }
 
   @override
-  void updateRoutine(
-    String userId,
+  Future<void> updateRoutine(
     String routineId, {
     String? updatedRoutineName,
     Map<String, dynamic>? updatedSets,

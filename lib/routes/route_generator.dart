@@ -9,7 +9,7 @@ import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/measurement.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/account_details.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
-import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/upsert_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/statistics.dart';
@@ -131,11 +131,11 @@ class RouteGenerator {
           ifAllowed: (_) => const AccountDetailsPage(),
           ifDenied: (_) => const LoginPage(),
         );
-      case RoutineRoutes.createRoutinePage:
+      case RoutineRoutes.upsertRoutinePage:
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const CreateRoutine(),
+          ifAllowed: (_) => const UpsertRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
       case RoutineRoutes.logWorkoutPage:
@@ -149,7 +149,7 @@ class RouteGenerator {
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const ViewRoutine(),
+          ifAllowed: (_) => ViewRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
       case WorkoutRoutes.logWorkout:
