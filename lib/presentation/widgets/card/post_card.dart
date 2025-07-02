@@ -480,6 +480,7 @@ class _PostCardState extends State<PostCard> {
     return InkWell(
       onTap: widget.onTap,
       child: Card(
+        margin: EdgeInsets.only(top: 10),
         color: Colors.white,
         elevation: 0,
         child: Column(

@@ -114,8 +114,8 @@ class RoutineService {
           'id': doc.id,
           ...routineData,
           'exercises': exercises,
-          'created_at': routineData['createdAt'] is Timestamp
-              ? (routineData['createdAt'] as Timestamp)
+          'created_at': routineData['created_at'] is Timestamp
+              ? (routineData['created_at'] as Timestamp)
                     .toDate()
                     .toIso8601String()
               : null,

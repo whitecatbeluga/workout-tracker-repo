@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/exercise_service.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/exercise_card.dart';
 
 enum ExerciseFilter { myExercises, predefinedExercises, allExercises }
@@ -160,10 +161,10 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
             const SizedBox(height: 10),
             Text(emptyMessage),
             const SizedBox(height: 10),
-            ElevatedButton.icon(
+            Button(
+              prefixIcon: Icons.filter_list,
+              label: 'Change Filter',
               onPressed: _openFilterDrawer,
-              icon: const Icon(Icons.filter_list),
-              label: const Text('Change Filter'),
             ),
           ],
         ),
