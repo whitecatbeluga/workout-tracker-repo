@@ -4,6 +4,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
@@ -230,6 +231,14 @@ class _CollapsibleState extends State<Collapsible> {
                     size: ButtonSize.large,
                     onPressed: () {
                       Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        RoutineRoutes.upsertRoutinePage,
+                        arguments: UpsertRoutineArgs(
+                          folderId: widget.folderContent.id,
+                          routine: routine,
+                        ),
+                      );
                     },
                   ),
                   Button(
@@ -474,10 +483,11 @@ class _CollapsibleState extends State<Collapsible> {
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
-                                RoutineRoutes.createRoutinePage,
-                                arguments: {
-                                  'folderId': widget.folderContent.id,
-                                },
+                                RoutineRoutes.upsertRoutinePage,
+                                arguments: UpsertRoutineArgs(
+                                  folderId: widget.folderContent.id,
+                                  routine: null,
+                                ),
                               );
                             },
                             prefixIcon: Icons.add,

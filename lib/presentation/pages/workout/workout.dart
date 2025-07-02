@@ -5,6 +5,7 @@ import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_i
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
+import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/collapsible/collapsible.dart';
@@ -20,7 +21,6 @@ class WorkoutPage extends StatefulWidget {
 
 class _WorkoutPageState extends State<WorkoutPage> {
   final user = authService.value.getCurrentUser();
-  late Future<List<Folder>> _futureFolders;
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
   );
@@ -57,8 +57,11 @@ class _WorkoutPageState extends State<WorkoutPage> {
                           Navigator.pop(context); // Close the bottom sheet
                           Navigator.pushNamed(
                             context,
-                            RoutineRoutes.createRoutinePage,
-                            arguments: {'folderId': folder.id},
+                            RoutineRoutes.upsertRoutinePage,
+                            arguments: UpsertRoutineArgs(
+                              folderId: folder.id,
+                              routine: null,
+                            ),
                           );
                         },
                         icon: const Icon(
@@ -258,10 +261,13 @@ class _WorkoutPageState extends State<WorkoutPage> {
                             if (folders.isNotEmpty) {
                               _showFolderPickerModal(context, folders);
                             } else {
-                              Navigator.pushNamedAndRemoveUntil(
+                              Navigator.pushNamed(
                                 context,
-                                RoutineRoutes.createRoutinePage,
-                                (route) => false,
+                                RoutineRoutes.upsertRoutinePage,
+                                arguments: UpsertRoutineArgs(
+                                  folderId: '',
+                                  routine: null,
+                                ),
                               );
                             }
                           },

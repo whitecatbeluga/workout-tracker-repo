@@ -198,48 +198,36 @@ class RoutineService {
       await routineRef.update({'routine_name': updatedRoutineName});
     }
 
-    // Update sets
     if (updatedSets != null) {
       final exercisesRef = routineRef.collection('exercises');
+
+      // Delete all existing embedded exercise documents
       final existingExercisesSnap = await exercisesRef.get();
-
-      // Delete existing exercises and sets
-      for (var exerciseDoc in existingExercisesSnap.docs) {
-        final setsRef = exerciseDoc.reference.collection('sets');
-        final setsSnap = await setsRef.get();
-
-        for (var setDoc in setsSnap.docs) {
-          await setDoc.reference.delete();
-        }
-
-        await exerciseDoc.reference.delete();
+      for (var doc in existingExercisesSnap.docs) {
+        await doc.reference.delete();
       }
 
-      // Add new exercises and sets
+      // Re-insert updated exercises with embedded sets
       for (var entry in updatedSets.entries) {
         final exerciseId = entry.key;
         final exerciseData = entry.value as Map<String, dynamic>;
 
-        if (exerciseData['name'] == null) continue;
+        final sets = (exerciseData['sets'] as List<dynamic>).map((set) {
+          final setMap = set as Map<String, dynamic>;
+          return {
+            'set_number': setMap['set_number'],
+            'previous': setMap['previous'] ?? '',
+            'kg': setMap['kg'],
+            'reps': setMap['reps'],
+            'isCompleted': setMap['isCompleted'] ?? false,
+          };
+        }).toList();
 
-        final newExerciseRef = exercisesRef.doc(exerciseId);
-        await newExerciseRef.set({'exercise_id': exerciseId});
-
-        final exerciseSets = exerciseData['sets'] as List?;
-        if (exerciseSets != null) {
-          for (var set in exerciseSets) {
-            final setData = set as Map<String, dynamic>;
-            if (setData['reps'] != null && setData['kg'] != null) {
-              await newExerciseRef.collection('sets').add({
-                'set_number': setData['set_number'],
-                'previous': setData['previous'] ?? '',
-                'kg': setData['kg'],
-                'reps': setData['reps'],
-                'checked': setData['checked'],
-              });
-            }
-          }
-        }
+        await exercisesRef.add({
+          'exercise_id': exerciseId,
+          'name': exerciseData['name'],
+          'sets': sets,
+        });
       }
     }
   }

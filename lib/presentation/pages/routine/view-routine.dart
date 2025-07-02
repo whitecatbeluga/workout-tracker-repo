@@ -12,15 +12,15 @@ import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 class ViewRoutine extends StatelessWidget {
-  const ViewRoutine({super.key});
+  ViewRoutine({super.key});
+
+  final RoutineRepository _routineRepository = RoutineRepositoryImpl(
+    RoutineService(),
+  );
 
   @override
   Widget build(BuildContext context) {
     final routineId = ModalRoute.of(context)!.settings.arguments as String;
-
-    final RoutineRepository routineRepository = RoutineRepositoryImpl(
-      RoutineService(),
-    );
 
     return Scaffold(
       appBar: AppBar(
@@ -29,7 +29,7 @@ class ViewRoutine extends StatelessWidget {
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<Routine>(
-        future: routineRepository.getRoutine(routineId),
+        future: _routineRepository.getRoutine(routineId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
