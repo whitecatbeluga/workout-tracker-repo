@@ -20,7 +20,9 @@ dependencies:
   image_picker: ^1.1.2
   intl: ^0.18.1
   dotted_border: ^2.0.0
-  
+  flutter_riverpod: ^2.6.1
+  shared_preferences: ^2.5.3
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

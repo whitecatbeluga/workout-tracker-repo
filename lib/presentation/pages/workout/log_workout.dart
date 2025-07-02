@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/pages/exercises/add_exercise.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
@@ -8,34 +10,78 @@ import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
-import '../../domain/entities/set_entry.dart';
+import '../../../providers/persistent_duration_provider.dart';
+import '../../../utils/timer_formatter.dart';
 
-class LogWorkout extends StatefulWidget {
+class LogWorkout extends ConsumerStatefulWidget {
   const LogWorkout({super.key});
 
   @override
-  State<LogWorkout> createState() => _LogWorkoutState();
+  ConsumerState<LogWorkout> createState() => _LogWorkoutState();
 }
 
-class _LogWorkoutState extends State<LogWorkout> {
+class _LogWorkoutState extends ConsumerState<LogWorkout> {
   final Map<String, List<SetEntry>> exerciseSets = {};
-  bool isTimerSelected = true;
-  Duration timerDuration = const Duration(minutes: 1);
-  Duration stopwatchDuration = Duration.zero;
-  bool isRunning = false;
-  late StateSetter dialogSetState;
+  late Timer _workoutDurationTimer;
+  Timer? _clockTimer;
 
   @override
   void initState() {
     super.initState();
 
     if (savedExerciseSets.isNotEmpty) {
-      exerciseSets.addAll(savedExerciseSets); // populate the sets from saved
+      exerciseSets.addAll(savedExerciseSets);
     }
+
+    // Timer for workout elapsed duration
+    _workoutDurationTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      final currentDuration = ref.read(workoutElapsedDurationProvider);
+      ref.read(workoutElapsedDurationProvider.notifier).state =
+          currentDuration + Duration(seconds: 1);
+    });
+  }
+
+  @override
+  void dispose() {
+    _workoutDurationTimer.cancel();
+    _clockTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startClockTimer() {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      final timerNotifier = ref.read(timerProvider.notifier);
+      final timerState = ref.read(timerProvider);
+
+      if (!timerState.isRunning) {
+        timer.cancel();
+        return;
+      }
+
+      if (timerState.isTimerSelected) {
+        // Countdown timer
+        if (timerState.timerDuration.inSeconds > 0) {
+          timerNotifier.setTimerDuration(
+            Duration(seconds: timerState.timerDuration.inSeconds - 1),
+          );
+        } else {
+          // Timer finished
+          timerNotifier.setRunning(false);
+          timerNotifier.resetTimer();
+          // You can add notification/sound here
+        }
+      } else {
+        // Stopwatch
+        timerNotifier.addStopwatchSecond();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final workoutDuration = ref.watch(workoutElapsedDurationProvider);
+
     return Scaffold(
       appBar: _buildAppBar(context),
       body: Container(
@@ -43,7 +89,7 @@ class _LogWorkoutState extends State<LogWorkout> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            _buildHeaderMetrics(),
+            _buildHeaderMetrics(workoutDuration),
             SizedBox(height: 20.0),
             Expanded(
               child: LogExerciseCard(
@@ -86,246 +132,15 @@ class _LogWorkoutState extends State<LogWorkout> {
             child: Row(
               children: [
                 GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        Duration timerDuration = const Duration(minutes: 1);
-                        bool isRunning = false;
-                        late StateSetter dialogSetState;
-
-                        return StatefulBuilder(
-                          builder: (context, setState) {
-                            dialogSetState = setState;
-                            return AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              title: const Center(
-                                child: Text(
-                                  'Clock',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              content: SizedBox(
-                                width: 500,
-                                height: 350,
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: isTimerSelected
-                                                  ? Color(0xFF006A71)
-                                                  : Color(0xFFD9D9D9),
-                                              padding: EdgeInsets.all(15),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.only(
-                                                  topLeft: Radius.circular(6),
-                                                  bottomLeft: Radius.circular(
-                                                    6,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              dialogSetState(() {
-                                                isTimerSelected = true;
-                                                isRunning = false;
-                                                timerDuration = const Duration(
-                                                  minutes: 1,
-                                                );
-                                                stopwatchDuration =
-                                                    Duration.zero;
-                                              });
-                                            },
-                                            child: Text(
-                                              'Timer',
-                                              style: TextStyle(
-                                                color: isTimerSelected
-                                                    ? Colors.white
-                                                    : Color(0xFF323232),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          child: ElevatedButton(
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: !isTimerSelected
-                                                  ? Color(0xFF006A71)
-                                                  : Color(0xFFD9D9D9),
-                                              padding: EdgeInsets.all(15),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.only(
-                                                  topRight: Radius.circular(6),
-                                                  bottomRight: Radius.circular(
-                                                    6,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            onPressed: () {
-                                              dialogSetState(() {
-                                                isTimerSelected = false;
-                                                isRunning = false;
-                                                timerDuration = const Duration(
-                                                  minutes: 1,
-                                                );
-                                                stopwatchDuration =
-                                                    Duration.zero;
-                                              });
-                                            },
-                                            child: Text(
-                                              'Stopwatch',
-                                              style: TextStyle(
-                                                color: !isTimerSelected
-                                                    ? Colors.white
-                                                    : Color(0xFF323232),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-
-                                    const SizedBox(height: 20),
-
-                                    // Timer or Stopwatch Display
-                                    Expanded(
-                                      child: Center(
-                                        child: Text(
-                                          isTimerSelected
-                                              ? '${timerDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${(timerDuration.inSeconds.remainder(60)).toString().padLeft(2, '0')}'
-                                              : '${stopwatchDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${(stopwatchDuration.inSeconds.remainder(60)).toString().padLeft(2, '0')}',
-                                          style: const TextStyle(
-                                            fontSize: 48,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 20),
-
-                                    // -15s and +15s only visible for Timer mode
-                                    if (isTimerSelected)
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          TextButton(
-                                            onPressed: () {
-                                              dialogSetState(() {
-                                                timerDuration -= const Duration(
-                                                  seconds: 15,
-                                                );
-                                                if (timerDuration.isNegative ||
-                                                    timerDuration.inSeconds <
-                                                        0) {
-                                                  timerDuration = Duration.zero;
-                                                }
-                                              });
-                                            },
-                                            child: const Text(
-                                              '-15s',
-                                              style: TextStyle(
-                                                color: Color(0xFF006A71),
-                                              ),
-                                            ),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              dialogSetState(() {
-                                                timerDuration += const Duration(
-                                                  seconds: 15,
-                                                );
-                                              });
-                                            },
-                                            child: const Text(
-                                              '+15s',
-                                              style: TextStyle(
-                                                color: Color(0xFF006A71),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-
-                                    const SizedBox(height: 20),
-
-                                    Button(
-                                      label: isRunning ? 'Cancel' : 'Start',
-                                      fullWidth: true,
-                                      variant: isRunning
-                                          ? ButtonVariant.gray
-                                          : ButtonVariant.primary,
-                                      onPressed: () {
-                                        if (isRunning) {
-                                          dialogSetState(() {
-                                            isRunning = false;
-                                            timerDuration = const Duration(
-                                              minutes: 1,
-                                            );
-                                            stopwatchDuration = Duration.zero;
-                                          });
-                                        } else {
-                                          dialogSetState(() {
-                                            isRunning = true;
-                                          });
-
-                                          Future.delayed(
-                                            const Duration(seconds: 1),
-                                            () async {
-                                              while (isRunning) {
-                                                await Future.delayed(
-                                                  const Duration(seconds: 1),
-                                                );
-                                                dialogSetState(() {
-                                                  if (isTimerSelected) {
-                                                    timerDuration -=
-                                                        const Duration(
-                                                          seconds: 1,
-                                                        );
-                                                    if (timerDuration
-                                                            .inSeconds <=
-                                                        0) {
-                                                      isRunning = false;
-                                                      timerDuration =
-                                                          const Duration(
-                                                            minutes: 1,
-                                                          );
-                                                    }
-                                                  } else {
-                                                    stopwatchDuration +=
-                                                        const Duration(
-                                                          seconds: 1,
-                                                        );
-                                                  }
-                                                });
-                                              }
-                                            },
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
+                  onTap: () => _showClockDialog(context),
                   child: const Icon(Icons.timer, color: Color(0xFF000000)),
                 ),
-
                 SizedBox(width: 5),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Color(0xFF48A6A7),
                     borderRadius: BorderRadius.circular(8),
@@ -345,11 +160,167 @@ class _LogWorkoutState extends State<LogWorkout> {
     );
   }
 
-  Widget _buildHeaderMetrics() {
+  void _showClockDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Consumer(
+          builder: (context, ref, child) {
+            final timerState = ref.watch(timerProvider);
+            final timerNotifier = ref.read(timerProvider.notifier);
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Center(
+                child: Text(
+                  'Clock',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              content: SizedBox(
+                width: 500,
+                height: 350,
+                child: Column(
+                  children: [
+                    // Timer/Stopwatch Toggle
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: timerState.isTimerSelected
+                                  ? Color(0xFF006A71)
+                                  : Color(0xFFD9D9D9),
+                              padding: EdgeInsets.all(15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(6),
+                                  bottomLeft: Radius.circular(6),
+                                ),
+                              ),
+                            ),
+                            onPressed: () {
+                              timerNotifier.setTimerSelected(true);
+                            },
+                            child: Text(
+                              'Timer',
+                              style: TextStyle(
+                                color: timerState.isTimerSelected
+                                    ? Colors.white
+                                    : Color(0xFF323232),
+                              ),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: !timerState.isTimerSelected
+                                  ? Color(0xFF006A71)
+                                  : Color(0xFFD9D9D9),
+                              padding: EdgeInsets.all(15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(6),
+                                  bottomRight: Radius.circular(6),
+                                ),
+                              ),
+                            ),
+                            onPressed: () {
+                              timerNotifier.setTimerSelected(false);
+                            },
+                            child: Text(
+                              'Stopwatch',
+                              style: TextStyle(
+                                color: !timerState.isTimerSelected
+                                    ? Colors.white
+                                    : Color(0xFF323232),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Time Display
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          timerState.isTimerSelected
+                              ? '${timerState.timerDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${timerState.timerDuration.inSeconds.remainder(60).toString().padLeft(2, '0')}'
+                              : '${timerState.stopwatchDuration.inMinutes.remainder(60).toString().padLeft(2, '0')}:${timerState.stopwatchDuration.inSeconds.remainder(60).toString().padLeft(2, '0')}',
+                          style: const TextStyle(
+                            fontSize: 48,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Timer Controls (only show for timer mode)
+                    if (timerState.isTimerSelected)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              timerNotifier.addTimerSeconds(-15);
+                            },
+                            child: const Text(
+                              '-15s',
+                              style: TextStyle(color: Color(0xFF006A71)),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              timerNotifier.addTimerSeconds(15);
+                            },
+                            child: const Text(
+                              '+15s',
+                              style: TextStyle(color: Color(0xFF006A71)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 20),
+
+                    // Start/Cancel Button
+                    Button(
+                      label: timerState.isRunning ? 'Cancel' : 'Start',
+                      fullWidth: true,
+                      variant: timerState.isRunning
+                          ? ButtonVariant.gray
+                          : ButtonVariant.primary,
+                      onPressed: () {
+                        if (timerState.isRunning) {
+                          timerNotifier.setRunning(false);
+                          timerNotifier.resetTimer();
+                          _clockTimer?.cancel();
+                        } else {
+                          timerNotifier.setRunning(true);
+                          _startClockTimer();
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderMetrics(Duration workoutDuration) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildMetric('Duration', '0s'),
+        _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
         _buildMetric('Volume', '0kg'),
         _buildMetric('Sets', '0'),
       ],
@@ -390,17 +361,6 @@ class _LogWorkoutState extends State<LogWorkout> {
           Row(
             children: [
               Expanded(
-                // child: TextButton(
-                //   onPressed: () =>
-                //       Navigator.pushNamed(context, AuthRoutes.home),
-                //   style: TextButton.styleFrom(
-                //     backgroundColor: Color(0xFFEEEEEE),
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(8),
-                //     ),
-                //   ),
-                //   child: Text('Cancel', style: TextStyle(color: Colors.black)),
-                // ),
                 child: Button(
                   fontSize: 16,
                   label: 'Cancel',
@@ -415,19 +375,6 @@ class _LogWorkoutState extends State<LogWorkout> {
               ),
               SizedBox(width: 10),
               Expanded(
-                // child: TextButton(
-                //   onPressed: () {},
-                //   style: TextButton.styleFrom(
-                //     backgroundColor: Color(0xFFEEEEEE),
-                //     shape: RoundedRectangleBorder(
-                //       borderRadius: BorderRadius.circular(8),
-                //     ),
-                //   ),
-                //   child: Text(
-                //     'Discard Workout',
-                //     style: TextStyle(color: Color(0xFFDB141F)),
-                //   ),
-                // ),
                 child: Button(
                   fontSize: 16,
                   label: 'Discard Workout',

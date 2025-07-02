@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Add this import
 import 'package:firebase_core/firebase_core.dart';
 import 'package:workout_tracker_repo/core/providers/user_info_provider.dart';
 import 'package:workout_tracker_repo/routes/route_generator.dart';
@@ -10,7 +11,9 @@ void main() async {
   await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await loadCurrentUserProfile();
-  runApp(const WorkoutTracker());
+  runApp(
+    const ProviderScope(child: WorkoutTracker()),
+  ); // Wrap with ProviderScope
 }
 
 class WorkoutTracker extends StatelessWidget {
