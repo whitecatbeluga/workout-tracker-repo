@@ -383,8 +383,16 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
                   textColor: Color(0xFFDB141F),
                   fontWeight: FontWeight.w500,
                   variant: ButtonVariant.gray,
-                  onPressed: () =>
-                      Navigator.pushNamed(context, AuthRoutes.home),
+                  onPressed: () {
+                    ref.read(workoutElapsedDurationProvider.notifier).state =
+                        Duration.zero;
+                    _workoutDurationTimer.cancel();
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      AuthRoutes.home,
+                      (route) => false,
+                    );
+                  },
                 ),
               ),
             ],
