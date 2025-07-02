@@ -23,8 +23,7 @@ abstract class RoutineRepository {
     WorkoutSets? workoutSets, {
     String? folderId,
   });
-  void updateRoutine(
-    String userId,
+  Future<void> updateRoutine(
     String routineId, {
     String? updatedRoutineName,
     Map<String, dynamic>? updatedSets,
