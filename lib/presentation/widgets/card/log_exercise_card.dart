@@ -74,7 +74,14 @@ class _LogExerciseCardState extends ConsumerState<LogExerciseCard> {
     return ValueListenableBuilder<List<Exercise>>(
       valueListenable: activeNotifier,
       builder: (context, exercises, _) {
-        if (exercises.isEmpty) return _buildEmptyState();
+        if (exercises.isEmpty) {
+          _kgControllers.clear();
+          _repControllers.clear();
+          _kgFocusNodes.clear();
+          _repFocusNodes.clear();
+          widget.exerciseSets.clear();
+          return _buildEmptyState();
+        }
 
         return ListView.builder(
           itemCount: exercises.length,
