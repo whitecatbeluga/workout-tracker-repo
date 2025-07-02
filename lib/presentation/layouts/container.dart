@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:workout_tracker_repo/core/providers/navbar_screen_provider.dart';
+import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/profile.dart';
 import 'package:workout_tracker_repo/presentation/pages/social/social_page.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/workout.dart';
 import 'package:workout_tracker_repo/presentation/widgets/navigation/navbar.dart';
+import 'package:workout_tracker_repo/presentation/widgets/navigation/workout_nav.dart';
 
 class ContainerTree extends StatefulWidget {
   const ContainerTree({super.key});
@@ -96,9 +98,14 @@ class _ContainerTreeState extends State<ContainerTree>
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: SlideTransition(
         position: _offsetAnimation,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [Navbar()],
+        child: ValueListenableBuilder(
+          valueListenable: workoutExercises,
+          builder: (context, exercises, child) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [if (exercises.isNotEmpty) WorkoutNav(), Navbar()],
+            );
+          },
         ),
       ),
     );
