@@ -5,18 +5,22 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
 
-class SaveWorkout extends StatefulWidget {
+import '../../../utils/timer_formatter.dart';
+
+class SaveWorkout extends ConsumerStatefulWidget {
   const SaveWorkout({super.key});
 
   @override
-  State<SaveWorkout> createState() => _SaveWorkoutState();
+  ConsumerState<SaveWorkout> createState() => _SaveWorkoutState();
 }
 
-class _SaveWorkoutState extends State<SaveWorkout> {
+class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
   final List<File> _capturedImages = [];
   bool _isUploading = false;
 
@@ -88,7 +92,8 @@ class _SaveWorkoutState extends State<SaveWorkout> {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
       final imageUrls = await _uploadImages();
-
+      final seconds = ref.read(workoutElapsedDurationProvider).inSeconds;
+      final durationTime = formatDuration(seconds);
       int totalSets = 0;
       int totalVolume = 0;
 
@@ -127,7 +132,7 @@ class _SaveWorkoutState extends State<SaveWorkout> {
         'total_volume': totalVolume,
         'workout_title': _titleController.text.trim(),
         'workout_description': _descriptionController.text.trim(),
-        'workout_duration': '23', // Placeholder for now
+        'workout_duration': durationTime, // Placeholder for now
         'visible_to_everyone': _visibleToEveryone,
         'exercises': exercisesData,
       });
@@ -151,6 +156,9 @@ class _SaveWorkoutState extends State<SaveWorkout> {
 
   @override
   Widget build(BuildContext context) {
+    final seconds = ref.read(workoutElapsedDurationProvider).inSeconds;
+    final durationTime = formatDuration(seconds);
+
     return Stack(
       children: [
         Scaffold(
@@ -219,12 +227,17 @@ class _SaveWorkoutState extends State<SaveWorkout> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Duration', style: TextStyle(fontSize: 16)),
-                          Text(
-                            '18s',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF48A6A7),
-                            ),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return Text(
+                                durationTime,
+                                // Using the formatter function here
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF48A6A7),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
