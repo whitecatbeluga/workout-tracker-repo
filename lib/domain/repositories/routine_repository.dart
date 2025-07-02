@@ -32,4 +32,5 @@ abstract class RoutineRepository {
 
   // Exercise operations
   Future<List<Exercise>> getExercisesById(String routineId);
+  Stream<List<Routine>> getUserRoutinesByIds(List<String> routineIds);
 }
