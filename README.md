@@ -115,3 +115,17 @@ BASH / WSL
 ```
 git branch | grep -v "master" | grep -v "beta" | xargs git branch -D
 ```
+
+SQUASH THE COMMIT TO 1
+
+```
+git reset --soft $(git merge-base beta HEAD)
+```
+
+```
+git commit -m "message"
+```
+
+```
+git push --force
+```
