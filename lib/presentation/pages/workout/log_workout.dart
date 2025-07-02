@@ -11,6 +11,7 @@ import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
 import '../../../providers/persistent_duration_provider.dart';
+import '../../../providers/persistent_volume_set_provider.dart';
 import '../../../utils/timer_formatter.dart';
 
 class LogWorkout extends ConsumerStatefulWidget {
@@ -127,7 +128,11 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
               savedExerciseSets
                 ..clear()
                 ..addAll(exerciseSets);
-              Navigator.pushNamed(context, WorkoutRoutes.saveWorkout);
+              Navigator.pushNamed(
+                context,
+                WorkoutRoutes.saveWorkout,
+                arguments: exerciseSets,
+              );
             },
             child: Row(
               children: [
@@ -347,14 +352,20 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
                       fontWeight: FontWeight.w500,
                       fullWidth: true,
                       onPressed: () {
+                        // Clear exercises and sets
                         workoutExercises.value.clear();
                         savedExerciseSets.clear();
 
+                        // Reset timer
                         ref
                                 .read(workoutElapsedDurationProvider.notifier)
                                 .state =
                             Duration.zero;
                         _workoutDurationTimer.cancel();
+
+                        // Reset volume and sets
+                        ref.read(volumeSetProvider.notifier).reset();
+
                         Navigator.pushNamedAndRemoveUntil(
                           context,
                           AuthRoutes.home,
@@ -383,13 +394,21 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
   }
 
   Widget _buildHeaderMetrics(Duration workoutDuration) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
-        _buildMetric('Volume', '0kg'),
-        _buildMetric('Sets', '0'),
-      ],
+    return Consumer(
+      builder: (context, ref, child) {
+        final volumeSetState = ref.watch(volumeSetProvider);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
+            _buildMetric(
+              'Volume',
+              '${volumeSetState.totalVolume.toStringAsFixed(1)}kg',
+            ),
+            _buildMetric('Sets', volumeSetState.totalSets.toString()),
+          ],
+        );
+      },
     );
   }
 

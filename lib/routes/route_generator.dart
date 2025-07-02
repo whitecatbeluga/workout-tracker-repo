@@ -26,6 +26,7 @@ import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import 'package:workout_tracker_repo/utils/authentication.dart';
 import 'package:workout_tracker_repo/utils/guarded_route.dart';
 
+import '../presentation/domain/entities/set_entry.dart';
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
 import '../presentation/pages/page_not_found/page_not_found.dart';
@@ -163,7 +164,11 @@ class RouteGenerator {
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const SaveWorkout(),
+          ifAllowed: (_) {
+            final exerciseSets =
+                settings.arguments as Map<String, List<SetEntry>>;
+            return SaveWorkout(exerciseSets: exerciseSets);
+          },
           ifDenied: (_) => const LoginPage(),
         );
       case ExerciseRoutes.addWorkoutExercise:
