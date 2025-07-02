@@ -13,7 +13,7 @@ class ExerciseWorkoutSet {
 
 class SetEntry {
   late final int setNumber;
-  final String previous;
+  late final String previous;
   double kg;
   int reps;
   bool isCompleted;
@@ -33,6 +33,16 @@ class SetEntry {
       'kg': kg,
       'reps': reps,
       'isCompleted': isCompleted,
+    };
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'set_number': setNumber,
+      'kg': kg,
+      'reps': reps,
+      'is_completed': isCompleted,
+      'previous': previous,
     };
   }
 }

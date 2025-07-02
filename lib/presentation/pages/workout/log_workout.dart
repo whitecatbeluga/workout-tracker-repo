@@ -11,6 +11,7 @@ import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 import '../../../core/providers/workout_exercise_provider.dart';
 import '../../../providers/persistent_duration_provider.dart';
+import '../../../providers/persistent_volume_set_provider.dart';
 import '../../../utils/timer_formatter.dart';
 
 class LogWorkout extends ConsumerStatefulWidget {
@@ -127,7 +128,11 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
               savedExerciseSets
                 ..clear()
                 ..addAll(exerciseSets);
-              Navigator.pushNamed(context, WorkoutRoutes.saveWorkout);
+              Navigator.pushNamed(
+                context,
+                WorkoutRoutes.saveWorkout,
+                arguments: exerciseSets,
+              );
             },
             child: Row(
               children: [
@@ -316,14 +321,94 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
     );
   }
 
+  void _openDismissWorkoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  "Are you sure you want to dismiss this workout?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: "Dismiss Workout",
+                      prefixIcon: Icons.delete_forever,
+                      backgroundColor: Colors.white,
+                      textColor: Colors.red.shade800,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      onPressed: () {
+                        // Clear exercises and sets
+                        workoutExercises.value.clear();
+                        savedExerciseSets.clear();
+
+                        // Reset timer
+                        ref
+                                .read(workoutElapsedDurationProvider.notifier)
+                                .state =
+                            Duration.zero;
+                        _workoutDurationTimer.cancel();
+
+                        // Reset volume and sets
+                        ref.read(volumeSetProvider.notifier).reset();
+
+                        Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          AuthRoutes.home,
+                          (route) => false,
+                        );
+                      },
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      fullWidth: true,
+                      variant: ButtonVariant.gray,
+                      fontWeight: FontWeight.w500,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildHeaderMetrics(Duration workoutDuration) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
-        _buildMetric('Volume', '0kg'),
-        _buildMetric('Sets', '0'),
-      ],
+    return Consumer(
+      builder: (context, ref, child) {
+        final volumeSetState = ref.watch(volumeSetProvider);
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
+            _buildMetric(
+              'Volume',
+              '${volumeSetState.totalVolume.toStringAsFixed(1)}kg',
+            ),
+            _buildMetric('Sets', volumeSetState.totalSets.toString()),
+          ],
+        );
+      },
     );
   }
 
@@ -383,16 +468,7 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
                   textColor: Color(0xFFDB141F),
                   fontWeight: FontWeight.w500,
                   variant: ButtonVariant.gray,
-                  onPressed: () {
-                    ref.read(workoutElapsedDurationProvider.notifier).state =
-                        Duration.zero;
-                    _workoutDurationTimer.cancel();
-                    Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      AuthRoutes.home,
-                      (route) => false,
-                    );
-                  },
+                  onPressed: () => _openDismissWorkoutDialog(),
                 ),
               ),
             ],
