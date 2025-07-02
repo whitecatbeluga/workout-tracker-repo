@@ -183,13 +183,14 @@ class _LogExerciseCardState extends ConsumerState<LogExerciseCard> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Row(
+                  Row(
                     children: [
                       SizedBox(width: 40, child: Text('Set')),
                       SizedBox(width: 80, child: Text('Previous')),
                       SizedBox(width: 70, child: Text('KG')),
                       SizedBox(width: 60, child: Text('Reps')),
-                      SizedBox(width: 65, child: Icon(Icons.check)),
+                      if (widget.routineExercises == null)
+                        SizedBox(width: 65, child: Icon(Icons.check)),
                     ],
                   ),
                   const Divider(),
@@ -298,15 +299,16 @@ class _LogExerciseCardState extends ConsumerState<LogExerciseCard> {
                                   ),
                                 ),
                               ),
-                              Checkbox(
-                                value: set.isCompleted,
-                                onChanged: (val) {
-                                  setState(() {
-                                    set.isCompleted = val ?? false;
-                                    _updateVolumeAndSets(exercise.id);
-                                  });
-                                },
-                              ),
+                              if (widget.routineExercises == null)
+                                Checkbox(
+                                  value: set.isCompleted,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      set.isCompleted = val ?? false;
+                                      _updateVolumeAndSets(exercise.id);
+                                    });
+                                  },
+                                ),
                             ],
                           ),
                         ),
