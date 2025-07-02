@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
@@ -9,17 +10,18 @@ import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/collapsible/collapsible.dart';
+import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
-class WorkoutPage extends StatefulWidget {
+class WorkoutPage extends ConsumerStatefulWidget {
   const WorkoutPage({super.key});
 
   @override
-  State<WorkoutPage> createState() => _WorkoutPageState();
+  ConsumerState<WorkoutPage> createState() => _WorkoutPageState();
 }
 
-class _WorkoutPageState extends State<WorkoutPage> {
+class _WorkoutPageState extends ConsumerState<WorkoutPage> {
   final user = authService.value.getCurrentUser();
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
@@ -128,6 +130,90 @@ class _WorkoutPageState extends State<WorkoutPage> {
     }
   }
 
+  void _openWorkoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  "Are you sure you want to delete this routine?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: "Start New Empty Workout",
+                      prefixIcon: Icons.add,
+                      variant: ButtonVariant.primary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      size: ButtonSize.large,
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        workoutExercises.value = [];
+                        savedExerciseSets = {};
+
+                        ref
+                                .read(workoutElapsedDurationProvider.notifier)
+                                .state =
+                            Duration.zero;
+
+                        Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
+                      },
+                    ),
+                    Button(
+                      label: "Discard Workout",
+                      prefixIcon: Icons.delete_forever,
+                      backgroundColor: Colors.white,
+                      textColor: Colors.red.shade800,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        workoutExercises.value = [];
+                        savedExerciseSets = {};
+
+                        ref
+                                .read(workoutElapsedDurationProvider.notifier)
+                                .state =
+                            Duration.zero;
+                      },
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      fullWidth: true,
+                      variant: ButtonVariant.gray,
+                      fontWeight: FontWeight.w500,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _folderNameController.dispose();
@@ -160,7 +246,11 @@ class _WorkoutPageState extends State<WorkoutPage> {
                     prefixIcon: Icons.add,
                     label: "Start Empty Workout",
                     onPressed: () {
-                      Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
+                      if (workoutExercises.value.isNotEmpty) {
+                        _openWorkoutDialog();
+                      } else {
+                        Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
+                      }
                     },
                     variant: ButtonVariant.secondary,
                     fullWidth: true,
