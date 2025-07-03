@@ -1,22 +1,27 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/presentation/pages/exercises/exercise_form_page.dart';
 import 'package:workout_tracker_repo/presentation/widgets/badge/badge.dart';
 
 class ExerciseCard extends StatefulWidget {
+  final String id;
   final String exerciseName;
   final bool withEquipment;
   final String exerciseCategory;
   final String exerciseDescription;
   final String? imageUrl;
+  final bool? isUser;
 
   const ExerciseCard({
     super.key,
+    required this.id,
     required this.exerciseName,
     required this.withEquipment,
     required this.exerciseCategory,
     required this.exerciseDescription,
     this.imageUrl,
+    this.isUser,
   });
 
   @override
@@ -33,6 +38,7 @@ class _ExerciseCardState extends State<ExerciseCard>
 
   @override
   void initState() {
+    print(widget.id);
     super.initState();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -76,41 +82,69 @@ class _ExerciseCardState extends State<ExerciseCard>
         child: Column(
           children: [
             // Always visible header section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
+            Stack(
               children: [
-                (widget.imageUrl == null || widget.imageUrl!.isEmpty)
-                    ? Transform.rotate(
-                        angle: -pi / 4,
-                        child: Icon(
-                          widget.withEquipment
-                              ? Icons.fitness_center
-                              : Icons.accessibility_new,
-                          size: 80,
-                          color: Color(0xFF434343),
-                        ),
-                      )
-                    : Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        clipBehavior: Clip.hardEdge,
-                        child: Image.network(
-                          widget.imageUrl!,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.cover,
-                        ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    (widget.imageUrl == null || widget.imageUrl!.isEmpty)
+                        ? Transform.rotate(
+                            angle: -pi / 4,
+                            child: Icon(
+                              widget.withEquipment
+                                  ? Icons.fitness_center
+                                  : Icons.accessibility_new,
+                              size: 80,
+                              color: Color(0xFF434343),
+                            ),
+                          )
+                        : Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            clipBehavior: Clip.hardEdge,
+                            child: Image.network(
+                              widget.imageUrl!,
+                              width: 80,
+                              height: 80,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                    const SizedBox(width: 14),
+                    Text(
+                      widget.exerciseName,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                const SizedBox(width: 14),
-                Text(
-                  widget.exerciseName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                    ),
+
+                    // const Spacer(),
+                  ],
                 ),
+                if (widget.isUser!)
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: IconButton(
+                      icon: Icon(Icons.edit),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ExerciseFormPage(
+                              id: widget.id,
+                              exerciseName: widget.exerciseName,
+                              withEquipment: widget.withEquipment,
+                              exerciseCategory: widget.exerciseCategory,
+                              exerciseDescription: widget.exerciseDescription,
+                              imageUrl: widget.imageUrl,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
               ],
             ),
 
