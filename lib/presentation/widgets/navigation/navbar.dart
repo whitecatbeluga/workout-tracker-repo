@@ -27,12 +27,13 @@ class _NavbarState extends State<Navbar> with TickerProviderStateMixin {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF006A71), width: 1.5),
+              // border: Border.all(color: const Color(0xFF006A71), width: 1.5),
               boxShadow: const [
                 BoxShadow(
-                  color: Colors.black12,
+                  color: Colors.black26,
                   offset: Offset(0, 2),
-                  blurRadius: 4,
+                  // blurRadius: 4,
+                  blurRadius: 30,
                 ),
               ],
             ),
@@ -62,7 +63,7 @@ class _NavbarState extends State<Navbar> with TickerProviderStateMixin {
                             size: 28,
                             color: isActive
                                 ? const Color(0xFF006A71)
-                                : Colors.black,
+                                : Color(0xFF323232),
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -75,7 +76,7 @@ class _NavbarState extends State<Navbar> with TickerProviderStateMixin {
                               : Text(
                                   navList[index]["title"],
                                   style: const TextStyle(
-                                    color: Colors.black,
+                                    color: Color(0xFF323232),
                                     fontSize: 12,
                                   ),
                                 ),
