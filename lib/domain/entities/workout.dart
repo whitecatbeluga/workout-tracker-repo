@@ -3,7 +3,7 @@ class Workout {
   final String name;
   final int duration;
   final DateTime createdAt;
-
+  List<dynamic>? exercises;
   final int? sets;
   final int? volume;
 
@@ -14,5 +14,6 @@ class Workout {
     required this.createdAt,
     this.sets,
     this.volume,
+    this.exercises,
   });
 }

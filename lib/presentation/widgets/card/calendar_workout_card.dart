@@ -51,7 +51,7 @@ class WorkoutCard extends StatelessWidget {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
-                    fontFamily: 'Poppins',
+                    fontFamily: 'Inter',
                   ),
                 ),
 
@@ -67,12 +67,18 @@ class WorkoutCard extends StatelessWidget {
 
                     // Volume Column
                     Expanded(
-                      child: _buildStatColumn(label: 'Volume', value: volume),
+                      child: _buildStatColumn(
+                        label: 'Volume',
+                        value: '${volume} kg',
+                      ),
                     ),
 
                     // Sets Column
                     Expanded(
-                      child: _buildStatColumn(label: 'Sets', value: sets),
+                      child: _buildStatColumn(
+                        label: 'Set${sets == '1' ? '' : 's'}',
+                        value: sets,
+                      ),
                     ),
                   ],
                 ),

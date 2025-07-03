@@ -888,7 +888,6 @@ class _CalendarPageState extends State<CalendarPage> {
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                     decoration: TextDecoration.none,
-                                    fontFamily: 'Poppins',
                                   ),
                                 ),
                                 GestureDetector(
@@ -917,7 +916,6 @@ class _CalendarPageState extends State<CalendarPage> {
                                   color: Colors.grey[600],
                                   decoration: TextDecoration.none,
                                   fontWeight: FontWeight.normal,
-                                  fontFamily: 'Poppins',
                                 ),
                               ),
                             ),

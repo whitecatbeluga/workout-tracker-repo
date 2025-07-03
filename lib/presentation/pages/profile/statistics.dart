@@ -81,7 +81,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                         _buildWorkoutSummarySection(workouts),
                         const SizedBox(height: 15),
 
-                        _buildVolumeOverTimeSection(workouts, routines),
+                        _buildVolumeOverTimeSection(workouts),
                         const SizedBox(height: 15),
 
                         _buildRoutineUsageStatsSection(routines),
@@ -113,6 +113,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     List<Workout> workouts,
     List<Routine> routines,
   ) {
+    print('\x1B[2J\x1B[1;1H');
     DateTime startOfThisWeek = DateTime.now().subtract(
       Duration(days: DateTime.now().weekday - 1),
     );
@@ -121,22 +122,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
       const Duration(days: 7),
     );
     DateTime endOfLastWeek = startOfThisWeek.subtract(const Duration(days: 1));
-    int thisWeekCount = workouts
-        .where(
-          (workout) =>
-              workout.createdAt.day >= startOfThisWeek.day &&
-              workout.createdAt.month >= startOfThisWeek.month,
-        )
-        .length;
-    int lastWeekCount = workouts
-        .where(
-          (workout) =>
-              workout.createdAt.day >= startOfLastWeek.day &&
-              workout.createdAt.month >= startOfLastWeek.month &&
-              workout.createdAt.day <= endOfLastWeek.day &&
-              workout.createdAt.month <= endOfLastWeek.month,
-        )
-        .length;
+    int thisWeekCount = 0;
+    int lastWeekCount = 0;
+    for (var workout in workouts) {
+      final routineDate = workout.createdAt;
+      bool isInRange =
+          !routineDate.isBefore(startOfThisWeek) &&
+          !routineDate.isAfter(endOfThisWeek);
+      if (isInRange) {
+        thisWeekCount++;
+      }
+      bool isInRange2 =
+          !routineDate.isBefore(startOfLastWeek) &&
+          !routineDate.isAfter(endOfLastWeek);
+      if (isInRange2) {
+        lastWeekCount++;
+      }
+    }
+
     int thisRoutineWeekCount = 0;
     int lastRoutineWeekCount = 0;
     for (var routine in routines) {
@@ -154,6 +157,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
         lastRoutineWeekCount++;
       }
     }
+    print('thisRoutineWeekCount: $thisWeekCount');
+    print('lastRoutineWeekCount: $lastWeekCount');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -346,7 +351,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     const SizedBox(height: 8),
                     _buildSummaryRow(
                       'Total Duration:',
-                      "${(totalDuration / 60).toStringAsFixed(1)} hours",
+                      "${(totalDuration / 60).toStringAsFixed(1)} minutes",
                     ),
                     const SizedBox(height: 8),
                     _buildSummaryRow('Total Volume:', "$totalVolume kg"),
@@ -373,10 +378,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildVolumeOverTimeSection(
-    List<Workout> workouts,
-    List<Routine> routines,
-  ) {
+  Widget _buildVolumeOverTimeSection(List<Workout> workouts) {
     DateTime startOfThisWeek = DateTime.now().subtract(
       Duration(days: DateTime.now().weekday - 1),
     );
@@ -391,16 +393,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
     int totalKgLastWeek = 0;
     int totalSetsLastWeek = 0;
     for (var workout in workouts) {
-      if (workout.createdAt.day >= startOfThisWeek.day &&
-          workout.createdAt.month >= startOfThisWeek.month) {
+      final routineDate = workout.createdAt;
+      bool isInRange =
+          !routineDate.isBefore(startOfThisWeek) &&
+          !routineDate.isAfter(endOfThisWeek);
+      if (isInRange) {
         // print(workout);
         totalKgThisWeek += (workout.volume ?? 0);
         totalSetsThisWeek += (workout.sets ?? 0);
       }
-      if (workout.createdAt.day >= startOfLastWeek.day &&
-          workout.createdAt.month >= startOfLastWeek.month &&
-          workout.createdAt.day <= endOfLastWeek.day &&
-          workout.createdAt.month <= endOfLastWeek.month) {
+      bool isInRange2 =
+          !routineDate.isBefore(startOfLastWeek) &&
+          !routineDate.isAfter(endOfLastWeek);
+      if (isInRange2) {
         totalKgLastWeek += (workout.volume ?? 0);
         totalSetsLastWeek += (workout.sets ?? 0);
       }
@@ -408,25 +413,29 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     double thisWeekRepCount = 0;
     double lastWeekRepCount = 0;
-    for (var routine in routines) {
-      final routineDate = DateTime.parse(routine.createdAt!);
-      if (routineDate.isAfter(startOfThisWeek) &&
-          routineDate.isBefore(endOfThisWeek)) {
-        for (var exercise in routine.exercises) {
-          for (var set in exercise.sets) {
-            thisWeekRepCount += set.reps;
+
+    for (var workout in workouts) {
+      final workoutDate = workout.createdAt;
+      for (var exercise in workout.exercises!) {
+        for (var set in exercise['sets']) {
+          bool isInRange =
+              !workoutDate.isBefore(startOfThisWeek) &&
+              !workoutDate.isAfter(endOfThisWeek);
+          if (isInRange) {
+            // print(workout);
+            thisWeekRepCount += (set['reps'] ?? 0);
           }
-        }
-      }
-      if (routineDate.isAfter(startOfLastWeek) &&
-          routineDate.isBefore(endOfLastWeek)) {
-        for (var exercise in routine.exercises) {
-          for (var set in exercise.sets) {
-            lastWeekRepCount += set.reps;
+          bool isInRange2 =
+              !workoutDate.isBefore(startOfLastWeek) &&
+              !workoutDate.isAfter(endOfLastWeek);
+          if (isInRange2) {
+            lastWeekRepCount += (set['reps'] ?? 0);
           }
         }
       }
     }
+    print('thisWeekRepCount: $thisWeekRepCount');
+    print('lastWeekRepCount: $lastWeekRepCount');
 
     return Container(
       padding: const EdgeInsets.all(16),
