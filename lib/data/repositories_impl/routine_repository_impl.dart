@@ -185,8 +185,7 @@ class RoutineRepositoryImpl implements RoutineRepository {
   }
 
   @override
-  void updateRoutine(
-    String userId,
+  Future<void> updateRoutine(
     String routineId, {
     String? updatedRoutineName,
     Map<String, dynamic>? updatedSets,
@@ -229,5 +228,45 @@ class RoutineRepositoryImpl implements RoutineRepository {
         sets: sets,
       );
     }).toList();
+  }
+
+  @override
+  Stream<List<Routine>> getUserRoutinesByIds(List<String> routineIds) {
+    return _service.getRoutinesByIds(routineIds).asStream().map((routinesData) {
+      return routinesData.map((routineData) {
+        final exercises = (routineData['exercises'] as List).map((
+          exerciseData,
+        ) {
+          final sets = (exerciseData['sets'] as List)
+              .map(
+                (setData) =>
+                    SetDetailModel.fromMap(setData as Map<String, dynamic>),
+              )
+              .toList();
+
+          return ExerciseModel(
+            id: exerciseData['id'],
+            name: exerciseData['name'] ?? '',
+            description: exerciseData['description'] ?? '',
+            category: exerciseData['category'] ?? '',
+            withOutEquipment: exerciseData['with_out_equipment'] ?? false,
+            imageUrl: exerciseData['image_url'] ?? '',
+            sets: sets,
+          );
+        }).toList();
+
+        return RoutineModel(
+          id: routineData['id'],
+          routineName: routineData['routine_name'],
+          createdAt: routineData['created_at'] is Timestamp
+              ? (routineData['created_at'] as Timestamp)
+                    .toDate()
+                    .toIso8601String()
+              : routineData['created_at']?.toString(),
+
+          exercises: exercises,
+        );
+      }).toList();
+    });
   }
 }

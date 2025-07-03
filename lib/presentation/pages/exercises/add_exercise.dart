@@ -5,8 +5,9 @@ import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.da
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/exercise_service.dart';
+import 'package:workout_tracker_repo/presentation/pages/exercises/exercise_form_page.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
-import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
+// import 'package:workout_tracker_repo/routes/exercise/exercise.dart';
 
 class AddExerciseArguments {
   final bool isLogWorkout;
@@ -325,9 +326,9 @@ class _AddExerciseState extends State<AddExercise> {
               const Text('Add Exercise', style: TextStyle(fontSize: 20)),
               GestureDetector(
                 onTap: () {
-                  Navigator.pushNamed(
+                  Navigator.push(
                     context,
-                    ExerciseRoutes.createNewExercise,
+                    MaterialPageRoute(builder: (_) => const ExerciseFormPage()),
                   );
                 },
                 child: Container(

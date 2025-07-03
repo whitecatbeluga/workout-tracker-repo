@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
+import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
+import 'package:workout_tracker_repo/domain/entities/view_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import '../../../domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
 
-class Collapsible extends StatefulWidget {
+class Collapsible extends ConsumerStatefulWidget {
   const Collapsible({super.key, required this.folderContent});
 
   final Folder folderContent;
 
   @override
-  State<Collapsible> createState() => _CollapsibleState();
+  ConsumerState<Collapsible> createState() => _CollapsibleState();
 }
 
-class _CollapsibleState extends State<Collapsible> {
+class _CollapsibleState extends ConsumerState<Collapsible> {
   bool _isExpanded = true;
   final user = authService.value.getCurrentUser();
   final TextEditingController _folderNameController = TextEditingController();
@@ -217,7 +221,7 @@ class _CollapsibleState extends State<Collapsible> {
                       Navigator.pushNamed(
                         context,
                         RoutineRoutes.viewRoutine,
-                        arguments: routine.id,
+                        arguments: ViewRoutineArgs(routineId: routine.id),
                       );
                     },
                   ),
@@ -230,6 +234,14 @@ class _CollapsibleState extends State<Collapsible> {
                     size: ButtonSize.large,
                     onPressed: () {
                       Navigator.pop(context);
+                      Navigator.pushNamed(
+                        context,
+                        RoutineRoutes.upsertRoutinePage,
+                        arguments: UpsertRoutineArgs(
+                          folderId: widget.folderContent.id,
+                          routine: routine,
+                        ),
+                      );
                     },
                   ),
                   Button(
@@ -416,6 +428,90 @@ class _CollapsibleState extends State<Collapsible> {
     );
   }
 
+  void _openWorkoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: 20,
+              children: [
+                Text(
+                  "Are you sure you want to delete this routine?",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                Column(
+                  spacing: 10,
+                  children: [
+                    Button(
+                      label: "Start New Empty Workout",
+                      prefixIcon: Icons.add,
+                      variant: ButtonVariant.primary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      size: ButtonSize.large,
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        workoutExercises.value = [];
+                        savedExerciseSets = {};
+
+                        ref
+                                .read(workoutElapsedDurationProvider.notifier)
+                                .state =
+                            Duration.zero;
+
+                        Navigator.pushNamed(context, WorkoutRoutes.logWorkout);
+                      },
+                    ),
+                    Button(
+                      label: "Discard Workout",
+                      prefixIcon: Icons.delete_forever,
+                      backgroundColor: Colors.white,
+                      textColor: Colors.red.shade800,
+                      fontWeight: FontWeight.w500,
+                      fullWidth: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+
+                        workoutExercises.value = [];
+                        savedExerciseSets = {};
+
+                        ref
+                                .read(workoutElapsedDurationProvider.notifier)
+                                .state =
+                            Duration.zero;
+                      },
+                    ),
+                    Button(
+                      label: 'Cancel',
+                      textColor: Color(0xFF323232),
+                      fullWidth: true,
+                      variant: ButtonVariant.gray,
+                      fontWeight: FontWeight.w500,
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _folderNameController.dispose();
@@ -474,10 +570,11 @@ class _CollapsibleState extends State<Collapsible> {
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
-                                RoutineRoutes.createRoutinePage,
-                                arguments: {
-                                  'folderId': widget.folderContent.id,
-                                },
+                                RoutineRoutes.upsertRoutinePage,
+                                arguments: UpsertRoutineArgs(
+                                  folderId: widget.folderContent.id,
+                                  routine: null,
+                                ),
                               );
                             },
                             prefixIcon: Icons.add,
@@ -563,44 +660,50 @@ class _CollapsibleState extends State<Collapsible> {
                             Button(
                               label: "Start Routine",
                               onPressed: () {
-                                // Set workout exercises (just metadata)
-                                workoutExercises.value = exercises.map((e) {
-                                  return base.Exercise(
-                                    id: e.id,
-                                    name: e.name,
-                                    description: e.description,
-                                    imageUrl: e.imageUrl,
-                                    category: e.category,
-                                    withoutEquipment: e.withOutEquipment,
+                                if (workoutExercises.value.isNotEmpty) {
+                                  _openWorkoutDialog();
+                                } else {
+                                  // Set workout exercises (just metadata)
+                                  workoutExercises.value = exercises.map((e) {
+                                    return base.Exercise(
+                                      id: e.id,
+                                      name: e.name,
+                                      description: e.description,
+                                      imageUrl: e.imageUrl,
+                                      category: e.category,
+                                      withoutEquipment: e.withOutEquipment,
+                                    );
+                                  }).toList();
+
+                                  // Clear old sets
+                                  savedExerciseSets.clear();
+
+                                  // Add sets from each exercise
+                                  for (final exercise in exercises) {
+                                    savedExerciseSets[exercise.id] = exercise
+                                        .sets
+                                        .asMap()
+                                        .entries
+                                        .map((entry) {
+                                          final set = entry.value;
+                                          return SetEntry(
+                                            setNumber: entry.key + 1,
+                                            previous:
+                                                "${set.kg}kg x ${set.reps}",
+                                            kg: set.kg,
+                                            reps: set.reps,
+                                            isCompleted: false,
+                                          );
+                                        })
+                                        .toList();
+                                  }
+
+                                  // Navigate
+                                  Navigator.pushNamed(
+                                    context,
+                                    WorkoutRoutes.logWorkout,
                                   );
-                                }).toList();
-
-                                // Clear old sets
-                                savedExerciseSets.clear();
-
-                                // Add sets from each exercise
-                                for (final exercise in exercises) {
-                                  savedExerciseSets[exercise.id] = exercise.sets
-                                      .asMap()
-                                      .entries
-                                      .map((entry) {
-                                        final set = entry.value;
-                                        return SetEntry(
-                                          setNumber: entry.key + 1,
-                                          previous: "${set.kg}kg x ${set.reps}",
-                                          kg: set.kg,
-                                          reps: set.reps,
-                                          isCompleted: false,
-                                        );
-                                      })
-                                      .toList();
                                 }
-
-                                // Navigate
-                                Navigator.pushNamed(
-                                  context,
-                                  WorkoutRoutes.logWorkout,
-                                );
                               },
                               prefixIcon: Icons.play_arrow_rounded,
                               fullWidth: true,

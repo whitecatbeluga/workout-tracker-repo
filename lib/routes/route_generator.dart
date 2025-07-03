@@ -7,9 +7,13 @@ import 'package:workout_tracker_repo/presentation/pages/profile/add_measurement.
 import 'package:workout_tracker_repo/presentation/pages/profile/exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/measurement.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/about_us.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/account_details.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/contact_us.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
-import 'package:workout_tracker_repo/presentation/pages/routine/create_routine.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/terms_and_service.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/explore-routines.dart';
+import 'package:workout_tracker_repo/presentation/pages/routine/upsert_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/statistics.dart';
@@ -24,8 +28,9 @@ import 'package:workout_tracker_repo/routes/social/social.dart';
 import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import 'package:workout_tracker_repo/utils/authentication.dart';
-import 'package:workout_tracker_repo/utils/guardedRoute.dart';
+import 'package:workout_tracker_repo/utils/guarded_route.dart';
 
+import '../presentation/domain/entities/set_entry.dart';
 import '../presentation/pages/auth/login.dart';
 import '../presentation/pages/auth/register.dart';
 import '../presentation/pages/page_not_found/page_not_found.dart';
@@ -131,11 +136,32 @@ class RouteGenerator {
           ifAllowed: (_) => const AccountDetailsPage(),
           ifDenied: (_) => const LoginPage(),
         );
-      case RoutineRoutes.createRoutinePage:
+      case ProfileRoutes.aboutUs:
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const CreateRoutine(),
+          ifAllowed: (_) => const AboutUsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.contactUs:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const ContactUsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.termsOfService:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const TermsOfServicePage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case RoutineRoutes.upsertRoutinePage:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const UpsertRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
       case RoutineRoutes.logWorkoutPage:
@@ -152,6 +178,13 @@ class RouteGenerator {
           ifAllowed: (_) => const ViewRoutine(),
           ifDenied: (_) => const LoginPage(),
         );
+      case RoutineRoutes.exploreRoutines:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const ExploreRoutines(),
+          ifDenied: (_) => const LoginPage(),
+        );
       case WorkoutRoutes.logWorkout:
         return guardedRoute(
           settings: settings,
@@ -163,7 +196,11 @@ class RouteGenerator {
         return guardedRoute(
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
-          ifAllowed: (_) => const SaveWorkout(),
+          ifAllowed: (_) {
+            final exerciseSets =
+                settings.arguments as Map<String, List<SetEntry>>;
+            return SaveWorkout(exerciseSets: exerciseSets);
+          },
           ifDenied: (_) => const LoginPage(),
         );
       case ExerciseRoutes.addWorkoutExercise:

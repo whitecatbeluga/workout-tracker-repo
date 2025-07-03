@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/workout_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/data/services/workout_service.dart';
+import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/entities/workout.dart';
 
 class StatisticsPage extends StatefulWidget {
@@ -14,6 +18,7 @@ class StatisticsPage extends StatefulWidget {
 class _StatisticsPageState extends State<StatisticsPage> {
   final user = authService.value.getCurrentUser();
   final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
+  final routineRepo = RoutineRepositoryImpl(RoutineService());
   late List<Workout> workouts = [];
 
   @override
@@ -44,34 +49,47 @@ class _StatisticsPageState extends State<StatisticsPage> {
           stream: workoutRepo.getWorkoutsByUserId(user!.uid),
           builder: (context, snapshot) {
             if (!snapshot.hasData) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 10),
-                    Text('Calculating your workouts...'),
-                  ],
-                ),
-              );
+              return showLoader();
             }
             final workouts = snapshot.data ?? [];
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildWorkoutFrequencySection(workouts),
-                const SizedBox(height: 15),
+            return StreamBuilder(
+              stream: routineRepo.streamFolders(user!.uid),
+              builder: (context, routinesnapshot) {
+                if (!routinesnapshot.hasData) {
+                  return showLoader();
+                }
+                List<String> userRoutineIds = [];
+                if (routinesnapshot.hasData) {
+                  for (var folder in routinesnapshot.data!) {
+                    userRoutineIds.addAll(folder.routineIds!);
+                  }
+                }
+                return StreamBuilder(
+                  stream: routineRepo.getUserRoutinesByIds(userRoutineIds),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return showLoader();
+                    }
+                    final routines = snapshot.data ?? [];
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildWorkoutFrequencySection(workouts, routines),
+                        const SizedBox(height: 15),
 
-                _buildWorkoutSummarySection(workouts),
-                const SizedBox(height: 15),
+                        _buildWorkoutSummarySection(workouts),
+                        const SizedBox(height: 15),
 
-                _buildVolumeOverTimeSection(workouts),
-                const SizedBox(height: 15),
+                        _buildVolumeOverTimeSection(workouts, routines),
+                        const SizedBox(height: 15),
 
-                _buildRoutineUsageStatsSection(),
-              ],
+                        _buildRoutineUsageStatsSection(routines),
+                      ],
+                    );
+                  },
+                );
+              },
             );
           },
         ),
@@ -79,10 +97,26 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildWorkoutFrequencySection(List<Workout> workouts) {
+  Column showLoader() {
+    return Column(
+      spacing: 15,
+      children: [
+        SkeletonLoader(),
+        SkeletonLoader(),
+        SkeletonLoader(),
+        SkeletonLoader(),
+      ],
+    );
+  }
+
+  Widget _buildWorkoutFrequencySection(
+    List<Workout> workouts,
+    List<Routine> routines,
+  ) {
     DateTime startOfThisWeek = DateTime.now().subtract(
       Duration(days: DateTime.now().weekday - 1),
     );
+    DateTime endOfThisWeek = startOfThisWeek.add(const Duration(days: 6));
     DateTime startOfLastWeek = startOfThisWeek.subtract(
       const Duration(days: 7),
     );
@@ -103,6 +137,23 @@ class _StatisticsPageState extends State<StatisticsPage> {
               workout.createdAt.month <= endOfLastWeek.month,
         )
         .length;
+    int thisRoutineWeekCount = 0;
+    int lastRoutineWeekCount = 0;
+    for (var routine in routines) {
+      final routineDate = DateTime.parse(routine.createdAt!);
+      bool isInRange =
+          !routineDate.isBefore(startOfThisWeek) &&
+          !routineDate.isAfter(endOfThisWeek);
+      if (isInRange) {
+        thisRoutineWeekCount++;
+      }
+      bool isInRange2 =
+          !routineDate.isBefore(startOfLastWeek) &&
+          !routineDate.isAfter(endOfLastWeek);
+      if (isInRange2) {
+        lastRoutineWeekCount++;
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -128,20 +179,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 'Workout Frequency',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
-              Row(
-                children: [
-                  const Text(
-                    'Filter',
-                    style: TextStyle(
-                      color: Colors.teal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, color: Colors.teal, size: 20),
-                ],
-              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -150,10 +187,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
               Expanded(
                 child: _buildFrequencyCard(
                   'This week',
-                  '12',
-                  'routines',
-                  3,
-                  Colors.teal,
+                  thisRoutineWeekCount.toString(),
+                  'routine${thisRoutineWeekCount > 1 ? 's' : ''}',
+                  thisRoutineWeekCount - lastRoutineWeekCount,
+                  thisRoutineWeekCount - lastRoutineWeekCount > 0
+                      ? Colors.teal
+                      : Colors.red,
                 ),
               ),
               const SizedBox(width: 16),
@@ -161,7 +200,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 child: _buildFrequencyCard(
                   'This week',
                   thisWeekCount.toString(),
-                  'workouts',
+                  'workout${thisWeekCount > 1 ? 's' : ''}',
                   thisWeekCount - lastWeekCount,
                   thisWeekCount - lastWeekCount > 0 ? Colors.teal : Colors.red,
                 ),
@@ -307,7 +346,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     const SizedBox(height: 8),
                     _buildSummaryRow(
                       'Total Duration:',
-                      "${(totalDuration / 60).toStringAsFixed(0)} hours",
+                      "${(totalDuration / 60).toStringAsFixed(1)} hours",
                     ),
                     const SizedBox(height: 8),
                     _buildSummaryRow('Total Volume:', "$totalVolume kg"),
@@ -334,11 +373,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildVolumeOverTimeSection(List<Workout> workouts) {
-    print('\x1B[2J\x1B[1;1H');
+  Widget _buildVolumeOverTimeSection(
+    List<Workout> workouts,
+    List<Routine> routines,
+  ) {
     DateTime startOfThisWeek = DateTime.now().subtract(
       Duration(days: DateTime.now().weekday - 1),
     );
+    DateTime endOfThisWeek = startOfThisWeek.add(const Duration(days: 6));
     DateTime startOfLastWeek = startOfThisWeek.subtract(
       const Duration(days: 7),
     );
@@ -346,18 +388,15 @@ class _StatisticsPageState extends State<StatisticsPage> {
 
     int totalKgThisWeek = 0;
     int totalSetsThisWeek = 0;
-    for (var workout in workouts) {
-      if (workout.createdAt.day >= startOfThisWeek.day &&
-          workout.createdAt.month >= startOfThisWeek.month) {
-        print(workout);
-        totalKgThisWeek += (workout.volume ?? 0);
-        totalSetsThisWeek += (workout.sets ?? 0);
-      }
-    }
-
     int totalKgLastWeek = 0;
     int totalSetsLastWeek = 0;
     for (var workout in workouts) {
+      if (workout.createdAt.day >= startOfThisWeek.day &&
+          workout.createdAt.month >= startOfThisWeek.month) {
+        // print(workout);
+        totalKgThisWeek += (workout.volume ?? 0);
+        totalSetsThisWeek += (workout.sets ?? 0);
+      }
       if (workout.createdAt.day >= startOfLastWeek.day &&
           workout.createdAt.month >= startOfLastWeek.month &&
           workout.createdAt.day <= endOfLastWeek.day &&
@@ -367,8 +406,27 @@ class _StatisticsPageState extends State<StatisticsPage> {
       }
     }
 
-    print('totalSetsThisWeek $totalSetsThisWeek');
-    print('totalSetsLastWeek $totalSetsLastWeek');
+    double thisWeekRepCount = 0;
+    double lastWeekRepCount = 0;
+    for (var routine in routines) {
+      final routineDate = DateTime.parse(routine.createdAt!);
+      if (routineDate.isAfter(startOfThisWeek) &&
+          routineDate.isBefore(endOfThisWeek)) {
+        for (var exercise in routine.exercises) {
+          for (var set in exercise.sets) {
+            thisWeekRepCount += set.reps;
+          }
+        }
+      }
+      if (routineDate.isAfter(startOfLastWeek) &&
+          routineDate.isBefore(endOfLastWeek)) {
+        for (var exercise in routine.exercises) {
+          for (var set in exercise.sets) {
+            lastWeekRepCount += set.reps;
+          }
+        }
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -397,9 +455,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
               Expanded(
                 child: _buildVolumeCard(
                   'Total Reps',
-                  '70',
-                  'reps',
-                  12,
+                  thisWeekRepCount.toInt().toString(),
+                  'rep${thisWeekRepCount == 1 ? '' : 's'}',
+                  thisWeekRepCount.toInt() - lastWeekRepCount.toInt(),
                   Colors.teal,
                 ),
               ),
@@ -506,7 +564,42 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
   }
 
-  Widget _buildRoutineUsageStatsSection() {
+  Widget _buildRoutineUsageStatsSection(List<Routine> routines) {
+    List<String> exercises = [];
+    List<Map<String, dynamic>> originalList = [];
+    for (var routine in routines) {
+      for (var exercise in routine.exercises) {
+        exercises.add(exercise.name);
+        originalList.add({
+          'exerciseName': exercise.name,
+          'createdAt': routine.createdAt,
+        });
+      }
+    }
+    Map<String, dynamic> exerciseCount = {};
+
+    for (var entry in originalList) {
+      String exerciseName = entry['exerciseName'];
+      DateTime createdAt = DateTime.parse(entry['createdAt']);
+      if (exerciseCount.containsKey(exerciseName)) {
+        if (exerciseCount[exerciseName]['createdAt'].isBefore(createdAt)) {
+          exerciseCount[exerciseName]['createdAt'] = createdAt;
+        }
+        exerciseCount[exerciseName]['count'] =
+            exerciseCount[exerciseName]['count'] + 1;
+      } else {
+        exerciseCount[exerciseName] = {'count': 1, 'createdAt': createdAt};
+      }
+    }
+
+    List<Map<String, dynamic>> countedList = exerciseCount.entries.map((entry) {
+      return {
+        'exerciseName': entry.key,
+        'count': entry.value['count'],
+        'createdAt': DateFormat('MMM d, yyyy').format(entry.value['createdAt']),
+      };
+    }).toList();
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -530,20 +623,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
               const Text(
                 'Routine usage stats',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              Row(
-                children: [
-                  const Text(
-                    'Filter',
-                    style: TextStyle(
-                      color: Colors.teal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, color: Colors.teal, size: 20),
-                ],
               ),
             ],
           ),
@@ -596,10 +675,24 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           const Divider(height: 1),
           // Data Rows
-          _buildRoutineRow('Push Day', '12', 'Apr 5, 2025'),
-          _buildRoutineRow('Pull Day', '10', 'Apr 4, 2025'),
-          _buildRoutineRow('Legs & Core', '6', 'Apr 1, 2025'),
-          _buildRoutineRow('Mobility Flow', '2', 'Mar 5, 2025'),
+          if (countedList.isNotEmpty)
+            ...countedList.map(
+              (e) => _buildRoutineRow(
+                e['exerciseName'],
+                e['count'].toString(),
+                e['createdAt'],
+              ),
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: const Center(
+                child: Text(
+                  'No data available',
+                  style: TextStyle(color: Colors.grey, fontSize: 16),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -636,4 +729,104 @@ class _StatisticsPageState extends State<StatisticsPage> {
       ),
     );
   }
+}
+
+class SkeletonLoader extends StatelessWidget {
+  const SkeletonLoader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withAlpha((0.1 * 255).round()),
+            spreadRadius: 1,
+            blurRadius: 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                height: 16,
+                width: 120,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(child: _buildSkeletonCard()),
+              const SizedBox(width: 16),
+              Expanded(child: _buildSkeletonCard()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+Widget _buildSkeletonCard() {
+  return Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.grey[100],
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.grey[300]!),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 14,
+          width: 80,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 24,
+          width: 40,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 14,
+          width: 60,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 10,
+          width: 30,
+          decoration: BoxDecoration(
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(6),
+          ),
+        ),
+      ],
+    ),
+  );
 }

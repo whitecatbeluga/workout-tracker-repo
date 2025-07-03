@@ -5,18 +5,27 @@ import 'package:dotted_border/dotted_border.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
+import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
 
-class SaveWorkout extends StatefulWidget {
-  const SaveWorkout({super.key});
+import '../../../providers/persistent_volume_set_provider.dart';
+import '../../../utils/timer_formatter.dart';
+import '../../domain/entities/set_entry.dart';
+import '../../layouts/container.dart';
+
+class SaveWorkout extends ConsumerStatefulWidget {
+  final Map<String, List<SetEntry>> exerciseSets;
+
+  const SaveWorkout({super.key, required this.exerciseSets});
 
   @override
-  State<SaveWorkout> createState() => _SaveWorkoutState();
+  ConsumerState<SaveWorkout> createState() => _SaveWorkoutState();
 }
 
-class _SaveWorkoutState extends State<SaveWorkout> {
+class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
   final List<File> _capturedImages = [];
   bool _isUploading = false;
 
@@ -88,35 +97,27 @@ class _SaveWorkoutState extends State<SaveWorkout> {
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid ?? "unknown_user";
       final imageUrls = await _uploadImages();
-
+      final seconds = ref.read(workoutElapsedDurationProvider).inSeconds;
+      final durationTime = formatDuration(seconds);
       int totalSets = 0;
       int totalVolume = 0;
 
       List<Map<String, dynamic>> exercisesData = [];
 
       for (var exercise in workoutExercises.value) {
-        final sets = savedExerciseSets[exercise.name] ?? [];
-
+        final sets = widget.exerciseSets[exercise.id] ?? [];
         totalSets += sets.length;
         totalVolume += sets.fold(
           0,
           (sum, set) => sum + (set.kg * set.reps).round(),
         );
 
-        final exerciseEntry = {
+        exercisesData.add({
           'exercise_id': exercise.id,
           'exercise_name': exercise.name,
-          'sets': sets.map((set) {
-            return {
-              'set_number': set.setNumber,
-              'kg': set.kg,
-              'reps': set.reps,
-              'is_completed': set.isCompleted,
-            };
-          }).toList(),
-        };
-
-        exercisesData.add(exerciseEntry);
+          'image_url': exercise.imageUrl,
+          'sets': sets.map((set) => set.toMap()).toList(),
+        });
       }
 
       await FirebaseFirestore.instance.collection('workouts').add({
@@ -127,30 +128,38 @@ class _SaveWorkoutState extends State<SaveWorkout> {
         'total_volume': totalVolume,
         'workout_title': _titleController.text.trim(),
         'workout_description': _descriptionController.text.trim(),
-        'workout_duration': '23', // Placeholder for now
+        'workout_duration': durationTime,
         'visible_to_everyone': _visibleToEveryone,
         'exercises': exercisesData,
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Workout saved successfully!")),
-      );
+      // Clear all workout state before navigating
+      workoutExercises.value.clear();
+      widget.exerciseSets.clear();
+      ref.read(workoutElapsedDurationProvider.notifier).state = Duration.zero;
+      ref.read(volumeSetProvider.notifier).reset();
 
-      Navigator.pushNamed(context, AuthRoutes.home);
+      setState(() {
+        _isUploading = false;
+      });
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const ContainerTree()),
+        (route) => false,
+      );
     } catch (e) {
       print("Error saving workout: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text("Failed to save workout.")));
-    } finally {
-      setState(() {
-        _isUploading = false;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final seconds = ref.read(workoutElapsedDurationProvider).inSeconds;
+    final durationTime = formatDuration(seconds);
+
     return Stack(
       children: [
         Scaffold(
@@ -219,28 +228,49 @@ class _SaveWorkoutState extends State<SaveWorkout> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Duration', style: TextStyle(fontSize: 16)),
-                          Text(
-                            '18s',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Color(0xFF48A6A7),
-                            ),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              return Text(
+                                durationTime,
+                                // Using the formatter function here
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF48A6A7),
+                                ),
+                              );
+                            },
                           ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Volume', style: TextStyle(fontSize: 16)),
-                          Text('0kg', style: TextStyle(fontSize: 16)),
-                        ],
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final volumeState = ref.watch(volumeSetProvider);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Volume', style: TextStyle(fontSize: 16)),
+                              Text(
+                                '${volumeState.totalVolume.toStringAsFixed(1)}kg',
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Sets', style: TextStyle(fontSize: 16)),
-                          Text('0', style: TextStyle(fontSize: 16)),
-                        ],
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final volumeState = ref.watch(volumeSetProvider);
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Sets', style: TextStyle(fontSize: 16)),
+                              Text(
+                                volumeState.totalSets.toString(),
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -416,58 +446,114 @@ class _SaveWorkoutState extends State<SaveWorkout> {
                   const SizedBox(height: 20),
                   Expanded(
                     child: workoutExercises.value.isEmpty
-                        ? const Center(
-                            child: Text("No workout data available."),
-                          )
+                        ? const Center(child: Text("No exercises added"))
                         : ListView.builder(
                             itemCount: workoutExercises.value.length,
                             itemBuilder: (context, index) {
                               final exercise = workoutExercises.value[index];
                               final sets =
-                                  savedExerciseSets[exercise.name] ?? [];
+                                  widget.exerciseSets[exercise.id] ?? [];
 
                               return Card(
-                                margin: const EdgeInsets.symmetric(
-                                  vertical: 10,
-                                ),
+                                margin: const EdgeInsets.symmetric(vertical: 8),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        exercise.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                      ...sets.map((set) {
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 4.0,
-                                          ),
-                                          child: Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text('Set ${set.setNumber}'),
-                                              Text('${set.kg} kg'),
-                                              Text('${set.reps} reps'),
-                                              Icon(
-                                                set.isCompleted
-                                                    ? Icons.check_circle
-                                                    : Icons.cancel,
-                                                color: set.isCompleted
-                                                    ? Colors.green
-                                                    : Colors.red,
+                                      // Exercise Name with Image
+                                      Row(
+                                        children: [
+                                          // Exercise Image
+                                          if (exercise.imageUrl != null)
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              child: Image.network(
+                                                exercise.imageUrl!,
+                                                width: 50,
+                                                height: 50,
+                                                fit: BoxFit.cover,
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) => const Icon(
+                                                      Icons.image_not_supported,
+                                                    ),
                                               ),
-                                            ],
+                                            )
+                                          else
+                                            const Icon(
+                                              Icons.fitness_center,
+                                              size: 50,
+                                            ),
+                                          const SizedBox(width: 12),
+                                          // Exercise Name
+                                          Expanded(
+                                            child: Text(
+                                              exercise.name,
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
-                                        );
-                                      }).toList(),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+
+                                      // Sets List
+                                      if (sets.isNotEmpty) ...[
+                                        const Divider(),
+                                        ...sets.map((set) {
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 4,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                // Set Number
+                                                SizedBox(
+                                                  width: 60,
+                                                  child: Text(
+                                                    'Set ${set.setNumber}',
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Weight and Reps
+                                                Expanded(
+                                                  child: Text(
+                                                    '${set.kg}kg x ${set.reps}',
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                                // Completion Icon
+                                                Icon(
+                                                  set.isCompleted
+                                                      ? Icons.check_circle
+                                                      : Icons.cancel,
+                                                  color: set.isCompleted
+                                                      ? Colors.green
+                                                      : Colors.red,
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ] else ...[
+                                        const SizedBox(height: 8),
+                                        const Text(
+                                          'No sets recorded',
+                                          style: TextStyle(color: Colors.grey),
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),

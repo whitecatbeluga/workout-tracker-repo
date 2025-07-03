@@ -23,8 +23,7 @@ abstract class RoutineRepository {
     WorkoutSets? workoutSets, {
     String? folderId,
   });
-  void updateRoutine(
-    String userId,
+  Future<void> updateRoutine(
     String routineId, {
     String? updatedRoutineName,
     Map<String, dynamic>? updatedSets,
@@ -33,4 +32,5 @@ abstract class RoutineRepository {
 
   // Exercise operations
   Future<List<Exercise>> getExercisesById(String routineId);
+  Stream<List<Routine>> getUserRoutinesByIds(List<String> routineIds);
 }

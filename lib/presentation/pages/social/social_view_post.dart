@@ -46,14 +46,26 @@ class ViewPost extends StatelessWidget {
                 );
               },
             ),
-            WorkoutDetail(
-              exerciseName: 'Dumbbell Goblet Squat',
-              sets: [
-                WorkoutSet(setNumber: 1, weightAndReps: '20kg x 12 reps'),
-                WorkoutSet(setNumber: 2, weightAndReps: '25kg x 10 reps'),
-                WorkoutSet(setNumber: 3, weightAndReps: '30kg x 8 reps'),
-              ],
+            Container(
+              padding: EdgeInsets.fromLTRB(13, 12, 12, 0),
+              child: Text(
+                'Workout',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
             ),
+            ...post.exercises.map((exercise) {
+              return WorkoutDetail(
+                exerciseName: exercise['exercise_name'] as String,
+                sets: (exercise['sets'] as List<dynamic>)
+                    .map(
+                      (set) => WorkoutSet(
+                        setNumber: (set['set_number'] as num).toInt(),
+                        weightAndReps: '${set['kg']}kg x ${set['reps']} reps',
+                      ),
+                    )
+                    .toList(),
+              );
+            }).toList(),
           ],
         ),
       ),

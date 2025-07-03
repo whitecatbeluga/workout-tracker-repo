@@ -22,16 +22,20 @@ class _SettingsState extends State<Settings> {
       icon: Icons.account_circle_rounded,
       route: ProfileRoutes.accountDetails,
     ),
-    MenuItem(title: "Contact Us", icon: Icons.call, route: "/contact-us"),
+    MenuItem(
+        title: "Contact Us",
+        icon: Icons.call,
+        route:ProfileRoutes.contactUs
+    ),
     MenuItem(
       title: "Terms and Service",
       icon: Icons.info,
-      route: "/terms-and-service",
+      route: ProfileRoutes.termsOfService,
     ),
     MenuItem(
       title: "About Us",
       icon: Icons.supervisor_account_rounded,
-      route: "/about-us",
+      route: ProfileRoutes.aboutUs,
     ),
   ];
 
