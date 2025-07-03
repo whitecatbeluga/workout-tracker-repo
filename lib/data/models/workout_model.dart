@@ -8,16 +8,18 @@ class WorkoutModel extends Workout {
     required super.createdAt,
     super.sets,
     super.volume,
+    super.exercises,
   });
 
   factory WorkoutModel.fromMap(Map<String, dynamic> data, String docId) {
     return WorkoutModel(
       id: docId,
       name: data['name'] ?? '',
-      duration: int.parse(data['workout_duration'] ?? '0'),
+      duration: parseDuration(data['workout_duration'] ?? '0m 0s'),
       createdAt: (data['created_at']).toDate(),
       sets: data['total_sets'],
       volume: data['total_volume'],
+      exercises: data['exercises'],
     );
   }
 
@@ -33,6 +35,19 @@ class WorkoutModel extends Workout {
 
   @override
   String toString() {
-    return 'WorkoutModel{id: $id, name: $name, duration: $duration, createdAt: $createdAt, sets: $sets, volume: $volume, }';
+    return 'WorkoutModel{id: $id, name: $name, duration: $duration, createdAt: $createdAt, sets: $sets, volume: $volume, exercises: $exercises}';
   }
+}
+
+int parseDuration(String input) {
+  final regex = RegExp(r'(\d+)m\s*(\d+)s');
+  final match = regex.firstMatch(input);
+
+  if (match != null) {
+    final minutes = int.parse(match.group(1)!);
+    final seconds = int.parse(match.group(2)!);
+    return minutes * 60 + seconds;
+  }
+
+  return 0; // fallback
 }
