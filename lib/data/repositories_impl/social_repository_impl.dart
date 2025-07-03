@@ -30,7 +30,6 @@ class SocialRepositoryImpl implements SocialRepository {
                 final workoutData = doc.data();
                 final social = SocialModel.fromMap(workoutData, doc.id);
 
-                // Extract exercises data
                 final exercises =
                     (workoutData['exercises'] as List<dynamic>?)
                         ?.map(
@@ -90,7 +89,7 @@ class SocialRepositoryImpl implements SocialRepository {
                   email: email,
                   likedByUids: likedByUids,
                   commentCount: commentsSnapshot.size,
-                  exercises: exercises, // Add this line
+                  exercises: exercises,
                 );
               }),
             );
@@ -319,7 +318,31 @@ class SocialRepositoryImpl implements SocialRepository {
           .asyncMap((snapshot) async {
             final results = await Future.wait(
               snapshot.docs.map((doc) async {
+                final workoutData = doc.data();
                 final social = SocialModel.fromMap(doc.data(), doc.id);
+
+                final exercises =
+                    (workoutData['exercises'] as List<dynamic>?)
+                        ?.map(
+                          (exercise) => {
+                            'exercise_name':
+                                exercise['exercise_name'] as String? ?? '',
+                            'sets':
+                                (exercise['sets'] as List<dynamic>?)
+                                    ?.map(
+                                      (set) => {
+                                        'kg': set['kg'] as num? ?? 0,
+                                        'reps': set['reps'] as num? ?? 0,
+                                        'set_number':
+                                            set['set_number'] as num? ?? 0,
+                                      },
+                                    )
+                                    .toList() ??
+                                [],
+                          },
+                        )
+                        .toList() ??
+                    [];
 
                 final userDoc = await _firestore
                     .collection('users')
@@ -358,6 +381,7 @@ class SocialRepositoryImpl implements SocialRepository {
                   email: email,
                   likedByUids: likedByUids,
                   commentCount: commentsSnapshot.size,
+                  exercises: exercises,
                 );
               }),
             );
@@ -382,7 +406,31 @@ class SocialRepositoryImpl implements SocialRepository {
           .asyncMap((snapshot) async {
             final results = await Future.wait(
               snapshot.docs.map((doc) async {
+                final workoutData = doc.data();
                 final social = SocialModel.fromMap(doc.data(), doc.id);
+
+                final exercises =
+                    (workoutData['exercises'] as List<dynamic>?)
+                        ?.map(
+                          (exercise) => {
+                            'exercise_name':
+                                exercise['exercise_name'] as String? ?? '',
+                            'sets':
+                                (exercise['sets'] as List<dynamic>?)
+                                    ?.map(
+                                      (set) => {
+                                        'kg': set['kg'] as num? ?? 0,
+                                        'reps': set['reps'] as num? ?? 0,
+                                        'set_number':
+                                            set['set_number'] as num? ?? 0,
+                                      },
+                                    )
+                                    .toList() ??
+                                [],
+                          },
+                        )
+                        .toList() ??
+                    [];
 
                 final userDoc = await _firestore
                     .collection('users')
@@ -421,6 +469,7 @@ class SocialRepositoryImpl implements SocialRepository {
                   email: email,
                   likedByUids: likedByUids,
                   commentCount: commentsSnapshot.size,
+                  exercises: exercises,
                 );
               }),
             );
@@ -795,6 +844,35 @@ class SocialRepositoryImpl implements SocialRepository {
     } catch (e) {
       print('Error fetching follower/following counts: $e');
       return {'followers': 0, 'following': 0};
+    }
+  }
+
+  Future<int> countRoutines(String userId) async {
+    try {
+      final foldersRef = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('folders');
+
+      final folderSnapshot = await foldersRef.get();
+
+      int totalRoutineCount = 0;
+
+      for (QueryDocumentSnapshot folderDoc in folderSnapshot.docs) {
+        final Map<String, dynamic> folderData =
+            folderDoc.data() as Map<String, dynamic>;
+
+        if (folderData.containsKey('routine_ids') &&
+            folderData['routine_ids'] is List) {
+          final List routineIds = folderData['routine_ids'] as List;
+          totalRoutineCount += routineIds.length;
+        }
+      }
+
+      return totalRoutineCount;
+    } catch (e) {
+      print('Error counting user routines: $e');
+      rethrow;
     }
   }
 }

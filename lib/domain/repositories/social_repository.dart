@@ -18,4 +18,5 @@ abstract class SocialRepository {
   Future<List<Map<String, dynamic>>> fetchRecents();
   Future<void> clearAllRecents();
   Stream<List<SocialWithUser>> fetchMyWorkouts(String userId);
+  Future<int> countRoutines(String userId);
 }

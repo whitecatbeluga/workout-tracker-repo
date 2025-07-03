@@ -264,6 +264,7 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
 
   int followerCount = 0;
   int followingCount = 0;
+  int workoutPostCount = 0;
 
   Future<void> fetchCounts() async {
     if (id == null) return;
@@ -365,7 +366,31 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
               ),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10),
-                child: TotalCount(routineCount: 14, workoutCount: 12),
+                child: FutureBuilder<int>(
+                  future: repository.countRoutines(id!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return TotalCount(
+                        routineCount: 0,
+                        workoutCount: workoutPostCount,
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return TotalCount(
+                        routineCount: 0,
+                        workoutCount: workoutPostCount,
+                      );
+                    }
+
+                    final routineCount = snapshot.data ?? 0;
+
+                    return TotalCount(
+                      routineCount: routineCount,
+                      workoutCount: workoutPostCount,
+                    );
+                  },
+                ),
               ),
               if (id != user!.uid)
                 Container(
@@ -393,6 +418,14 @@ class _VisitProfilePageState extends State<VisitProfilePage> {
                     }
 
                     final posts = snapshot.data ?? [];
+
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (workoutPostCount != posts.length) {
+                        setState(() {
+                          workoutPostCount = posts.length;
+                        });
+                      }
+                    });
 
                     if (posts.isEmpty) {
                       return const Center(
