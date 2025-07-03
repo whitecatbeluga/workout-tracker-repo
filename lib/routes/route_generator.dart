@@ -7,8 +7,11 @@ import 'package:workout_tracker_repo/presentation/pages/profile/add_measurement.
 import 'package:workout_tracker_repo/presentation/pages/profile/exercise.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/calendar.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/measurement.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/about_us.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/account_details.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/contact_us.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/terms_and_service.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/explore-routines.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/upsert_routine.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart';
@@ -131,6 +134,27 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const AccountDetailsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.aboutUs:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const AboutUsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.contactUs:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const ContactUsPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case ProfileRoutes.termsOfService:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const TermsOfServicePage(),
           ifDenied: (_) => const LoginPage(),
         );
       case RoutineRoutes.upsertRoutinePage:
