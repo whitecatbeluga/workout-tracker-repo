@@ -87,6 +87,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
                   children: [
                     for (var exercise in exercises)
                       ExerciseCard(
+                        id: exercise.id,
                         exerciseName: exercise.name,
                         withEquipment: exercise.withoutEquipment,
                         exerciseCategory: exercise.category,

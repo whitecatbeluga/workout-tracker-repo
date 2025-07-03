@@ -58,4 +58,23 @@ class ExerciseRepositoryImpl implements ExerciseRepository {
       throw CustomErrorException.fromCode(500);
     }
   }
+
+  @override
+  Future<void> updateExercise(Exercise exercise, String userId) async {
+    try {
+      final model = ExerciseModel(
+        id: exercise.id,
+        name: exercise.name,
+        description: exercise.description,
+        imageUrl: exercise.imageUrl,
+        category: exercise.category,
+        withoutEquipment: exercise.withoutEquipment,
+      );
+      await _exercise.updateExercise(exercise.id, model.toMap(), userId);
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
+    }
+  }
 }
