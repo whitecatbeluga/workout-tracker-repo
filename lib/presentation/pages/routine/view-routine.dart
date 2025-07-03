@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/core/providers/user_info_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/predefined_routine_repository_impl.dart';
@@ -6,6 +7,7 @@ import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_i
 import 'package:workout_tracker_repo/data/services/predefined_routine_service.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
+import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
 import 'package:workout_tracker_repo/domain/entities/view_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/predefined_routine_repository.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
@@ -13,6 +15,7 @@ import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart
 import 'package:workout_tracker_repo/presentation/widgets/badge/badge.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
+import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 class ViewRoutine extends StatefulWidget {
@@ -23,6 +26,8 @@ class ViewRoutine extends StatefulWidget {
 }
 
 class _ViewRoutineState extends State<ViewRoutine> {
+  final user = authService.value.getCurrentUser();
+
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
   );
@@ -31,6 +36,8 @@ class _ViewRoutineState extends State<ViewRoutine> {
       PredefinedRoutineRepositoryImpl(PredefinedRoutineService());
 
   late final ViewRoutineArgs args;
+
+  Routine? passedRoutine;
 
   @override
   void didChangeDependencies() {
@@ -43,12 +50,132 @@ class _ViewRoutineState extends State<ViewRoutine> {
     }
   }
 
+  void _saveRoutine(String? folderId) async {
+    final Map<String, ExerciseWorkoutSet> mappedSets = {
+      for (final exercise in passedRoutine!.exercises)
+        exercise.id: ExerciseWorkoutSet(
+          name: exercise.name,
+          sets: exercise.sets
+              .map(
+                (set) => SetEntry(
+                  setNumber: set.setNumber,
+                  previous: set.previous,
+                  kg: set.kg,
+                  reps: set.reps,
+                  isCompleted: set.isCompleted,
+                ),
+              )
+              .toList(),
+        ),
+    };
+
+    final workoutSets = WorkoutSets(sets: mappedSets);
+
+    _routineRepository.createNewRoutine(
+      user!.uid,
+      passedRoutine!.routineName as String,
+      workoutSets,
+      folderId: folderId,
+    );
+
+    routineExercises.value.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Routine saved successfully!')),
+    );
+  }
+
+  void _showFolderPickerModal(BuildContext context, List<Folder> folders) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return FractionallySizedBox(
+          widthFactor: 1.0, // 🔥 This makes it take full width
+          child: Padding(
+            padding: MediaQuery.of(context).viewInsets, // handles keyboard
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Choose a Folder',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 20),
+                  ...folders.map((folder) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context); // Close the bottom sheet
+
+                          _saveRoutine(folder.id);
+                        },
+                        icon: const Icon(
+                          Icons.folder,
+                          color: Color(0xFF323232),
+                        ),
+                        label: Text(
+                          folder.folderName ?? 'Unnamed Folder',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Color(0xFF323232),
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(56),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          foregroundColor: const Color(0xFF323232),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Routine Details'),
         backgroundColor: Colors.white,
+        actions: [
+          if (args.predefinedRoutineId != null)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              onPressed: () async {
+                final folders = await _routineRepository
+                    .streamFolders(user!.uid)
+                    .first;
+
+                if (folders.isNotEmpty) {
+                  _showFolderPickerModal(context, folders);
+                } else {
+                  _saveRoutine('');
+                }
+              },
+            ),
+        ],
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<Routine>(
@@ -67,6 +194,8 @@ class _ViewRoutineState extends State<ViewRoutine> {
           }
 
           final routine = snapshot.data!;
+
+          passedRoutine = routine;
 
           return Padding(
             padding: const EdgeInsets.all(16.0),
