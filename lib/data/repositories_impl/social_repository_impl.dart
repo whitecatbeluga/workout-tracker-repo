@@ -776,8 +776,29 @@ class SocialRepositoryImpl implements SocialRepository {
     try {
       final doc = await _firestore.collection('workouts').doc(workoutId).get();
       if (!doc.exists) return null;
-
+      final workoutData = doc.data();
       final social = SocialModel.fromMap(doc.data()!, doc.id);
+
+      final exercises =
+          (workoutData!['exercises'] as List<dynamic>?)
+              ?.map(
+                (exercise) => {
+                  'exercise_name': exercise['exercise_name'] as String? ?? '',
+                  'sets':
+                      (exercise['sets'] as List<dynamic>?)
+                          ?.map(
+                            (set) => {
+                              'kg': set['kg'] as num? ?? 0,
+                              'reps': set['reps'] as num? ?? 0,
+                              'set_number': set['set_number'] as num? ?? 0,
+                            },
+                          )
+                          .toList() ??
+                      [],
+                },
+              )
+              .toList() ??
+          [];
 
       final userDoc = await _firestore
           .collection('users')
@@ -816,6 +837,7 @@ class SocialRepositoryImpl implements SocialRepository {
         email: email,
         likedByUids: likedByUids,
         commentCount: commentsSnapshot.size,
+        exercises: exercises,
       );
     } catch (e) {
       print('Error fetching workout post: $e');
