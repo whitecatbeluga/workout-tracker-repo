@@ -23,7 +23,7 @@ class WorkoutDetail extends StatelessWidget {
       color: Colors.white,
       elevation: 0,
       child: Container(
-        padding: EdgeInsets.all(0),
+        padding: EdgeInsets.symmetric(vertical: 10),
         width: double.infinity,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,13 +40,6 @@ class WorkoutDetail extends StatelessWidget {
                       spacing: 5,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Workout',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
                         Text(
                           exerciseName,
                           style: TextStyle(
@@ -86,7 +79,10 @@ class WorkoutDetail extends StatelessWidget {
                     final isOdd = (set.setNumber % 2 == 1);
 
                     return Container(
-                      padding: EdgeInsets.symmetric(vertical: 4, horizontal: 15),
+                      padding: EdgeInsets.symmetric(
+                        vertical: 4,
+                        horizontal: 15,
+                      ),
                       color: isOdd ? Color(0xFF48A6A7) : Colors.transparent,
                       child: Row(
                         spacing: 30,
