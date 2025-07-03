@@ -219,10 +219,12 @@ class _ViewRoutineState extends State<ViewRoutine> {
                       ValueListenableBuilder(
                         valueListenable: currentUserProfile,
                         builder: (context, user, child) {
-                          return Text(
-                            'Created By: ${user!.firstName} ${user.lastName}',
-                            style: const TextStyle(fontSize: 14),
-                          );
+                          return args.routineId != null
+                              ? Text(
+                                  'Created By: ${user!.firstName} ${user.lastName}',
+                                  style: const TextStyle(fontSize: 14),
+                                )
+                              : const SizedBox.shrink();
                         },
                       ),
                       Button(
