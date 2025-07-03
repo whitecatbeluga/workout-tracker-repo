@@ -59,7 +59,7 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
               _buildFilterOption(
                 ExerciseFilter.myExercises,
                 'My Exercises',
-                'Show only exercises I created',
+                'Show and Edit exercises I created',
                 Icons.person,
               ),
               _buildFilterOption(
@@ -222,11 +222,13 @@ class _ExcercisesPageState extends State<ExcercisesPage> {
           children: [
             for (var exercise in exercisesToDisplay)
               ExerciseCard(
+                id: exercise.id,
                 exerciseName: exercise.name,
                 withEquipment: exercise.withoutEquipment,
                 exerciseCategory: exercise.category,
                 exerciseDescription: exercise.description,
                 imageUrl: exercise.imageUrl,
+                isUser: selectedFilter.value == ExerciseFilter.myExercises,
               ),
           ],
         ),
