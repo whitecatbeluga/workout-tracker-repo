@@ -9,6 +9,7 @@ class SocialWithUser {
   final String email;
   final List<String> likedByUids;
   final int commentCount;
+  final List<Map<String, dynamic>> exercises;
 
   SocialWithUser({
     required this.social,
@@ -19,5 +20,6 @@ class SocialWithUser {
     required this.email,
     this.likedByUids = const [],
     this.commentCount = 0,
+    this.exercises = const [],
   });
 }
