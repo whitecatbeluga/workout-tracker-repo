@@ -7,7 +7,6 @@ import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_i
 import 'package:workout_tracker_repo/data/services/predefined_routine_service.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
-import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
 import 'package:workout_tracker_repo/domain/entities/view_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/predefined_routine_repository.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
@@ -15,7 +14,6 @@ import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart
 import 'package:workout_tracker_repo/presentation/widgets/badge/badge.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
-import 'package:workout_tracker_repo/routes/routine/routine.dart';
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
 class ViewRoutine extends StatefulWidget {
@@ -36,17 +34,21 @@ class _ViewRoutineState extends State<ViewRoutine> {
       PredefinedRoutineRepositoryImpl(PredefinedRoutineService());
 
   late final ViewRoutineArgs args;
-
   Routine? passedRoutine;
+  bool _argsInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final receivedArgs = ModalRoute.of(context)?.settings.arguments;
-    if (receivedArgs != null && receivedArgs is ViewRoutineArgs) {
-      args = receivedArgs;
-    } else {
-      throw Exception('Missing arguments for UpsertRoutine');
+
+    if (!_argsInitialized) {
+      final receivedArgs = ModalRoute.of(context)?.settings.arguments;
+      if (receivedArgs != null && receivedArgs is ViewRoutineArgs) {
+        args = receivedArgs;
+        _argsInitialized = true;
+      } else {
+        throw Exception('Missing arguments for ViewRoutine');
+      }
     }
   }
 
