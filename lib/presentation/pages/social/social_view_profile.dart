@@ -28,81 +28,77 @@ class ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Container(
-          padding: EdgeInsets.all(0),
-          child: Row(
-            spacing: 10,
-            children: [
-              CircleAvatar(
-                backgroundImage: imagePath != null
-                    ? NetworkImage(imagePath)
-                    : null,
-                child: imagePath != null
-                    ? Text(
-                        userName.isNotEmpty ? userName[0].toUpperCase() : "?",
-                      )
-                    : null,
-              ),
-              Container(
-                padding: EdgeInsets.all(0),
-                child: Column(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 10,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: (imagePath.isNotEmpty)
+                  ? NetworkImage(imagePath)
+                  : null,
+              child: (imagePath.isEmpty)
+                  ? Text(
+                      name.isNotEmpty == true ? name[0].toUpperCase() : '?',
+                      style: TextStyle(fontSize: 40),
+                    )
+                  : null,
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       name,
                       style: TextStyle(
+                        fontWeight: FontWeight.bold,
                         fontSize: 16,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(email, style: TextStyle(fontSize: 14)),
                   ],
                 ),
-              ),
-            ],
-          ),
-        ),
-        Container(
-          padding: EdgeInsets.all(0),
-          child: Row(
-            spacing: 14,
-            children: [
-              Container(
-                padding: EdgeInsets.all(0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+
+                Row(
+                  spacing: 20,
                   children: [
-                    Text(
-                      followers.toString(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          followers.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text("Followers", style: TextStyle(fontSize: 14)),
+                      ],
                     ),
-                    Text('Followers', style: TextStyle(fontSize: 10)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          following.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text("Following", style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              Container(
-                padding: EdgeInsets.all(0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      following.toString(),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text('Following', style: TextStyle(fontSize: 10)),
-                  ],
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
       ],
     );

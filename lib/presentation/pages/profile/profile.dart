@@ -368,6 +368,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
               valueListenable: currentUserProfile,
               builder: (context, profile, _) {
                 return CircleAvatar(
+                  radius: 50,
                   backgroundImage:
                       (profile != null &&
                           profile.accountPicture != null &&
@@ -382,6 +383,7 @@ class _ProfileHeaderState extends State<ProfileHeader> {
                           profile?.userName.isNotEmpty == true
                               ? profile!.userName[0].toUpperCase()
                               : '?',
+                          style: TextStyle(fontSize: 40),
                         )
                       : null,
                 );
@@ -389,47 +391,62 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
               children: [
                 ValueListenableBuilder<UserProfile?>(
                   valueListenable: currentUserProfile,
                   builder: (context, profile, _) {
                     if (profile == null) return CircularProgressIndicator();
-                    return Text(
-                      '${profile.firstName} ${profile.lastName}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${profile.firstName} ${profile.lastName}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          widget.user?.email ?? "",
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ],
                     );
                   },
                 ),
 
-                Text(widget.user?.email ?? "", style: TextStyle(fontSize: 14)),
-              ],
-            ),
-          ],
-        ),
-        Row(
-          spacing: 20,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  followerCount.toString(),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                Row(
+                  spacing: 20,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          followerCount.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text("Followers", style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          followingCount.toString(),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text("Following", style: TextStyle(fontSize: 14)),
+                      ],
+                    ),
+                  ],
                 ),
-                Text("Followers", style: TextStyle(fontSize: 14)),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  followingCount.toString(),
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                Text("Following", style: TextStyle(fontSize: 14)),
               ],
             ),
           ],
