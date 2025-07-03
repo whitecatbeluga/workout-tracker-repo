@@ -6,6 +6,7 @@ import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.da
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/upsert_routine_args.dart';
+import 'package:workout_tracker_repo/domain/entities/view_routine_args.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
@@ -220,7 +221,7 @@ class _CollapsibleState extends ConsumerState<Collapsible> {
                       Navigator.pushNamed(
                         context,
                         RoutineRoutes.viewRoutine,
-                        arguments: routine.id,
+                        arguments: ViewRoutineArgs(routineId: routine.id),
                       );
                     },
                   ),

@@ -86,12 +86,13 @@ class _WorkoutNavState extends ConsumerState<WorkoutNav> {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withAlpha(40),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
