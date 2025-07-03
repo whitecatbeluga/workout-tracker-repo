@@ -88,6 +88,8 @@ class _CollapsibleState extends ConsumerState<Collapsible> {
         );
       }
 
+      if (!mounted) return;
+
       Navigator.of(context).pop();
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,6 +97,8 @@ class _CollapsibleState extends ConsumerState<Collapsible> {
       );
     } catch (e) {
       print('Error deleting folder: $e');
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -354,7 +358,13 @@ class _CollapsibleState extends ConsumerState<Collapsible> {
                       textColor: Colors.red.shade800,
                       fontWeight: FontWeight.w500,
                       fullWidth: true,
-                      onPressed: () => _deleteFolder(),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Future.delayed(
+                          Duration(milliseconds: 100),
+                          _deleteFolder,
+                        );
+                      },
                     ),
                     Button(
                       label: 'Cancel',
