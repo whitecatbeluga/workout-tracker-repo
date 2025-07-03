@@ -373,7 +373,12 @@ class _WorkoutPageState extends ConsumerState<WorkoutPage> {
                       Expanded(
                         child: Button(
                           label: "Explore",
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.pushNamed(
+                              context,
+                              RoutineRoutes.exploreRoutines,
+                            );
+                          },
                           variant: ButtonVariant.secondary,
                           size: ButtonSize.large,
                           prefixIcon: Icons.search,

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/user_info_provider.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/data/repositories_impl/predefined_routine_repository_impl.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/routine_repository_impl.dart';
+import 'package:workout_tracker_repo/data/services/predefined_routine_service.dart';
 import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
+import 'package:workout_tracker_repo/domain/entities/view_routine_args.dart';
+import 'package:workout_tracker_repo/domain/repositories/predefined_routine_repository.dart';
 import 'package:workout_tracker_repo/domain/repositories/routine_repository.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 import 'package:workout_tracker_repo/presentation/widgets/badge/badge.dart';
@@ -11,17 +15,36 @@ import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart' as base;
 import 'package:workout_tracker_repo/routes/workout/workout.dart';
 
-class ViewRoutine extends StatelessWidget {
-  ViewRoutine({super.key});
+class ViewRoutine extends StatefulWidget {
+  const ViewRoutine({super.key});
 
+  @override
+  State<ViewRoutine> createState() => _ViewRoutineState();
+}
+
+class _ViewRoutineState extends State<ViewRoutine> {
   final RoutineRepository _routineRepository = RoutineRepositoryImpl(
     RoutineService(),
   );
 
+  final PredefinedRoutineRepository _predefinedRoutineRepository =
+      PredefinedRoutineRepositoryImpl(PredefinedRoutineService());
+
+  late final ViewRoutineArgs args;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final receivedArgs = ModalRoute.of(context)?.settings.arguments;
+    if (receivedArgs != null && receivedArgs is ViewRoutineArgs) {
+      args = receivedArgs;
+    } else {
+      throw Exception('Missing arguments for UpsertRoutine');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final routineId = ModalRoute.of(context)!.settings.arguments as String;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Routine Details'),
@@ -29,7 +52,11 @@ class ViewRoutine extends StatelessWidget {
       ),
       backgroundColor: Colors.white,
       body: FutureBuilder<Routine>(
-        future: _routineRepository.getRoutine(routineId),
+        future: args.routineId != null
+            ? _routineRepository.getRoutine(args.routineId as String)
+            : _predefinedRoutineRepository.getPredefinedRoutine(
+                args.predefinedRoutineId as String,
+              ),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
