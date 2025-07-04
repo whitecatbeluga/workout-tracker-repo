@@ -25,6 +25,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
   final authrepo = AuthRepositoryImpl(AuthService());
   final _formKey = GlobalKey<FormState>();
   StreamSubscription<UserAccount>? _accountSubscription;
+  final _isUploading = ValueNotifier<bool>(false);
   final ValueNotifier<bool> _isLoadingDetails = ValueNotifier(false);
   final ValueNotifier<bool> _isLoadingPassword = ValueNotifier(false);
   final _usernameController = TextEditingController();
@@ -308,14 +309,16 @@ class _EditAccountPageState extends State<EditAccountPage> {
   }
 
   void _removePhoto() async {
+    _isUploading.value = true;
     setState(() {
       _selectedImage = null;
     });
     await authrepo.removeUserAvatar(user!.uid).then((_) {
       if (mounted) {
+        _isUploading.value = false;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Photo removed! Don\'t forget to save your changes.'),
+            content: Text('Photo removed!'),
             backgroundColor: Color(0xFF505050),
           ),
         );
@@ -324,6 +327,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
   }
 
   Future<void> _saveNewAvatar(String? imagePath) async {
+    _isUploading.value = true;
     try {
       if (imagePath != null) {
         // Update user profile
@@ -337,6 +341,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
         });
 
         if (mounted) {
+          _isUploading.value = false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               behavior: SnackBarBehavior.floating,
@@ -351,6 +356,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
         // await refreshUserProfile();
 
         if (mounted) {
+          _isUploading.value = false;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Avatar removed successfully!'),
@@ -361,6 +367,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
       }
     } catch (e) {
       if (mounted) {
+        _isUploading.value = false;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error updating avatar: $e'),
@@ -500,237 +507,279 @@ class _EditAccountPageState extends State<EditAccountPage> {
         ),
         centerTitle: true,
       ),
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 29,
+      body: ValueListenableBuilder(
+        valueListenable: _isUploading,
+        builder: (context, value, child) {
+          return Stack(
             children: [
-              Center(
-                child: StreamBuilder(
-                  stream: getUserAccount(user!.uid),
-                  builder: (context, res) {
-                    if (res.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 10),
-                          ],
-                        ),
-                      );
-                    }
-
-                    if (res.hasError) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Icon(
-                              Icons.error_outline,
-                              color: Colors.red,
-                              size: 60,
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              'Error: ${res.error}',
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-                    UserAccount account = res.data!;
-
-                    return GestureDetector(
-                      onTap: () => _showAvatarDialog(account),
-                      child: Stack(
-                        children: [
-                          CircleAvatar(
-                            backgroundColor: Color(0xFF9ACBD0),
-                            radius: 45,
-                            backgroundImage:
-                                (account.accountPicture != null &&
-                                    account.accountPicture!.isNotEmpty)
-                                ? NetworkImage(account.accountPicture!)
-                                : null,
-                            child:
-                                (account.accountPicture == null ||
-                                    account.accountPicture!.isEmpty)
-                                ? Text(
-                                    account.accountPicture == "" ||
-                                            account.accountPicture == null
-                                        ? account.username![0].toUpperCase()
-                                        : '?',
-                                    style: const TextStyle(
-                                      fontSize: 40,
-                                      color: Color(0xFF006A71),
-                                    ),
-                                  )
-                                : null,
-                          ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: _selectedImage != null
-                                    ? Colors.orange
-                                    : Color(0xFF006A71),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
-                                ),
-                              ),
-                              child: Icon(
-                                _selectedImage != null
-                                    ? Icons.pending
-                                    : Icons.edit,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Text(
-                'Update Username',
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 17),
-              ),
-              Column(
-                spacing: 20,
-                children: [
-                  InputField(
-                    controller: _usernameController,
-                    label: 'Username',
-                    prefixIcon: Icons.person,
-                    validator: FormValidators.validateUsername,
-                    autoValidateMode: AutovalidateMode.onUserInteraction,
-                    enableLiveValidation: true,
-                  ),
-                  InputField(
-                    disabled: true,
-                    controller: _emailController,
-                    label: 'Email Address',
-                    prefixIcon: Icons.email,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: FormValidators.validateEmail,
-                    autoValidateMode: AutovalidateMode.onUserInteraction,
-                    enableLiveValidation: true,
-                  ),
-                  ValueListenableBuilder<bool>(
-                    valueListenable: _isLoadingDetails,
-                    builder: (context, isLoading, child) {
-                      return isLoading
-                          ? CircularProgressIndicator()
-                          : Button(
-                              label: 'Save Details',
-                              onPressed: () async {
-                                if (_usernameController.text.isNotEmpty &&
-                                    _emailController.text.isNotEmpty) {
-                                  _isLoadingDetails.value = true;
-                                  try {
-                                    await updateUserEmailAndUsername(
-                                      newEmail: _emailController.text,
-                                      newUsername: _usernameController.text,
-                                    );
-                                  } finally {
-                                    _isLoadingDetails.value = false;
-                                  }
-                                }
-                              },
-                              fullWidth: true,
-                              height: 45,
-                            );
-                    },
-                  ),
-                  Divider(),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Update Password',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 17,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Form(
-                    key: _formKey,
+              SingleChildScrollView(
+                child: Container(
+                  width: double.infinity,
+                  color: Colors.white,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
                     child: Column(
-                      spacing: 20,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 29,
                       children: [
-                        PasswordField(
-                          controller: _oldPasswordController,
-                          label: 'Current Password',
-                          validator: FormValidators.validatePassword,
-                          autoValidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        PasswordField(
-                          controller: _passwordController,
-                          label: 'New Password',
-                          validator: FormValidators.validatePassword,
-                          autoValidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        PasswordField(
-                          controller: _confirmPasswordController,
-                          label: 'Confirm New Password',
-                          validator: (value) =>
-                              FormValidators.validateConfirmPassword(
-                                value,
-                                _passwordController.text,
-                              ),
-                          autoValidateMode: AutovalidateMode.onUserInteraction,
-                        ),
-                        ValueListenableBuilder<bool>(
-                          valueListenable: _isLoadingPassword,
-                          builder: (context, isLoading, child) {
-                            return isLoading
-                                ? CircularProgressIndicator()
-                                : Button(
-                                    label: 'Save Password',
-                                    onPressed: () async {
-                                      if (_formKey.currentState!.validate()) {
-                                        _isLoadingPassword.value = true;
+                        Center(
+                          child: StreamBuilder(
+                            stream: getUserAccount(user!.uid),
+                            builder: (context, res) {
+                              if (res.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      CircularProgressIndicator(),
+                                      SizedBox(height: 10),
+                                    ],
+                                  ),
+                                );
+                              }
 
-                                        try {
-                                          await updatePassword(
-                                            currentPassword:
-                                                _oldPasswordController.text,
-                                            newPassword:
-                                                _passwordController.text,
-                                          );
-                                        } finally {
-                                          _isLoadingPassword.value = false;
-                                        }
-                                      }
+                              if (res.hasError) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(
+                                        Icons.error_outline,
+                                        color: Colors.red,
+                                        size: 60,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        'Error: ${res.error}',
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+                              UserAccount account = res.data!;
+
+                              return GestureDetector(
+                                onTap: () => _showAvatarDialog(account),
+                                child: Stack(
+                                  children: [
+                                    CircleAvatar(
+                                      backgroundColor: Color(0xFF9ACBD0),
+                                      radius: 45,
+                                      backgroundImage:
+                                          (account.accountPicture != null &&
+                                              account
+                                                  .accountPicture!
+                                                  .isNotEmpty)
+                                          ? NetworkImage(
+                                              account.accountPicture!,
+                                            )
+                                          : null,
+                                      child:
+                                          (account.accountPicture == null ||
+                                              account.accountPicture!.isEmpty)
+                                          ? Text(
+                                              account.accountPicture == "" ||
+                                                      account.accountPicture ==
+                                                          null
+                                                  ? account.username![0]
+                                                        .toUpperCase()
+                                                  : '?',
+                                              style: const TextStyle(
+                                                fontSize: 40,
+                                                color: Color(0xFF006A71),
+                                              ),
+                                            )
+                                          : null,
+                                    ),
+                                    Positioned(
+                                      bottom: 0,
+                                      right: 0,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: _selectedImage != null
+                                              ? Colors.orange
+                                              : Color(0xFF006A71),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                          border: Border.all(
+                                            color: Colors.white,
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          _selectedImage != null
+                                              ? Icons.pending
+                                              : Icons.edit,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const Text(
+                          'Update Username',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 17,
+                          ),
+                        ),
+                        Column(
+                          spacing: 20,
+                          children: [
+                            InputField(
+                              controller: _usernameController,
+                              label: 'Username',
+                              prefixIcon: Icons.person,
+                              validator: FormValidators.validateUsername,
+                              autoValidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              enableLiveValidation: true,
+                            ),
+                            InputField(
+                              disabled: true,
+                              controller: _emailController,
+                              label: 'Email Address',
+                              prefixIcon: Icons.email,
+                              keyboardType: TextInputType.emailAddress,
+                              validator: FormValidators.validateEmail,
+                              autoValidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              enableLiveValidation: true,
+                            ),
+                            ValueListenableBuilder<bool>(
+                              valueListenable: _isLoadingDetails,
+                              builder: (context, isLoading, child) {
+                                return isLoading
+                                    ? CircularProgressIndicator()
+                                    : Button(
+                                        label: 'Save Details',
+                                        onPressed: () async {
+                                          if (_usernameController
+                                                  .text
+                                                  .isNotEmpty &&
+                                              _emailController
+                                                  .text
+                                                  .isNotEmpty) {
+                                            _isLoadingDetails.value = true;
+                                            try {
+                                              await updateUserEmailAndUsername(
+                                                newEmail: _emailController.text,
+                                                newUsername:
+                                                    _usernameController.text,
+                                              );
+                                            } finally {
+                                              _isLoadingDetails.value = false;
+                                            }
+                                          }
+                                        },
+                                        fullWidth: true,
+                                        height: 45,
+                                      );
+                              },
+                            ),
+                            Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Update Password',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 17,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Form(
+                              key: _formKey,
+                              child: Column(
+                                spacing: 20,
+                                children: [
+                                  PasswordField(
+                                    controller: _oldPasswordController,
+                                    label: 'Current Password',
+                                    validator: FormValidators.validatePassword,
+                                    autoValidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                  ),
+                                  PasswordField(
+                                    controller: _passwordController,
+                                    label: 'New Password',
+                                    validator: FormValidators.validatePassword,
+                                    autoValidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                  ),
+                                  PasswordField(
+                                    controller: _confirmPasswordController,
+                                    label: 'Confirm New Password',
+                                    validator: (value) =>
+                                        FormValidators.validateConfirmPassword(
+                                          value,
+                                          _passwordController.text,
+                                        ),
+                                    autoValidateMode:
+                                        AutovalidateMode.onUserInteraction,
+                                  ),
+                                  ValueListenableBuilder<bool>(
+                                    valueListenable: _isLoadingPassword,
+                                    builder: (context, isLoading, child) {
+                                      return isLoading
+                                          ? CircularProgressIndicator()
+                                          : Button(
+                                              label: 'Save Password',
+                                              onPressed: () async {
+                                                if (_formKey.currentState!
+                                                    .validate()) {
+                                                  _isLoadingPassword.value =
+                                                      true;
+
+                                                  try {
+                                                    await updatePassword(
+                                                      currentPassword:
+                                                          _oldPasswordController
+                                                              .text,
+                                                      newPassword:
+                                                          _passwordController
+                                                              .text,
+                                                    );
+                                                  } finally {
+                                                    _isLoadingPassword.value =
+                                                        false;
+                                                  }
+                                                }
+                                              },
+                                              fullWidth: true,
+                                              height: 45,
+                                            );
                                     },
-                                    fullWidth: true,
-                                    height: 45,
-                                  );
-                          },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
+              if (_isUploading.value)
+                Container(
+                  color: Colors.black.withAlpha(40),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }

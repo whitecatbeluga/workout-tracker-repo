@@ -7,6 +7,9 @@ import 'package:workout_tracker_repo/data/services/routine_service.dart';
 import 'package:workout_tracker_repo/data/services/workout_service.dart';
 import 'package:workout_tracker_repo/domain/entities/routine.dart';
 import 'package:workout_tracker_repo/domain/entities/workout.dart';
+import 'package:workout_tracker_repo/presentation/domain/entities/filter_item.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/collapsible/bottomdrawer.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});
@@ -20,6 +23,62 @@ class _StatisticsPageState extends State<StatisticsPage> {
   final workoutRepo = WorkoutRepositoryImpl(WorkoutService());
   final routineRepo = RoutineRepositoryImpl(RoutineService());
   late List<Workout> workouts = [];
+  ValueNotifier<String> selectedWF = ValueNotifier('This Week');
+  ValueNotifier<String> selectedVOT = ValueNotifier('This Week');
+
+  void showWFFilter(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => BottomDrawer(
+        filterItems: [
+          FilterItem(
+            title: 'This Week',
+            onTap: () {
+              selectedWF.value = 'This Week';
+            },
+            icon: Icons.today,
+          ),
+          FilterItem(
+            title: 'Last Week',
+            onTap: () {
+              selectedWF.value = 'Last Week';
+            },
+            icon: Icons.calendar_month,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void showVOTFilter(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => BottomDrawer(
+        filterItems: [
+          FilterItem(
+            title: 'This Week',
+            onTap: () {
+              selectedVOT.value = 'This Week';
+            },
+            icon: Icons.today,
+          ),
+          FilterItem(
+            title: 'Last Week',
+            onTap: () {
+              selectedVOT.value = 'Last Week';
+            },
+            icon: Icons.calendar_month,
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -157,8 +216,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
         lastRoutineWeekCount++;
       }
     }
-    print('thisRoutineWeekCount: $thisWeekCount');
-    print('lastRoutineWeekCount: $lastWeekCount');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -174,45 +231,80 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: ValueListenableBuilder(
+        valueListenable: selectedWF,
+        builder: (context, value, child) {
+          final isThisWeek = value == 'This Week';
+
+          final routineLabel = isThisWeek
+              ? 'This week'
+              : 'Last week → This week';
+          final workoutLabel = isThisWeek
+              ? 'This week'
+              : 'Last week → This week';
+
+          final routineChange = routineLabel == 'This week'
+              ? thisRoutineWeekCount - lastRoutineWeekCount
+              : lastRoutineWeekCount - thisRoutineWeekCount;
+          final workoutChange = workoutLabel == 'This week'
+              ? thisWeekCount - lastWeekCount
+              : lastWeekCount - thisWeekCount;
+          final workoutCount = workoutLabel == 'This week'
+              ? thisWeekCount
+              : lastWeekCount;
+          final routineCount = routineLabel == 'This week'
+              ? thisRoutineWeekCount
+              : lastRoutineWeekCount;
+          print('Last week: $lastWeekCount');
+          print('This Week $thisWeekCount');
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Workout Frequency',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Workout Frequency',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  Button(
+                    label: selectedWF.value,
+                    onPressed: () => showWFFilter(context),
+                    backgroundColor: Colors.white,
+                    textColor: Color(0xFF006A71),
+                    suffixIcon: Icons.arrow_downward,
+                    fontSize: 14,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildFrequencyCard(
+                      routineLabel,
+                      routineCount.toString(),
+                      'routine${thisRoutineWeekCount > 1 ? 's' : ''}',
+                      routineChange,
+                      routineChange > 0 ? Colors.teal : Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _buildFrequencyCard(
+                      workoutLabel,
+                      workoutCount.toString(),
+                      'workout${thisWeekCount > 1 ? 's' : ''}',
+                      workoutChange,
+                      workoutChange > 0 ? Colors.teal : Colors.red,
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildFrequencyCard(
-                  'This week',
-                  thisRoutineWeekCount.toString(),
-                  'routine${thisRoutineWeekCount > 1 ? 's' : ''}',
-                  thisRoutineWeekCount - lastRoutineWeekCount,
-                  thisRoutineWeekCount - lastRoutineWeekCount > 0
-                      ? Colors.teal
-                      : Colors.red,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildFrequencyCard(
-                  'This week',
-                  thisWeekCount.toString(),
-                  'workout${thisWeekCount > 1 ? 's' : ''}',
-                  thisWeekCount - lastWeekCount,
-                  thisWeekCount - lastWeekCount > 0 ? Colors.teal : Colors.red,
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -388,9 +480,9 @@ class _StatisticsPageState extends State<StatisticsPage> {
     );
     DateTime endOfLastWeek = startOfThisWeek.subtract(const Duration(days: 1));
 
-    int totalKgThisWeek = 0;
+    // int totalKgThisWeek = 0;
     int totalSetsThisWeek = 0;
-    int totalKgLastWeek = 0;
+    // int totalKgLastWeek = 0;
     int totalSetsLastWeek = 0;
     for (var workout in workouts) {
       final routineDate = workout.createdAt;
@@ -399,14 +491,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
           !routineDate.isAfter(endOfThisWeek);
       if (isInRange) {
         // print(workout);
-        totalKgThisWeek += (workout.volume ?? 0);
+        // totalKgThisWeek += (workout.volume ?? 0);
         totalSetsThisWeek += (workout.sets ?? 0);
       }
       bool isInRange2 =
           !routineDate.isBefore(startOfLastWeek) &&
           !routineDate.isAfter(endOfLastWeek);
       if (isInRange2) {
-        totalKgLastWeek += (workout.volume ?? 0);
+        // totalKgLastWeek += (workout.volume ?? 0);
         totalSetsLastWeek += (workout.sets ?? 0);
       }
     }
@@ -434,8 +526,6 @@ class _StatisticsPageState extends State<StatisticsPage> {
         }
       }
     }
-    print('thisWeekRepCount: $thisWeekRepCount');
-    print('lastWeekRepCount: $lastWeekRepCount');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -451,52 +541,77 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Volume over time',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 16),
-          Row(
+      child: ValueListenableBuilder(
+        valueListenable: selectedVOT,
+        builder: (context, value, child) {
+          final isThisWeek = selectedVOT.value == 'This Week';
+          final totalKg = isThisWeek ? thisWeekRepCount : lastWeekRepCount;
+          final kgChange = isThisWeek
+              ? thisWeekRepCount - lastWeekRepCount
+              : lastWeekRepCount - thisWeekRepCount;
+
+          final totalSets = isThisWeek ? totalSetsThisWeek : totalSetsLastWeek;
+          final setChange = isThisWeek
+              ? totalSetsThisWeek - totalSetsLastWeek
+              : totalSetsLastWeek - totalSetsThisWeek;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _buildVolumeCard(
-                  'Total Reps',
-                  thisWeekRepCount.toInt().toString(),
-                  'rep${thisWeekRepCount == 1 ? '' : 's'}',
-                  thisWeekRepCount.toInt() - lastWeekRepCount.toInt(),
-                  Colors.teal,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Volume over time',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  Button(
+                    label: selectedVOT.value,
+                    onPressed: () => showVOTFilter(context),
+                    backgroundColor: Colors.white,
+                    textColor: Color(0xFF006A71),
+                    suffixIcon: Icons.arrow_downward,
+                    fontSize: 14,
+                  ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildVolumeCard(
-                  'Weight Lifted',
-                  '$totalKgThisWeek',
-                  'kg',
-                  totalKgThisWeek - totalKgLastWeek,
-                  totalKgThisWeek - totalKgLastWeek > 0
-                      ? Colors.teal
-                      : Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildVolumeCard(
-                  'Total Sets',
-                  '$totalSetsThisWeek',
-                  'sets',
-                  totalSetsThisWeek - totalSetsLastWeek,
-                  totalSetsThisWeek - totalSetsLastWeek > 0
-                      ? Colors.teal
-                      : Colors.red,
-                ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVolumeCard(
+                      'Total Reps',
+                      totalKg.toInt().toString(),
+                      'rep${totalKg <= 1 ? '' : 's'}',
+                      kgChange.toInt(),
+                      kgChange > 0 ? Colors.teal : Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildVolumeCard(
+                      'Weight Lifted',
+                      totalKg.toInt().toString(),
+                      'kg',
+                      kgChange.toInt(),
+                      kgChange > 0 ? Colors.teal : Colors.red,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildVolumeCard(
+                      'Total Sets',
+                      '$totalSets',
+                      'sets',
+                      setChange,
+                      setChange > 0 ? Colors.teal : Colors.red,
+                    ),
+                  ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -521,7 +636,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               Text(
                 value,
                 style: const TextStyle(
-                  fontSize: 30,
+                  fontSize: 25,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -577,6 +692,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
     List<String> exercises = [];
     List<Map<String, dynamic>> originalList = [];
     for (var routine in routines) {
+      print(routine);
       for (var exercise in routine.exercises) {
         exercises.add(exercise.name);
         originalList.add({
@@ -637,7 +753,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Most used routines',
+            'Top Used Routine Exercises',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 0.1),
@@ -649,7 +765,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const Expanded(
                   flex: 3,
                   child: Text(
-                    'Routine Name',
+                    'Exercise Name',
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey,
