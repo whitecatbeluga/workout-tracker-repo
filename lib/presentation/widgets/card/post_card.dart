@@ -9,6 +9,7 @@ import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_ac
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../domain/entities/social_with_user.dart';
 import 'package:intl/intl.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LikesBottomSheet extends StatefulWidget {
   final String workoutId;
@@ -355,6 +356,60 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class ShareBottomSheet extends StatelessWidget {
+  const ShareBottomSheet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: SizedBox(
+        width: double.infinity,
+        height: 160,
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Share Workout',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: 20),
+              Row(
+                spacing: 20,
+                children: [
+                  Column(
+                    children: [
+                      FaIcon(FontAwesomeIcons.facebook, size: 40),
+                      Text('Facebook', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      FaIcon(FontAwesomeIcons.instagram, size: 40),
+                      Text('Instagram', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      FaIcon(FontAwesomeIcons.xTwitter, size: 40),
+                      Text('X', style: TextStyle(fontSize: 12)),
+                    ],
+                  ),
+                
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -787,7 +842,16 @@ class _PostCardState extends State<PostCard> {
                   ),
                   IconButton(
                     onPressed: () {
-                      print('Pressed share');
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(20),
+                          ),
+                        ),
+                        builder: (context) => ShareBottomSheet(),
+                      );
                     },
                     icon: Icon(Icons.ios_share),
                   ),
