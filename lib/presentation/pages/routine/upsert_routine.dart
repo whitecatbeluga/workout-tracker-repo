@@ -90,6 +90,13 @@ class _UpsertRoutineState extends State<UpsertRoutine> {
 
     final workoutSets = WorkoutSets(sets: mappedSets);
 
+    if (workoutSets.sets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one exercise.')),
+      );
+      return;
+    }
+
     if (routineName.isNotEmpty) {
       try {
         _routineRepository.createNewRoutine(
