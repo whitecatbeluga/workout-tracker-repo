@@ -159,24 +159,24 @@ class _ProfilePageState extends State<ProfilePage> {
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20.0,
                             ),
-                            child: Column(
-                              children: [
-                                GraphFilter(
-                                  selectedValue: selectedFilter,
-                                  onChanged: (newValue) {
-                                    selectedF.value = newValue;
-                                  },
-                                ),
-                                ValueListenableBuilder(
-                                  valueListenable: selectedF,
-                                  builder: (context, value, child) {
-                                    return BarChartWidget(
+                            child: ValueListenableBuilder(
+                              valueListenable: selectedF,
+                              builder: (context, value, child) {
+                                return Column(
+                                  children: [
+                                    GraphFilter(
+                                      selectedValue: selectedF.value,
+                                      onChanged: (newValue) {
+                                        selectedF.value = newValue;
+                                      },
+                                    ),
+                                    BarChartWidget(
                                       filter: selectedF.value,
                                       workouts: workouts,
-                                    );
-                                  },
-                                ),
-                              ],
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         ],
