@@ -1,4 +1,5 @@
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
+import 'package:workout_tracker_repo/domain/entities/notifications_with_user.dart';
 import '../entities/social_with_user.dart';
 
 abstract class SocialRepository {
@@ -19,4 +20,6 @@ abstract class SocialRepository {
   Future<void> clearAllRecents();
   Stream<List<SocialWithUser>> fetchMyWorkouts(String userId);
   Future<int> countRoutines(String userId);
+  Stream<List<NotificationWithUser>> fetchNotifications(String userId);
+  Future<SocialWithUser?> fetchSocialWithUserByWorkoutId(String workoutId);
 }

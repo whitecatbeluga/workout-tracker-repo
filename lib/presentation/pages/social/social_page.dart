@@ -79,7 +79,7 @@ class SocialPageState extends State<SocialPage> {
           ),
           IconButton(
             onPressed: () {
-              print('Notifications pressed');
+              Navigator.pushNamed(context, SocialRoutes.notifications);
             },
             icon: Icon(Icons.notifications_outlined),
           ),
