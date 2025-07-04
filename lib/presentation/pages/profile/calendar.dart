@@ -881,13 +881,14 @@ class _CalendarPageState extends State<CalendarPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
+                                Text(
                                   'Workout Details',
                                   style: TextStyle(
                                     fontSize: 22,
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black,
                                     decoration: TextDecoration.none,
+                                    fontFamily: 'Inter',
                                   ),
                                 ),
                                 GestureDetector(
@@ -916,6 +917,7 @@ class _CalendarPageState extends State<CalendarPage> {
                                   color: Colors.grey[600],
                                   decoration: TextDecoration.none,
                                   fontWeight: FontWeight.normal,
+                                  fontFamily: 'Inter',
                                 ),
                               ),
                             ),
