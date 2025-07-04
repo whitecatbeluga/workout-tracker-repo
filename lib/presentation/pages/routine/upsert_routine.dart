@@ -28,46 +28,51 @@ class _UpsertRoutineState extends State<UpsertRoutine> {
     RoutineService(),
   );
   late final UpsertRoutineArgs args;
+  bool _argsInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final receivedArgs = ModalRoute.of(context)?.settings.arguments;
-    if (receivedArgs != null && receivedArgs is UpsertRoutineArgs) {
-      args = receivedArgs;
-      setState(() {
-        routineNameController.text = args.routine?.routineName ?? '';
-      });
 
-      if (args.routine?.exercises != null) {
-        routineExercises.value = args.routine!.exercises.map((e) {
-          return exercise_entity.Exercise(
-            id: e.id,
-            name: e.name,
-            description: e.description,
-            category: e.category,
-            withoutEquipment: e.withOutEquipment,
-            imageUrl: e.imageUrl,
-          );
-        }).toList();
+    if (!_argsInitialized) {
+      final receivedArgs = ModalRoute.of(context)?.settings.arguments;
+      if (receivedArgs != null && receivedArgs is UpsertRoutineArgs) {
+        args = receivedArgs;
+        _argsInitialized = true;
+        setState(() {
+          routineNameController.text = args.routine?.routineName ?? '';
+        });
 
-        for (final exercise in args.routine!.exercises) {
-          exerciseSets[exercise.id] = exercise.sets.asMap().entries.map((
-            entry,
-          ) {
-            final set = entry.value;
-            return SetEntry(
-              setNumber: entry.key + 1,
-              previous: "${set.kg}kg x ${set.reps}",
-              kg: set.kg,
-              reps: set.reps,
-              isCompleted: false,
+        if (args.routine?.exercises != null) {
+          routineExercises.value = args.routine!.exercises.map((e) {
+            return exercise_entity.Exercise(
+              id: e.id,
+              name: e.name,
+              description: e.description,
+              category: e.category,
+              withoutEquipment: e.withOutEquipment,
+              imageUrl: e.imageUrl,
             );
           }).toList();
+
+          for (final exercise in args.routine!.exercises) {
+            exerciseSets[exercise.id] = exercise.sets.asMap().entries.map((
+              entry,
+            ) {
+              final set = entry.value;
+              return SetEntry(
+                setNumber: entry.key + 1,
+                previous: "${set.kg}kg x ${set.reps}",
+                kg: set.kg,
+                reps: set.reps,
+                isCompleted: false,
+              );
+            }).toList();
+          }
         }
+      } else {
+        throw Exception('Missing arguments for UpsertRoutine');
       }
-    } else {
-      throw Exception('Missing arguments for UpsertRoutine');
     }
   }
 
