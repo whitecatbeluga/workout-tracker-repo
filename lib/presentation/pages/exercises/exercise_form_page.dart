@@ -7,6 +7,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/exercise_repository_impl.dart';
 import 'package:workout_tracker_repo/data/services/exercise_service.dart';
 import 'package:workout_tracker_repo/domain/entities/exercise.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 
 class ExerciseFormPage extends StatefulWidget {
   final String? id;
@@ -36,8 +37,8 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
+  ValueNotifier<bool> isLoading = ValueNotifier<bool>(false);
   final _formKey = GlobalKey<FormState>();
-
   bool withEquipment = false;
   bool isloading = false;
   File? _selectedImage;
@@ -122,7 +123,7 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState?.validate() != true) return;
-
+    isLoading.value = true;
     setState(() => isloading = true);
 
     try {
@@ -141,14 +142,13 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
       );
 
       if (widget.id == null) {
-        // Create mode
         await exerciserepo.addExercise(exercise, user!.uid);
       } else {
-        // Update mode
         await exerciserepo.updateExercise(exercise, user!.uid);
       }
 
       if (mounted) {
+        isLoading.value = false;
         setState(() => isloading = false);
         Navigator.pop(context);
       }
@@ -158,6 +158,80 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
+  Future<void> _deleteExercise() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 20,
+            children: [
+              Text(
+                'Are you sure you want to delete this exercise?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              Column(
+                spacing: 10,
+                children: [
+                  Button(
+                    label: 'Delete',
+                    onPressed: () => Navigator.pop(context, true),
+                    prefixIcon: Icons.delete_forever,
+                    backgroundColor: Colors.red.shade800,
+                    textColor: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                  ),
+                  Button(
+                    label: 'Cancel',
+                    onPressed: () => Navigator.pop(context, false),
+                    prefixIcon: Icons.delete_forever,
+                    backgroundColor: Colors.white,
+                    textColor: Colors.red.shade800,
+                    fontWeight: FontWeight.w500,
+                    fullWidth: true,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      isLoading.value = true;
+      setState(() => isloading = true);
+      await exerciserepo.deleteExercise(
+        widget.id!,
+        user!.uid,
+        imageUrl: widget.imageUrl,
+      );
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      if (mounted) {
+        isLoading.value = false;
+        setState(() => isloading = false);
       }
     }
   }
@@ -186,96 +260,134 @@ class _ExerciseFormPageState extends State<ExerciseFormPage> {
               style: const TextStyle(fontSize: 20),
             ),
             GestureDetector(
-              onTap: _submitForm,
+              onTap: isloading ? null : _submitForm,
               child: Container(
                 margin: const EdgeInsets.only(right: 5),
-                child: const Text(
+                child: Text(
                   'Save',
-                  style: TextStyle(color: Color(0xFF48A6A7), fontSize: 16),
+                  style: TextStyle(
+                    color: isloading ? Colors.grey : Color(0xFF48A6A7),
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
-      body: Container(
-        color: Colors.white,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                InputImage(
-                  onTap: _pickImage,
-                  imageFile: _selectedImage,
-                  imageUrl: widget.imageUrl,
-                ),
-                TextFormField(
-                  controller: _nameController,
-                  style: const TextStyle(
-                    color: Color.fromARGB(255, 165, 165, 165),
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  decoration: const InputDecoration(
-                    enabledBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        width: 1,
-                        color: Color(0xFFEEEEEE),
+      body: Stack(
+        children: [
+          Container(
+            color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    InputImage(
+                      onTap: _pickImage,
+                      imageFile: _selectedImage,
+                      imageUrl: widget.imageUrl,
+                    ),
+                    TextFormField(
+                      controller: _nameController,
+                      style: const TextStyle(
+                        color: Color(0xFF505050),
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
                       ),
-                    ),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(
-                        width: 1,
-                        color: Color(0xFFEEEEEE),
-                      ),
-                    ),
-                    hintText: 'Exercise Name',
-                    hintStyle: TextStyle(
-                      color: Color.fromARGB(255, 165, 165, 165),
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  validator: (value) =>
-                      value == null || value.trim().isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 8),
-                InputWidget(label: 'Description', controller: _descController),
-                InputWidget(label: 'Category', controller: _categoryController),
-                Padding(
-                  padding: const EdgeInsets.only(left: 4.0),
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(width: 1, color: Color(0xFFEEEEEE)),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'With Equipment',
-                          style: TextStyle(fontSize: 16),
+                      decoration: const InputDecoration(
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            width: 1,
+                            color: Color(0xFFEEEEEE),
+                          ),
                         ),
-                        Switch(
-                          activeColor: const Color(0xFF006A71),
-                          value: withEquipment,
-                          onChanged: (value) {
-                            setState(() {
-                              withEquipment = value;
-                            });
-                          },
+                        focusedBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(
+                            width: 1,
+                            color: Color(0xFFEEEEEE),
+                          ),
                         ),
-                      ],
+                        hintText: 'Exercise Name',
+                        hintStyle: TextStyle(
+                          color: Color.fromARGB(255, 165, 165, 165),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      validator: (value) =>
+                          value == null || value.trim().isEmpty
+                          ? 'Required'
+                          : null,
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    InputWidget(
+                      label: 'Description',
+                      controller: _descController,
+                    ),
+                    InputWidget(
+                      label: 'Category',
+                      controller: _categoryController,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4.0),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              width: 1,
+                              color: Color(0xFFEEEEEE),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'With Equipment',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                            Switch(
+                              activeColor: const Color(0xFF006A71),
+                              value: withEquipment,
+                              onChanged: (value) {
+                                setState(() {
+                                  withEquipment = value;
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (widget.id != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: GestureDetector(
+                          onTap: isloading ? null : _deleteExercise,
+                          child: const Text(
+                            'Delete Exercise',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 16,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
+          if (isLoading.value)
+            Container(
+              color: Colors.black.withAlpha(40),
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+        ],
       ),
     );
   }
@@ -336,6 +448,8 @@ class InputImage extends StatelessWidget {
         fit: BoxFit.cover,
         width: double.infinity,
         height: 150,
+        errorBuilder: (context, error, stackTrace) =>
+            const Center(child: Text('Image load error')),
       );
     } else {
       child = Column(

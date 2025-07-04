@@ -60,6 +60,12 @@ class _ProfilePageState extends State<ProfilePage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    loadCurrentUserProfile();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
@@ -366,6 +372,8 @@ class _ProfileHeaderState extends State<ProfileHeader> {
             email: doc.data()?['email'],
             accountPicture: doc.data()?['account_picture'],
             username: doc.data()?['user_name'],
+            firstName: doc.data()?['first_name'],
+            lastName: doc.data()?['last_name'],
           ),
         );
   }
@@ -378,128 +386,99 @@ class _ProfileHeaderState extends State<ProfileHeader> {
       children: [
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 10,
           children: [
-            StreamBuilder(
-              stream: getUserAccount(widget.user!.uid),
-              builder: (context, res) {
-                if (res.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 10),
-                      ],
+            ValueListenableBuilder(
+              valueListenable: currentUserProfile,
+              builder: (context, profile, _) {
+                if (profile == null) return const CircularProgressIndicator();
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFF9ACBD0),
+                      radius: 45,
+                      backgroundImage:
+                          (profile.accountPicture != null &&
+                              profile.accountPicture!.isNotEmpty)
+                          ? NetworkImage(profile.accountPicture!)
+                          : null,
+                      child:
+                          (profile.accountPicture == null ||
+                              profile.accountPicture!.isEmpty)
+                          ? Text(
+                              profile.userName[0].toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 40,
+                                color: Color(0xFF006A71),
+                              ),
+                            )
+                          : null,
                     ),
-                  );
-                }
-
-                if (res.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                    const SizedBox(
+                      width: 16,
+                    ), // spacing between avatar and info
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.red,
-                          size: 60,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${profile.firstName} ${profile.lastName}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            Text(
+                              widget.user?.email ?? "",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 10),
-                        Text(
-                          'Error: ${res.error}',
-                          textAlign: TextAlign.center,
+                        Row(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  followerCount.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const Text(
+                                  "Followers",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  followingCount.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const Text(
+                                  "Following",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }
-                UserAccount account = res.data!;
-                return CircleAvatar(
-                  backgroundColor: Color(0xFF9ACBD0),
-                  radius: 45,
-                  backgroundImage:
-                      (account.accountPicture != null &&
-                          account.accountPicture!.isNotEmpty)
-                      ? NetworkImage(account.accountPicture!)
-                      : null,
-                  child:
-                      (account.accountPicture == null ||
-                          account.accountPicture!.isEmpty)
-                      ? Text(
-                          account.accountPicture == "" ||
-                                  account.accountPicture == null
-                              ? account.username![0].toUpperCase()
-                              : '?',
-                          style: const TextStyle(
-                            fontSize: 40,
-                            color: Color(0xFF006A71),
-                          ),
-                        )
-                      : null,
-                );
-              },
-            ),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 10,
-              children: [
-                ValueListenableBuilder<UserProfile?>(
-                  valueListenable: currentUserProfile,
-                  builder: (context, profile, _) {
-                    if (profile == null) return CircularProgressIndicator();
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${profile.firstName} ${profile.lastName}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          widget.user?.email ?? "",
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-
-                Row(
-                  spacing: 20,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          followerCount.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text("Followers", style: TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          followingCount.toString(),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text("Following", style: TextStyle(fontSize: 14)),
                       ],
                     ),
                   ],
-                ),
-              ],
+                );
+              },
             ),
           ],
         ),

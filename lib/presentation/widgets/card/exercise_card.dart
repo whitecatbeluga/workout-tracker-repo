@@ -38,7 +38,6 @@ class _ExerciseCardState extends State<ExerciseCard>
 
   @override
   void initState() {
-    print(widget.id);
     super.initState();
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -113,7 +112,10 @@ class _ExerciseCardState extends State<ExerciseCard>
                           ),
                     const SizedBox(width: 14),
                     Text(
-                      widget.exerciseName,
+                      // widget.exerciseName,
+                      widget.exerciseName.length > 21
+                          ? '${widget.exerciseName.substring(0, 21)}...'
+                          : widget.exerciseName,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

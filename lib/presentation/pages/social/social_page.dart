@@ -22,6 +22,12 @@ class SocialPageState extends State<SocialPage> {
   final repository = SocialRepositoryImpl(FirebaseFirestore.instance);
 
   @override
+  void initState() {
+    super.initState();
+    loadCurrentUserProfile();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,

@@ -7,4 +7,10 @@ abstract class ExerciseRepository {
   Future<void> updateExercise(Exercise exercise, String userId);
 
   Stream<List<Exercise>> getExercisesByUserId(String userId);
+
+  Future<void> deleteExercise(
+    String exerciseId,
+    String useId, {
+    String? imageUrl,
+  });
 }

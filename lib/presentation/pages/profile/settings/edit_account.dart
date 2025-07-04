@@ -790,6 +790,14 @@ class UserAccount {
   final String? username;
   final String? email;
   final String? accountPicture;
+  String? firstName;
+  String? lastName;
 
-  UserAccount({this.email, this.accountPicture, this.username});
+  UserAccount({
+    this.email,
+    this.accountPicture,
+    this.username,
+    this.firstName,
+    this.lastName,
+  });
 }
