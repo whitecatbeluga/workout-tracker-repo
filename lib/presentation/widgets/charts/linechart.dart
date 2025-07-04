@@ -6,30 +6,12 @@ import 'package:workout_tracker_repo/domain/entities/measurement.dart';
 class LinechartWidget extends StatelessWidget {
   final List<Measurement> measurements;
   final bool showWeight; // true = weight, false = height
+
   const LinechartWidget({
     super.key,
     required this.showWeight,
     required this.measurements,
   });
-
-  // Simple method to calculate interval based on range
-  double _calculateInterval(double range, bool isWeight) {
-    if (range <= 2) {
-      return 0.5;
-    } else if (range <= 5) {
-      return 1.0;
-    } else if (range <= 10) {
-      return 2.0;
-    } else if (range <= 20) {
-      return showWeight ? 2.0 : 5.0;
-    } else if (range <= 50) {
-      return 5.0;
-    } else if (range <= 100) {
-      return 10.0;
-    } else {
-      return 20.0;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,26 +25,38 @@ class LinechartWidget extends StatelessWidget {
 
     final List<DateTime> dates = measurements.map((e) => e.date).toList();
 
-    // Extract all y-values from dataPoints
-    final yValues = dataPoints.map((e) => e.y).toList();
+    if (dataPoints.isEmpty) {
+      return const Center(child: Text('No data'));
+    }
 
-    // Get min and max values
-    final double dataMin = yValues.reduce((a, b) => a < b ? a : b);
-    final double dataMax = yValues.reduce((a, b) => a > b ? a : b);
-    final double range = dataMax - dataMin;
+    /// -------------------- Y-Axis Scaling Logic --------------------
+    double maxY = dataPoints.map((e) => e.y).reduce((a, b) => a > b ? a : b);
+    double minY = dataPoints.map((e) => e.y).reduce((a, b) => a < b ? a : b);
+    bool isPrime(int n) {
+      if (n <= 1) return false;
+      for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) return false;
+      }
+      return true;
+    }
 
-    // Calculate interval based on range
-    double interval = _calculateInterval(range, showWeight);
+    // Pad maxY slightly if it's prime for better tick division
+    while (isPrime(maxY.toInt())) {
+      maxY += 1;
+    }
 
-    // Set bounds with some padding
-    final double minY = (dataMin - interval).floorToDouble();
-    final double maxY = (dataMax + interval).ceilToDouble();
-    ;
+    // Determine interval
+    double interval = (maxY / 9).ceilToDouble();
+    while (maxY % interval != 0) {
+      interval += 1;
+    }
 
-    print('\x1B[2J\x1B[1;1H');
-    print('Range: $range');
-    print('Interval: $interval');
-    print('minY: $minY, maxY: $maxY');
+    // Recalculate maxY as next divisible value
+    maxY = (interval * (maxY / interval).ceil()).toDouble();
+
+    // Ensure minY starts from 0 or just below the minimum, rounded nicely
+    minY = (minY / interval).floor() * interval;
+    if (minY < 0) minY = 0;
 
     return SizedBox(
       height: 250,
@@ -70,8 +64,8 @@ class LinechartWidget extends StatelessWidget {
         LineChartData(
           minX: -0.5,
           maxX: (dataPoints.length - 1) + 0.5,
-          minY: minY,
-          maxY: maxY,
+          minY: minY - interval < 0 ? 0 : minY - interval,
+          maxY: maxY + interval,
           titlesData: FlTitlesData(
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
@@ -80,14 +74,12 @@ class LinechartWidget extends StatelessWidget {
                 getTitlesWidget: (value, meta) {
                   int index = value.toInt();
 
-                  // Only show titles for exact integer values that correspond to our data points
                   if (value != index.toDouble() ||
                       index < 0 ||
                       index >= dates.length) {
                     return const SizedBox();
                   }
 
-                  // Optional: Skip some labels if there are too many data points
                   if (dataPoints.length > 6 && index % 2 != 0) {
                     return const SizedBox();
                   }
@@ -111,7 +103,7 @@ class LinechartWidget extends StatelessWidget {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 40, // Increased to accommodate larger numbers
+                reservedSize: 55,
                 interval: interval,
                 getTitlesWidget: (value, meta) {
                   return SideTitleWidget(
@@ -131,11 +123,7 @@ class LinechartWidget extends StatelessWidget {
             topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
             rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
-          gridData: FlGridData(
-            show: true,
-            horizontalInterval:
-                interval, // Ensure grid lines match the title intervals
-          ),
+          gridData: FlGridData(show: true, horizontalInterval: interval),
           borderData: FlBorderData(show: true),
           lineBarsData: [
             LineChartBarData(

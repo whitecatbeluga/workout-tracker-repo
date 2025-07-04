@@ -77,4 +77,13 @@ class ExerciseRepositoryImpl implements ExerciseRepository {
       throw CustomErrorException.fromCode(500);
     }
   }
+
+  @override
+  Future<void> deleteExercise(
+    String exerciseId,
+    String userId, {
+    String? imageUrl,
+  }) {
+    return _exercise.deleteExercise(userId, exerciseId, imageUrl);
+  }
 }

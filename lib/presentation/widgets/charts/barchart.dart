@@ -34,7 +34,10 @@ class BarChartWidgetState extends State<BarChartWidget> {
     'Nov',
     'Dec',
   ];
-
+  double weekMaxY = 18;
+  double weekInterval = 2;
+  double monthMaxY = 30;
+  double monthInterval = 5;
   @override
   void initState() {
     processDates(widget.workouts);
@@ -49,7 +52,7 @@ class BarChartWidgetState extends State<BarChartWidget> {
       child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
-          maxY: widget.filter == 'Week' ? 10 : 30,
+          maxY: widget.filter == 'Week' ? weekMaxY : monthMaxY,
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
@@ -95,7 +98,9 @@ class BarChartWidgetState extends State<BarChartWidget> {
             leftTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                interval: widget.filter == 'Week' ? 2 : 5,
+                interval: widget.filter == 'Week'
+                    ? weekInterval
+                    : monthInterval,
                 getTitlesWidget: (value, meta) {
                   return SideTitleWidget(
                     meta: meta,
@@ -177,8 +182,53 @@ class BarChartWidgetState extends State<BarChartWidget> {
       monthStats.add(MonthStat(month: month, count: count));
     }
 
-    // print('WORKOUT DATES : $workoutDates');
-    // print('MONTH STATS : $monthStats');
+    double maxWeekCount = weekStats.isNotEmpty
+        ? weekStats
+              .map((stats) => stats.count.toDouble())
+              .reduce((a, b) => a > b ? a : b)
+        : 0.0;
+    if (maxWeekCount > weekMaxY) {
+      bool isPrime(int n) {
+        if (n <= 1) return false;
+        for (int i = 2; i * i <= n; i++) {
+          if (n % i == 0) return false;
+        }
+        return true;
+      }
+
+      while (isPrime(maxWeekCount.toInt())) {
+        maxWeekCount += 1;
+      }
+      weekMaxY = maxWeekCount;
+      weekInterval = (maxWeekCount / 9).ceilToDouble();
+      while (maxWeekCount % weekInterval != 0) {
+        weekInterval += 1;
+      }
+    }
+
+    double maxMonthCount = monthStats.isNotEmpty
+        ? monthStats
+              .map((stats) => stats.count.toDouble())
+              .reduce((a, b) => a > b ? a : b)
+        : 0.0;
+    if (maxMonthCount > monthMaxY) {
+      bool isPrime(int n) {
+        if (n <= 1) return false;
+        for (int i = 2; i * i <= n; i++) {
+          if (n % i == 0) return false;
+        }
+        return true;
+      }
+
+      while (isPrime(maxMonthCount.toInt())) {
+        maxMonthCount += 1;
+      }
+      monthMaxY = maxMonthCount;
+      monthInterval = (maxMonthCount / 9).ceilToDouble();
+      while (maxMonthCount % monthInterval != 0) {
+        monthInterval += 1;
+      }
+    }
   }
 }
 
