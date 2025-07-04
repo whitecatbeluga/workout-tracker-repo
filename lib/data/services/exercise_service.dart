@@ -76,4 +76,28 @@ class ExerciseService {
           .doc(userId)
           .collection(_collection)
           .snapshots();
+
+  Future<void> deleteExercise(
+    String userId,
+    String exerciseId,
+    String? imageUrl,
+  ) async {
+    try {
+      // Delete Firestore document
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('exercises')
+          .doc(exerciseId)
+          .delete();
+
+      // Delete image from Firebase Storage if exists
+      if (imageUrl != null && imageUrl.isNotEmpty) {
+        final ref = FirebaseStorage.instance.refFromURL(imageUrl);
+        await ref.delete();
+      }
+    } catch (e) {
+      throw Exception('Failed to delete exercise: $e');
+    }
+  }
 }
