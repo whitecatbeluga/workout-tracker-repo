@@ -10,6 +10,7 @@ import 'package:workout_tracker_repo/domain/entities/user_profile.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/profile-menu.dart';
 import 'package:flutter/material.dart';
 import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/graphfilter.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/menu_list.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
@@ -354,6 +355,21 @@ class _ProfileHeaderState extends State<ProfileHeader> {
     });
   }
 
+  Stream<UserAccount> getUserAccount(String userId) {
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .snapshots()
+        .map(
+          (doc) => UserAccount(
+            // password: doc.data()?['password'],
+            email: doc.data()?['email'],
+            accountPicture: doc.data()?['account_picture'],
+            username: doc.data()?['user_name'],
+          ),
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -364,31 +380,67 @@ class _ProfileHeaderState extends State<ProfileHeader> {
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 10,
           children: [
-            ValueListenableBuilder<UserProfile?>(
-              valueListenable: currentUserProfile,
-              builder: (context, profile, _) {
+            StreamBuilder(
+              stream: getUserAccount(widget.user!.uid),
+              builder: (context, res) {
+                if (res.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 10),
+                      ],
+                    ),
+                  );
+                }
+
+                if (res.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 60,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Error: ${res.error}',
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                UserAccount account = res.data!;
                 return CircleAvatar(
-                  radius: 50,
+                  backgroundColor: Color(0xFF9ACBD0),
+                  radius: 45,
                   backgroundImage:
-                      (profile != null &&
-                          profile.accountPicture != null &&
-                          profile.accountPicture!.isNotEmpty)
-                      ? NetworkImage(profile.accountPicture!)
+                      (account.accountPicture != null &&
+                          account.accountPicture!.isNotEmpty)
+                      ? NetworkImage(account.accountPicture!)
                       : null,
                   child:
-                      (profile == null ||
-                          profile.accountPicture == null ||
-                          profile.accountPicture!.isEmpty)
+                      (account.accountPicture == null ||
+                          account.accountPicture!.isEmpty)
                       ? Text(
-                          profile?.userName.isNotEmpty == true
-                              ? profile!.userName[0].toUpperCase()
+                          account.accountPicture == "" ||
+                                  account.accountPicture == null
+                              ? account.username![0].toUpperCase()
                               : '?',
-                          style: TextStyle(fontSize: 40),
+                          style: const TextStyle(
+                            fontSize: 40,
+                            color: Color(0xFF006A71),
+                          ),
                         )
                       : null,
                 );
               },
             ),
+
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 10,

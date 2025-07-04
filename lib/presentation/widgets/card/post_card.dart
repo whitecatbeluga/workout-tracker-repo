@@ -5,6 +5,7 @@ import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/data/repositories_impl/social_repository_impl.dart';
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 import 'package:workout_tracker_repo/domain/repositories/social_repository.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../domain/entities/social_with_user.dart';
 import 'package:intl/intl.dart';
@@ -477,6 +478,21 @@ class _PostCardState extends State<PostCard> {
     final createdAt = widget.data.social.createdAt.toDate();
     final timeAgo = timeago.format(createdAt);
 
+    Stream<UserAccount> getUserAccount(String userId) {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .snapshots()
+          .map(
+            (doc) => UserAccount(
+              // password: doc.data()?['password'],
+              email: doc.data()?['email'],
+              accountPicture: doc.data()?['account_picture'],
+              username: doc.data()?['user_name'],
+            ),
+          );
+    }
+
     return InkWell(
       onTap: widget.onTap,
       child: Card(
@@ -505,23 +521,74 @@ class _PostCardState extends State<PostCard> {
                               child: Row(
                                 spacing: 10,
                                 children: [
-                                  CircleAvatar(
-                                    backgroundImage:
-                                        widget.data.accountPicture != null
-                                        ? NetworkImage(
-                                            widget.data.accountPicture,
-                                          )
-                                        : null,
-                                    child: widget.data.accountPicture != null
-                                        ? Text(
-                                            widget.data.userName.isNotEmpty
-                                                ? widget.data.userName[0]
-                                                      .toUpperCase()
-                                                : '?',
-                                          )
-                                        : null,
-                                  ),
+                                  StreamBuilder(
+                                    stream: getUserAccount(user!.uid),
+                                    builder: (context, res) {
+                                      if (res.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return const Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              CircularProgressIndicator(),
+                                              SizedBox(height: 10),
+                                            ],
+                                          ),
+                                        );
+                                      }
 
+                                      if (res.hasError) {
+                                        return Center(
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons.error_outline,
+                                                color: Colors.red,
+                                                size: 60,
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                'Error: ${res.error}',
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      UserAccount account = res.data!;
+                                      return CircleAvatar(
+                                        backgroundColor: Color(0xFF9ACBD0),
+                                        backgroundImage:
+                                            (account.accountPicture != null &&
+                                                account
+                                                    .accountPicture!
+                                                    .isNotEmpty)
+                                            ? NetworkImage(
+                                                account.accountPicture!,
+                                              )
+                                            : null,
+                                        child:
+                                            (account.accountPicture == null ||
+                                                account.accountPicture!.isEmpty)
+                                            ? Text(
+                                                account.accountPicture == "" ||
+                                                        account.accountPicture ==
+                                                            null
+                                                    ? account.username![0]
+                                                          .toUpperCase()
+                                                    : '?',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Color(0xFF006A71),
+                                                ),
+                                              )
+                                            : null,
+                                      );
+                                    },
+                                  ),
                                   Container(
                                     padding: EdgeInsets.zero,
                                     child: Column(
