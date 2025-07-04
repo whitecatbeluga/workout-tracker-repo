@@ -18,6 +18,7 @@ import 'package:workout_tracker_repo/presentation/pages/routine/log_routine.dart
 import 'package:workout_tracker_repo/presentation/pages/profile/settings.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/statistics.dart';
 import 'package:workout_tracker_repo/presentation/pages/routine/view-routine.dart';
+import 'package:workout_tracker_repo/presentation/pages/social/notifications.dart';
 import 'package:workout_tracker_repo/presentation/pages/social/social_view_profile.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/log_workout.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/save_workout_exercise.dart';
@@ -78,6 +79,13 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) => const SearchPage(),
+          ifDenied: (_) => const LoginPage(),
+        );
+      case SocialRoutes.notifications:
+        return guardedRoute(
+          settings: settings,
+          guard: () async => Authentication.isAuthenticated(),
+          ifAllowed: (_) => const NotificationsPage(),
           ifDenied: (_) => const LoginPage(),
         );
       case ProfileRoutes.settings:

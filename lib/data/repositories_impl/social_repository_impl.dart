@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:workout_tracker_repo/data/errors/custom_error_exception.dart';
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
+import 'package:workout_tracker_repo/domain/entities/notifications_with_user.dart';
 
 import '../../domain/entities/social_with_user.dart'; // ✅ Use the same one
 import '../../domain/repositories/social_repository.dart';
@@ -609,6 +610,30 @@ class SocialRepositoryImpl implements SocialRepository {
           .doc(workoutId)
           .collection('comments')
           .add(commentData);
+
+      final workoutDoc = await _firestore
+          .collection('workouts')
+          .doc(workoutId)
+          .get();
+
+      if (workoutDoc.exists) {
+        final postOwnerId = workoutDoc.data()?['user_id'] as String?;
+
+        if (postOwnerId != null && postOwnerId != userId) {
+          await _firestore
+              .collection('users')
+              .doc(postOwnerId)
+              .collection('notifications')
+              .add({
+                'from': userId,
+                'title': 'commented on your post:',
+                'description': '$description.',
+                'type': 'post',
+                'post_id': workoutId,
+                'created_at': FieldValue.serverTimestamp(),
+              });
+        }
+      }
     } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
     } catch (_) {
@@ -634,6 +659,30 @@ class SocialRepositoryImpl implements SocialRepository {
         await likeRef.delete();
       } else {
         await likeRef.set({'liked_by': userId});
+
+        final workoutDoc = await _firestore
+            .collection('workouts')
+            .doc(workoutId)
+            .get();
+
+        if (workoutDoc.exists) {
+          final postOwnerId = workoutDoc.data()?['user_id'] as String?;
+
+          if (postOwnerId != null && postOwnerId != userId) {
+            await _firestore
+                .collection('users')
+                .doc(postOwnerId)
+                .collection('notifications')
+                .add({
+                  'from': userId,
+                  'title': 'liked your post.',
+                  'description': '',
+                  'type': 'post',
+                  'post_id': workoutId,
+                  'created_at': FieldValue.serverTimestamp(),
+                });
+          }
+        }
       }
     } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
@@ -671,6 +720,18 @@ class SocialRepositoryImpl implements SocialRepository {
           followingRef.set(timestamp),
           followerRef.set(timestamp),
         ]);
+
+        await _firestore
+            .collection('users')
+            .doc(followingId)
+            .collection('notifications')
+            .add({
+              'from': userId,
+              'title': 'followed you.',
+              'description': '',
+              'type': 'follow',
+              'created_at': FieldValue.serverTimestamp(),
+            });
       }
     } on FirebaseException catch (_) {
       throw CustomErrorException.fromCode(400);
@@ -869,6 +930,7 @@ class SocialRepositoryImpl implements SocialRepository {
     }
   }
 
+  @override
   Future<int> countRoutines(String userId) async {
     try {
       final foldersRef = await FirebaseFirestore.instance
@@ -895,6 +957,68 @@ class SocialRepositoryImpl implements SocialRepository {
     } catch (e) {
       print('Error counting user routines: $e');
       rethrow;
+    }
+  }
+
+  @override
+  Stream<List<NotificationWithUser>> fetchNotifications(String userId) {
+    try {
+      return _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .orderBy('created_at', descending: true)
+          .snapshots()
+          .asyncMap((snapshot) async {
+            final results = await Future.wait(
+              snapshot.docs.map((doc) async {
+                final notificationData = doc.data();
+                final fromUserId = notificationData['from'] as String;
+                final title = notificationData['title'] as String? ?? '';
+                final description =
+                    notificationData['description'] as String? ?? '';
+                final type = notificationData['type'] as String? ?? '';
+                final createdAt = notificationData['created_at'] as Timestamp?;
+                final postId = notificationData['post_id'] as String?;
+
+                final userDoc = await _firestore
+                    .collection('users')
+                    .doc(fromUserId)
+                    .get();
+
+                final accountPicture =
+                    userDoc.data()?['account_picture'] as String? ?? '';
+                final userName =
+                    userDoc.data()?['user_name'] as String? ?? 'Unknown';
+                final firstName =
+                    userDoc.data()?['first_name'] as String? ?? 'Unknown';
+                final lastName =
+                    userDoc.data()?['last_name'] as String? ?? 'Unknown';
+                final email = userDoc.data()?['email'] as String? ?? 'Unknown';
+
+                return NotificationWithUser(
+                  id: doc.id,
+                  from: fromUserId,
+                  title: title,
+                  description: description,
+                  type: type,
+                  accountPicture: accountPicture,
+                  userName: userName,
+                  firstName: firstName,
+                  lastName: lastName,
+                  email: email,
+                  createdAt: createdAt?.toDate(),
+                  postId: postId,
+                );
+              }),
+            );
+
+            return results;
+          });
+    } on CustomErrorException catch (_) {
+      throw CustomErrorException.fromCode(400);
+    } catch (e) {
+      throw CustomErrorException.fromCode(500);
     }
   }
 }
