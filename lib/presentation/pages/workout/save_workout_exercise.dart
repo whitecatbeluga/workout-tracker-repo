@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/presentation/pages/workout/confetti_workout.dart';
 import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
 
@@ -144,7 +145,7 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
       });
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const ContainerTree()),
+        MaterialPageRoute(builder: (_) => const ConfettiWorkout()),
         (route) => false,
       );
     } catch (e) {
