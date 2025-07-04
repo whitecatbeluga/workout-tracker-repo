@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/set_entry.dart';
 
 class RoutineService {
@@ -45,14 +46,16 @@ class RoutineService {
         .collection('exercises');
     final snapshot = await exercisesRef.get();
 
+    final user = authService.value.getCurrentUser();
+    if (user == null) return [];
+
     List<Map<String, dynamic>> exercises = [];
 
     for (var exerciseDoc in snapshot.docs) {
       final exerciseData = exerciseDoc.data();
 
-      // ✅ Get sets directly from embedded 'sets' field
+      // ✅ Parse sets
       final rawSets = exerciseData['sets'] as List<dynamic>? ?? [];
-
       final sets = rawSets.map((set) {
         return {
           'set_number': set['set_number'],
@@ -63,22 +66,39 @@ class RoutineService {
         };
       }).toList();
 
-      // ✅ Get full exercise info from 'exercises' collection
-      final exerciseRef = _firestore
+      final exerciseId = exerciseData['exercise_id'];
+
+      // ✅ Try fetching custom user-defined exercise first
+      final userExerciseRef = _firestore
+          .collection('users')
+          .doc(user.uid)
           .collection('exercises')
-          .doc(exerciseData['exercise_id']);
-      final exerciseSnapshot = await exerciseRef.get();
-      final fullData = exerciseSnapshot.data();
+          .doc(exerciseId);
+      final userExerciseSnapshot = await userExerciseRef.get();
+
+      Map<String, dynamic>? exerciseInfo;
+
+      if (userExerciseSnapshot.exists) {
+        // Use user-defined custom exercise
+        exerciseInfo = userExerciseSnapshot.data();
+      } else {
+        // Fallback to global exercise
+        final globalExerciseRef = _firestore
+            .collection('exercises')
+            .doc(exerciseId);
+        final globalExerciseSnapshot = await globalExerciseRef.get();
+        exerciseInfo = globalExerciseSnapshot.data();
+      }
 
       exercises.add({
-        'id': exerciseData['exercise_id'],
-        'exercise_id': exerciseData['exercise_id'],
-        'name': fullData?['name'],
-        'description': fullData?['description'],
-        'category': fullData?['category'],
-        'with_out_equipment': fullData?['with_out_equipment'],
-        'image_url': fullData?['image_url'],
-        'sets': sets, // ✅ embedded sets returned
+        'id': exerciseId,
+        'exercise_id': exerciseId,
+        'name': exerciseInfo?['name'],
+        'description': exerciseInfo?['description'],
+        'category': exerciseInfo?['category'],
+        'with_out_equipment': exerciseInfo?['with_out_equipment'],
+        'image_url': exerciseInfo?['image_url'],
+        'sets': sets,
       });
     }
 
