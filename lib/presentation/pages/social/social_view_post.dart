@@ -6,13 +6,19 @@ import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/post_card.dart';
 import 'package:workout_tracker_repo/presentation/widgets/card/workout_detail_card.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
+import 'package:workout_tracker_repo/routes/workout/workout.dart';
 import '../../../domain/entities/social_with_user.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class OptionsBottomSheet extends StatefulWidget {
   final String workoutId;
+  final SocialWithUser post;
 
-  const OptionsBottomSheet({super.key, required this.workoutId});
+  const OptionsBottomSheet({
+    super.key,
+    required this.workoutId,
+    required this.post,
+  });
 
   @override
   State<OptionsBottomSheet> createState() => _OptionsBottomSheetState();
@@ -103,15 +109,22 @@ class _OptionsBottomSheetState extends State<OptionsBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    WorkoutRoutes.saveWorkout,
+                    arguments: {'data': widget.post, 'type': 'edit-workout'},
+                  );
+                },
                 child: Row(
-                  spacing: 10,
                   children: [
                     FaIcon(FontAwesomeIcons.pencil, size: 20),
+                    SizedBox(width: 10),
                     Text('Edit Workout', style: TextStyle(fontSize: 16)),
                   ],
                 ),
               ),
+
               GestureDetector(
                 onTap: () {
                   _openConfirmDelete(context);
@@ -169,7 +182,10 @@ class _ViewPostState extends State<ViewPost> {
                 showModalBottomSheet(
                   context: context,
                   builder: (BuildContext context) {
-                    return OptionsBottomSheet(workoutId: post.social.id);
+                    return OptionsBottomSheet(
+                      workoutId: post.social.id,
+                      post: post,
+                    );
                   },
                 );
               },
