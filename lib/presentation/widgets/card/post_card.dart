@@ -385,7 +385,6 @@ class ShareBottomSheet extends StatelessWidget {
               ),
               SizedBox(height: 20),
               Row(
-                spacing: 20,
                 children: [
                   Column(
                     children: [
@@ -393,19 +392,20 @@ class ShareBottomSheet extends StatelessWidget {
                       Text('Facebook', style: TextStyle(fontSize: 12)),
                     ],
                   ),
+                  SizedBox(width: 20),
                   Column(
                     children: [
                       FaIcon(FontAwesomeIcons.instagram, size: 40),
                       Text('Instagram', style: TextStyle(fontSize: 12)),
                     ],
                   ),
+                  SizedBox(width: 20),
                   Column(
                     children: [
                       FaIcon(FontAwesomeIcons.xTwitter, size: 40),
                       Text('X', style: TextStyle(fontSize: 12)),
                     ],
                   ),
-                
                 ],
               ),
             ],
