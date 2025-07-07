@@ -251,7 +251,7 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
                             children: [
                               Text('Volume', style: TextStyle(fontSize: 16)),
                               Text(
-                                '${volumeState.totalVolume.toStringAsFixed(1)}kg',
+                                '${volumeState.totalVolume.round()}',
                                 style: TextStyle(fontSize: 16),
                               ),
                             ],
