@@ -52,6 +52,25 @@ class VolumeSetNotifier extends StateNotifier<VolumeSetState> {
     );
   }
 
+  void removeVolume(String exerciseId) {
+    final updatedExerciseVolumes = Map<String, double>.from(
+      state.exerciseVolumes,
+    )..remove(exerciseId);
+
+    final updatedTotalVolume = updatedExerciseVolumes.values.fold(
+      0.0,
+      (sum, volume) => sum + volume,
+    );
+
+    final updatedTotalSets = updatedExerciseVolumes.length;
+
+    state = state.copyWith(
+      exerciseVolumes: updatedExerciseVolumes,
+      totalVolume: updatedTotalVolume,
+      totalSets: updatedTotalSets,
+    );
+  }
+
   void reset() {
     state = const VolumeSetState();
   }
