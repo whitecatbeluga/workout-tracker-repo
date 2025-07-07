@@ -10,6 +10,7 @@ import 'package:workout_tracker_repo/domain/entities/workout.dart';
 import 'package:workout_tracker_repo/presentation/domain/entities/filter_item.dart';
 import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
 import 'package:workout_tracker_repo/presentation/widgets/collapsible/bottomdrawer.dart';
+import 'package:workout_tracker_repo/presentation/widgets/exporter/exportimg.dart';
 
 class StatisticsPage extends StatefulWidget {
   const StatisticsPage({super.key});

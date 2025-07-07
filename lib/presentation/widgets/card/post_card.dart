@@ -6,6 +6,8 @@ import 'package:workout_tracker_repo/data/repositories_impl/social_repository_im
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 import 'package:workout_tracker_repo/domain/repositories/social_repository.dart';
 import 'package:workout_tracker_repo/presentation/pages/profile/settings/edit_account.dart';
+import 'package:workout_tracker_repo/presentation/widgets/buttons/button.dart';
+import 'package:workout_tracker_repo/presentation/widgets/exporter/exportimg.dart';
 import 'package:workout_tracker_repo/routes/social/social.dart';
 import '../../../domain/entities/social_with_user.dart';
 import 'package:intl/intl.dart';
@@ -363,7 +365,19 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 }
 
 class ShareBottomSheet extends StatelessWidget {
-  const ShareBottomSheet({super.key});
+  final String? imageurl;
+  final String title;
+  final String description;
+  final String time;
+  final String volume;
+  const ShareBottomSheet({
+    super.key,
+    required this.imageurl,
+    required this.title,
+    required this.description,
+    required this.time,
+    required this.volume,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -373,37 +387,115 @@ class ShareBottomSheet extends StatelessWidget {
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 160,
+        height: 200,
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Share Workout',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Share Workout',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                  ),
+                  Column(
+                    children: [
+                      Visibility(
+                        visible: imageurl != null && imageurl != '',
+                        child: IconButton(
+                          onPressed: () async {
+                            // print('imgurl: $imgurl');
+                            // print('title: $title');
+                            // print('description: $description');
+                            // print('time: $time');
+                            // print('volume: $volume');
+
+                            if (imageurl == null || imageurl == '') {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Post has no Image'),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                              return;
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Saving image...'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            final scaffoldMessenger = ScaffoldMessenger.of(
+                              context,
+                            );
+                            final success = await exportWorkoutImage(
+                              context: context,
+                              imageUrl: imageurl!,
+                              title: title,
+                              description: description,
+                              time: time,
+                              volume: volume,
+                            );
+
+                            if (success) {
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text("Workout image saved!"),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            } else {
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text("Failed to save image."),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                            Navigator.pop(context);
+                          },
+                          icon: Icon(
+                            Icons.file_download_outlined,
+                            size: 40,
+                            color: Color(0xFF006A71),
+                          ),
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
               SizedBox(height: 20),
               Row(
+                spacing: 20,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
+                  Row(
+                    spacing: 20,
                     children: [
-                      FaIcon(FontAwesomeIcons.facebook, size: 40),
-                      Text('Facebook', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  SizedBox(width: 20),
-                  Column(
-                    children: [
-                      FaIcon(FontAwesomeIcons.instagram, size: 40),
-                      Text('Instagram', style: TextStyle(fontSize: 12)),
-                    ],
-                  ),
-                  SizedBox(width: 20),
-                  Column(
-                    children: [
-                      FaIcon(FontAwesomeIcons.xTwitter, size: 40),
-                      Text('X', style: TextStyle(fontSize: 12)),
+                      Column(
+                        children: [
+                          FaIcon(FontAwesomeIcons.facebook, size: 40),
+                          Text('Facebook', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          FaIcon(FontAwesomeIcons.instagram, size: 40),
+                          Text('Instagram', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
+                      Column(
+                        children: [
+                          FaIcon(FontAwesomeIcons.xTwitter, size: 40),
+                          Text('X', style: TextStyle(fontSize: 12)),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -850,7 +942,15 @@ class _PostCardState extends State<PostCard> {
                             top: Radius.circular(20),
                           ),
                         ),
-                        builder: (context) => ShareBottomSheet(),
+                        builder: (context) => ShareBottomSheet(
+                          imageurl: widget.data.social.imageUrls.isEmpty
+                              ? null
+                              : widget.data.social.imageUrls[0],
+                          title: widget.data.social.workoutTitle,
+                          description: widget.data.social.workoutDescription,
+                          time: widget.data.social.workoutDuration,
+                          volume: widget.data.social.totalVolume.toString(),
+                        ),
                       );
                     },
                     icon: Icon(Icons.ios_share),
