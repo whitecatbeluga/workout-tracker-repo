@@ -109,15 +109,17 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
     return AppBar(
       automaticallyImplyLeading: false,
       leading: BackButton(
-        onPressed: Navigator.canPop(context)
-            ? () => Navigator.pop(context)
-            : () {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/',
-                  (route) => false,
-                );
-              },
+        onPressed: () {
+          savedExerciseSets
+            ..clear()
+            ..addAll(exerciseSets);
+
+          if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+          }
+        },
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
