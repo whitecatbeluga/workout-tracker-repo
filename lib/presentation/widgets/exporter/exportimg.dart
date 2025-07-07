@@ -104,7 +104,8 @@ Future<bool> exportWorkoutImage({
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 48,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
