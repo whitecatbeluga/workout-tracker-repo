@@ -401,10 +401,7 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             _buildMetric('Duration', formatDuration(workoutDuration.inSeconds)),
-            _buildMetric(
-              'Volume',
-              '${volumeSetState.totalVolume.toStringAsFixed(1)}kg',
-            ),
+            _buildMetric('Volume', '${volumeSetState.totalVolume.round()}'),
             _buildMetric('Sets', volumeSetState.totalSets.toString()),
           ],
         );
