@@ -1,4 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/core/providers/auth_service_provider.dart';
 
 import '../../../../routes/profile/profile.dart';
 import '../../../widgets/buttons/button.dart';
@@ -12,6 +16,34 @@ class ContactUsPage extends StatefulWidget {
 
 class _ContactUsPageState extends State<ContactUsPage> {
   @override
+  String? firstName;
+  String? lastName;
+  String? email;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUser();
+  }
+
+  //fetch current user
+  Future<void> fetchUser() async{
+    final user = FirebaseAuth.instance.currentUser?.uid;
+
+    if (user != null){
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user).get();
+
+      if(doc.exists){
+        setState(() {
+          firstName=doc['first_name'];
+          lastName=doc['last_name'];
+          email=doc['email'];
+        });
+      }
+    }
+  }
   Widget build(BuildContext context) {
     //text field borders
     final border = OutlineInputBorder(
@@ -113,7 +145,7 @@ class _ContactUsPageState extends State<ContactUsPage> {
               ],
             ),
             SizedBox(height: 15),
-            Text("Message from: John Doe(volt@gmail.com"),
+            Text("Message from: ${firstName} ${lastName} (${email})"),
             SizedBox(height:20),
             Button(
               label: 'Send',
