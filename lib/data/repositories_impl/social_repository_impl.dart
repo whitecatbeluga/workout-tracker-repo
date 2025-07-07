@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:workout_tracker_repo/data/errors/custom_error_exception.dart';
 import 'package:workout_tracker_repo/domain/entities/comments_with_user.dart';
 import 'package:workout_tracker_repo/domain/entities/notifications_with_user.dart';
@@ -831,6 +832,7 @@ class SocialRepositoryImpl implements SocialRepository {
         });
   }
 
+  @override
   Future<SocialWithUser?> fetchSocialWithUserByWorkoutId(
     String workoutId,
   ) async {
@@ -1019,6 +1021,37 @@ class SocialRepositoryImpl implements SocialRepository {
       throw CustomErrorException.fromCode(400);
     } catch (e) {
       throw CustomErrorException.fromCode(500);
+    }
+  }
+
+  Future<void> deleteWorkout({required String workoutId}) async {
+    try {
+      final workoutRef = _firestore.collection('workouts').doc(workoutId);
+      final workoutDoc = await workoutRef.get();
+
+      if (workoutDoc.exists) {
+        final data = workoutDoc.data();
+        final imageUrls = List<String>.from(data?['image_urls'] ?? []);
+
+        if (imageUrls.isNotEmpty) {
+          for (final imageUrl in imageUrls) {
+            try {
+              final ref = FirebaseStorage.instance.refFromURL(imageUrl);
+              await ref.delete();
+              print('Deleted image: $imageUrl');
+            } catch (e) {
+              print('Error deleting image $imageUrl: $e');
+            }
+          }
+        }
+
+        await workoutRef.delete();
+        print('Workout and associated images deleted successfully.');
+      } else {
+        print('Workout does not exist.');
+      }
+    } catch (e) {
+      print('Error deleting workout: $e');
     }
   }
 }
