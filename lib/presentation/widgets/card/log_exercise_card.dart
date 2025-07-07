@@ -63,6 +63,57 @@ class _LogExerciseCardState extends ConsumerState<LogExerciseCard> {
         .updateVolume(exerciseId, completedSets);
   }
 
+  void _deleteExercise(int index, Exercise exercise) {
+    setState(() {
+      widget.workoutExercises?.value.removeAt(index);
+      widget.routineExercises?.value.removeAt(index);
+
+      widget.exerciseSets.remove(exercise.id);
+
+      _kgControllers.remove(exercise.name);
+      _repControllers.remove(exercise.name);
+      _kgFocusNodes.remove(exercise.name);
+      _repFocusNodes.remove(exercise.name);
+
+      if (widget.workoutExercises != null) {
+        widget.workoutExercises!.value = List.from(
+          widget.workoutExercises!.value,
+        );
+      }
+
+      if (widget.routineExercises != null) {
+        widget.routineExercises!.value = List.from(
+          widget.routineExercises!.value,
+        );
+      }
+
+      ref.read(volumeSetProvider.notifier).removeVolume(exercise.id);
+    });
+  }
+
+  void _removeExerciseDialog(int index, Exercise exercise) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Remove Exercise"),
+        content: const Text("Are you sure you want to delete this exercise?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              _deleteExercise(index, exercise);
+            },
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeNotifier = widget.workoutExercises ?? widget.routineExercises;
@@ -186,6 +237,15 @@ class _LogExerciseCardState extends ConsumerState<LogExerciseCard> {
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                      IconButton(
+                        highlightColor: Colors.transparent,
+                        icon: const Icon(
+                          Icons.delete_forever_rounded,
+                          size: 30,
+                        ),
+                        color: Colors.red.shade600,
+                        onPressed: () => _removeExerciseDialog(index, exercise),
                       ),
                     ],
                   ),
