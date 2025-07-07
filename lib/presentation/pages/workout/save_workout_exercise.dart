@@ -8,19 +8,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:workout_tracker_repo/core/providers/workout_exercise_provider.dart';
+import 'package:workout_tracker_repo/domain/entities/social_with_user.dart';
 import 'package:workout_tracker_repo/presentation/pages/workout/confetti_workout.dart';
-import 'package:workout_tracker_repo/routes/auth/auth.dart';
 import 'package:workout_tracker_repo/providers/persistent_duration_provider.dart';
+import 'package:workout_tracker_repo/routes/profile/profile.dart';
 
 import '../../../providers/persistent_volume_set_provider.dart';
 import '../../../utils/timer_formatter.dart';
 import '../../domain/entities/set_entry.dart';
-import '../../layouts/container.dart';
 
 class SaveWorkout extends ConsumerStatefulWidget {
-  final Map<String, List<SetEntry>> exerciseSets;
+  final Map<String, List<SetEntry>>? exerciseSets;
+  final String? type;
+  final SocialWithUser? data;
 
-  const SaveWorkout({super.key, required this.exerciseSets});
+  const SaveWorkout({super.key, this.exerciseSets, this.type, this.data});
 
   @override
   ConsumerState<SaveWorkout> createState() => _SaveWorkoutState();
@@ -34,7 +36,15 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
   final TextEditingController _descriptionController = TextEditingController();
   bool _visibleToEveryone = true;
 
-  final ImagePicker _picker = ImagePicker();
+  @override
+  void initState() {
+    super.initState();
+    if (widget.type == 'edit-workout' && widget.data != null) {
+      _titleController.text = widget.data!.social.workoutTitle;
+      _descriptionController.text = widget.data!.social.workoutDescription;
+      _visibleToEveryone = widget.data!.social.visibleToEveryone;
+    }
+  }
 
   @override
   void dispose() {
@@ -106,7 +116,7 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
       List<Map<String, dynamic>> exercisesData = [];
 
       for (var exercise in workoutExercises.value) {
-        final sets = widget.exerciseSets[exercise.id] ?? [];
+        final sets = widget.exerciseSets?[exercise.id] ?? [];
         totalSets += sets.length;
         totalVolume += sets.fold(
           0,
@@ -136,7 +146,7 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
 
       // Clear all workout state before navigating
       workoutExercises.value.clear();
-      widget.exerciseSets.clear();
+      widget.exerciseSets?.clear();
       ref.read(workoutElapsedDurationProvider.notifier).state = Duration.zero;
       ref.read(volumeSetProvider.notifier).reset();
 
@@ -156,6 +166,49 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
     }
   }
 
+  Future<void> _editWorkout() async {
+    if (_titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please enter a workout title.")),
+      );
+      return;
+    }
+
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('workouts')
+          .doc(widget.data!.social.id)
+          .update({
+            'workout_title': _titleController.text.trim(),
+            'workout_description': _descriptionController.text.trim(),
+            'visible_to_everyone': _visibleToEveryone,
+          });
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Workout updated successfully.")),
+      );
+
+      // Navigator.pop(context);
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+    } catch (e) {
+      print("Error updating workout: $e");
+      setState(() {
+        _isUploading = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to update workout.")),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final seconds = ref.read(workoutElapsedDurationProvider).inSeconds;
@@ -169,9 +222,22 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Save Workout', style: TextStyle(fontSize: 20)),
+                Text(
+                  widget.type == 'edit-workout'
+                      ? "Edit Workout"
+                      : "Save Workout",
+                  style: TextStyle(fontSize: 20),
+                ),
                 GestureDetector(
-                  onTap: _isUploading ? null : _saveWorkout,
+                  onTap: _isUploading
+                      ? null
+                      : () {
+                          if (widget.type == 'edit-workout') {
+                            _editWorkout();
+                          } else {
+                            _saveWorkout();
+                          }
+                        },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
@@ -228,13 +294,20 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Duration', style: TextStyle(fontSize: 16)),
+                          const Text(
+                            'Duration',
+                            style: TextStyle(fontSize: 16),
+                          ),
                           Consumer(
                             builder: (context, ref, child) {
+                              final durationDisplay =
+                                  widget.type == 'edit-workout'
+                                  ? widget.data!.social.workoutDuration
+                                  : durationTime;
+
                               return Text(
-                                durationTime,
-                                // Using the formatter function here
-                                style: TextStyle(
+                                durationDisplay,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   color: Color(0xFF48A6A7),
                                 ),
@@ -243,31 +316,53 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
                           ),
                         ],
                       ),
+
                       Consumer(
                         builder: (context, ref, child) {
                           final volumeState = ref.watch(volumeSetProvider);
+
+                          final volumeDisplay =
+                              widget.type == 'edit-workout' &&
+                                  widget.data != null
+                              ? widget.data!.social.totalVolume.toString()
+                              : volumeState.totalVolume.round().toString();
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Volume', style: TextStyle(fontSize: 16)),
-                              Text(
-                                '${volumeState.totalVolume.round()}',
+                              const Text(
+                                'Volume',
                                 style: TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                volumeDisplay,
+                                style: const TextStyle(fontSize: 16),
                               ),
                             ],
                           );
                         },
                       ),
+
                       Consumer(
                         builder: (context, ref, child) {
                           final volumeState = ref.watch(volumeSetProvider);
+
+                          final setsDisplay =
+                              widget.type == 'edit-workout' &&
+                                  widget.data != null
+                              ? widget.data!.social.totalSets.toString()
+                              : volumeState.totalSets.toString();
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Sets', style: TextStyle(fontSize: 16)),
-                              Text(
-                                volumeState.totalSets.toString(),
+                              const Text(
+                                'Sets',
                                 style: TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                setsDisplay,
+                                style: const TextStyle(fontSize: 16),
                               ),
                             ],
                           );
@@ -298,31 +393,31 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
 
                   const SizedBox(height: 20),
 
-                  GestureDetector(
-                    onTap: () {
-                      _captureImage();
-                    },
-                    child: Row(
-                      spacing: 20,
-                      children: [
-                        DottedBorder(
-                          color: Colors.grey,
-                          strokeWidth: 1,
-                          borderType: BorderType.RRect,
-                          radius: Radius.circular(4),
-                          dashPattern: [6, 3],
-                          child: Padding(
-                            padding: EdgeInsets.all(20),
-                            child: Icon(Icons.photo, color: Colors.grey),
+                  if (widget.type != 'edit-workout')
+                    GestureDetector(
+                      onTap: () {
+                        _captureImage();
+                      },
+                      child: Row(
+                        children: [
+                          DottedBorder(
+                            color: Colors.grey,
+                            strokeWidth: 1,
+                            borderType: BorderType.RRect,
+                            radius: Radius.circular(4),
+                            dashPattern: [6, 3],
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: Icon(Icons.photo, color: Colors.grey),
+                            ),
                           ),
-                        ),
-                        Text(
-                          'Add a Photo / Video',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                      ],
+                          Text(
+                            'Add a Photo / Video',
+                            style: TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
                   const SizedBox(height: 20),
 
@@ -447,13 +542,19 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
                   const SizedBox(height: 20),
                   Expanded(
                     child: workoutExercises.value.isEmpty
-                        ? const Center(child: Text("No exercises added"))
+                        ? Center(
+                            child: Text(
+                              widget.type == "edit-workout"
+                                  ? ""
+                                  : "No exercises added",
+                            ),
+                          )
                         : ListView.builder(
                             itemCount: workoutExercises.value.length,
                             itemBuilder: (context, index) {
                               final exercise = workoutExercises.value[index];
                               final sets =
-                                  widget.exerciseSets[exercise.id] ?? [];
+                                  widget.exerciseSets?[exercise.id] ?? [];
 
                               return Card(
                                 margin: const EdgeInsets.symmetric(vertical: 8),

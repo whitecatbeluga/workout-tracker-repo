@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:workout_tracker_repo/domain/entities/social_with_user.dart';
 import 'package:workout_tracker_repo/presentation/layouts/container.dart';
 import 'package:workout_tracker_repo/presentation/pages/auth/landing_page.dart';
 import 'package:workout_tracker_repo/presentation/pages/exercises/add_exercise.dart';
@@ -205,12 +206,22 @@ class RouteGenerator {
           settings: settings,
           guard: () async => Authentication.isAuthenticated(),
           ifAllowed: (_) {
+            final args = settings.arguments as Map<String, dynamic>?;
+
             final exerciseSets =
-                settings.arguments as Map<String, List<SetEntry>>;
-            return SaveWorkout(exerciseSets: exerciseSets);
+                args?['exerciseSets'] as Map<String, List<SetEntry>>?;
+            final type = args?['type'] as String?;
+            final data = args?['data'] as SocialWithUser?;
+
+            return SaveWorkout(
+              exerciseSets: exerciseSets,
+              type: type,
+              data: data,
+            );
           },
           ifDenied: (_) => const LoginPage(),
         );
+
       case ExerciseRoutes.addWorkoutExercise:
         return guardedRoute(
           settings: settings,
