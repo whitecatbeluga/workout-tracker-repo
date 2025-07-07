@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:workout_tracker_repo/domain/entities/measurement.dart';
+import 'package:workout_tracker_repo/presentation/pages/profile/measurements/comparison.dart';
 
 class MeasurementListPage extends StatefulWidget {
   final List<Measurement> measurements;
@@ -12,6 +14,8 @@ class MeasurementListPage extends StatefulWidget {
 
 class MeasurementListPageState extends State<MeasurementListPage> {
   List<Measurement> _sortedMeasurements = [];
+  Measurement? _beforeMeasurement;
+  Measurement? _afterMeasurement;
 
   @override
   void initState() {
@@ -20,20 +24,121 @@ class MeasurementListPageState extends State<MeasurementListPage> {
       ..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  void _showComparisonDrawer() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Generate Before and After',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<Measurement>(
+                    value: _beforeMeasurement,
+                    hint: const Text('Select BEFORE month'),
+                    items: _sortedMeasurements
+                        .where(
+                          (m) => m.imageUrl != null && m.imageUrl!.isNotEmpty,
+                        )
+                        .where((m) => m != _sortedMeasurements.first)
+                        .map(
+                          (m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(DateFormat('MMMM yyyy').format(m.date)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() => _beforeMeasurement = value);
+                      setModalState(() => _afterMeasurement = null);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<Measurement>(
+                    value: _afterMeasurement,
+                    hint: const Text('Select AFTER month'),
+                    items: _sortedMeasurements
+                        .where(
+                          (m) => m.imageUrl != null && m.imageUrl!.isNotEmpty,
+                        )
+                        .where(
+                          (m) =>
+                              _beforeMeasurement == null ||
+                              m.date.isAfter(_beforeMeasurement!.date),
+                        )
+                        .map(
+                          (m) => DropdownMenuItem(
+                            value: m,
+                            child: Text(DateFormat('MMMM yyyy').format(m.date)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      setModalState(() => _afterMeasurement = value);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton.icon(
+                    icon: const Icon(
+                      Icons.compare_arrows,
+                      color: Color(0xFF006A71),
+                    ),
+                    label: const Text(
+                      'Generate Image',
+                      style: TextStyle(fontSize: 16, color: Color(0xFF006A71)),
+                    ),
+                    onPressed:
+                        _beforeMeasurement != null && _afterMeasurement != null
+                        ? () => _navigateToComparisonPage(
+                            _beforeMeasurement!,
+                            _afterMeasurement!,
+                          )
+                        : null,
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _navigateToComparisonPage(Measurement before, Measurement after) {
+    Navigator.of(context).pop();
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ComparisonImagePage(before: before, after: after),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Text('Measurements'),
+        title: const Text('Measurements'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.image),
+            onPressed: _showComparisonDrawer,
+          ),
           Builder(
             builder: (context) {
               return IconButton(
-                icon: Icon(Icons.sort),
+                icon: const Icon(Icons.sort),
                 onPressed: () {
                   showModalBottomSheet(
                     context: context,
@@ -44,8 +149,8 @@ class MeasurementListPageState extends State<MeasurementListPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             ListTile(
-                              leading: Icon(Icons.arrow_upward),
-                              title: Text('Newest first'),
+                              leading: const Icon(Icons.arrow_upward),
+                              title: const Text('Newest first'),
                               onTap: () {
                                 setState(() {
                                   _sortedMeasurements = widget.measurements
@@ -55,8 +160,8 @@ class MeasurementListPageState extends State<MeasurementListPage> {
                               },
                             ),
                             ListTile(
-                              leading: Icon(Icons.arrow_downward),
-                              title: Text('Oldest first'),
+                              leading: const Icon(Icons.arrow_downward),
+                              title: const Text('Oldest first'),
                               onTap: () {
                                 setState(() {
                                   _sortedMeasurements = widget.measurements
@@ -138,13 +243,13 @@ class MeasurementCard extends StatelessWidget {
               ? Container(
                   height: 100,
                   width: double.infinity,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(12),
                     ),
                     color: Colors.grey,
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Icons.fitness_center,
                     color: Color(0xFF505050),
                     size: 100,
@@ -160,7 +265,7 @@ class MeasurementCard extends StatelessWidget {
                     );
                   },
                   child: ClipRRect(
-                    borderRadius: BorderRadius.vertical(
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(12),
                     ),
                     child: Image.network(
@@ -178,9 +283,12 @@ class MeasurementCard extends StatelessWidget {
               children: [
                 Text(
                   "${date.day} ${_getMonthName(date.month)} ${date.year}",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   "Weight: $weight kg",
                   style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
