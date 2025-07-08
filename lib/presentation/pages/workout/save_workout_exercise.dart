@@ -44,6 +44,7 @@ class _SaveWorkoutState extends ConsumerState<SaveWorkout> {
       _descriptionController.text = widget.data!.social.workoutDescription;
       _visibleToEveryone = widget.data!.social.visibleToEveryone;
     }
+    debugPrint('exerciseSets: ${widget.exerciseSets}');
   }
 
   @override

@@ -133,7 +133,11 @@ class _LogWorkoutState extends ConsumerState<LogWorkout> {
               Navigator.pushNamed(
                 context,
                 WorkoutRoutes.saveWorkout,
-                arguments: exerciseSets,
+                arguments: {
+                  'exerciseSets': exerciseSets,
+                  'type': 'save-workout',
+                  'data': null,
+                },
               );
             },
             child: Row(
