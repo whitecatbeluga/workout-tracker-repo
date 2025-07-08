@@ -51,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
       icon: Icons.scale,
       route: ProfileRoutes.measurements,
     ),
-    MenuItem(title: "Routines", icon: Icons.fitness_center, route: "/routines"),
+    // MenuItem(title: "Routines", icon: Icons.fitness_center, route: "/routines"),
     MenuItem(
       title: "Calendar",
       icon: Icons.calendar_month,

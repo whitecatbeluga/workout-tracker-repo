@@ -709,22 +709,24 @@ class _PostCardState extends State<PostCard> {
                                       return CircleAvatar(
                                         backgroundColor: Color(0xFF9ACBD0),
                                         backgroundImage:
-                                            (account.accountPicture != null &&
-                                                account
-                                                    .accountPicture!
-                                                    .isNotEmpty)
+                                            (widget
+                                                .data
+                                                .accountPicture
+                                                .isNotEmpty)
                                             ? NetworkImage(
-                                                account.accountPicture!,
+                                                widget.data.accountPicture,
                                               )
                                             : null,
                                         child:
-                                            (account.accountPicture == null ||
-                                                account.accountPicture!.isEmpty)
+                                            (widget.data.accountPicture.isEmpty)
                                             ? Text(
-                                                account.accountPicture == "" ||
-                                                        account.accountPicture ==
-                                                            null
-                                                    ? account.username![0]
+                                                widget.data.accountPicture ==
+                                                            "" ||
+                                                        widget
+                                                            .data
+                                                            .accountPicture
+                                                            .isEmpty
+                                                    ? widget.data.userName[0]
                                                           .toUpperCase()
                                                     : '?',
                                                 style: const TextStyle(
