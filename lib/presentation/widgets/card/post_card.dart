@@ -387,7 +387,7 @@ class ShareBottomSheet extends StatelessWidget {
       ),
       child: SizedBox(
         width: double.infinity,
-        height: 200,
+        height: 180,
         child: Padding(
           padding: EdgeInsets.all(20),
           child: Column(
